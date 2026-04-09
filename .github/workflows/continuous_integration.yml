@@ -22,9 +22,6 @@ jobs:
       - name: Run unit tests
         run: bundle exec rspec --format documentation
 
-      - name: Test packaging
-        run: bundle exec gem build composable_agents.gemspec
-
   package:
     needs: test
     runs-on: ubuntu-latest
