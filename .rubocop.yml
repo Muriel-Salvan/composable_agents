@@ -1,0 +1,26 @@
+plugins: rubocop-rspec
+
+AllCops:
+  NewCops: enable
+
+# I don't want to pollute my code with something that should be integrated in the language
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: never
+
+# I don't want to pollute my code with something that should be integrated in the language
+Style/MutableConstant:
+  Enabled: false
+
+# These tests are not describing any class or module
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/scenarios/code_quality_spec.rb'
+    - 'spec/scenarios/packaging_spec.rb'
+
+# It's ok to have test scenarios having several expectations
+RSpec/MultipleExpectations:
+  Max: 10
+
+# It's ok to have scenarios having multiple lines
+RSpec/ExampleLength:
+  Max: 30
