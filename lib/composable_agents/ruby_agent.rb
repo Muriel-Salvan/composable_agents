@@ -17,7 +17,7 @@ module ComposableAgents
     # @example Proc signature
     #   ->(input_artifacts) { { result: input_artifacts[:value] * 2 } }
     def initialize(processor)
-      super
+      super()
       @processor = processor
     end
 

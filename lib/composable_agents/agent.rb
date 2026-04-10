@@ -11,15 +11,27 @@ module ComposableAgents
   class Agent
     class << self
       # Declare expected input artifacts for this agent
-      # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions
-      def input_artifacts(artifacts = {})
-        @input_artifacts = artifacts
+      # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions,
+      #   or nil to only get artifacts
+      # @return [Hash<Symbol, String>] The full set of input artifacts
+      def input_artifacts(artifacts = nil)
+        if artifacts
+          @input_artifacts = artifacts
+        else
+          @input_artifacts ||= {}
+        end
       end
 
       # Declare expected output artifacts for this agent
-      # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions
-      def output_artifacts(artifacts = {})
-        @output_artifacts = artifacts
+      # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions,
+      #   or nil to only get artifacts
+      # @return [Hash<Symbol, String>] The full set of output artifacts
+      def output_artifacts(artifacts = nil)
+        if artifacts
+          @output_artifacts = artifacts
+        else
+          @output_artifacts ||= {}
+        end
       end
 
       # Inherit artifact definitions from parent class
