@@ -3,6 +3,18 @@ plugins: rubocop-rspec
 AllCops:
   NewCops: enable
 
+# It's ok to have longer lines
+Layout/LineLength:
+  Max: 160
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/AbcSize:
+  Max: 30
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/MethodLength:
+  Max: 30
+
 # I don't want to pollute my code with something that should be integrated in the language
 Style/FrozenStringLiteralComment:
   EnforcedStyle: never

@@ -42,6 +42,13 @@ module ComposableAgents
       end
     end
 
+    # Constructor
+    #
+    # @param composable_agents_dir [String] Base directory where composable agents can store data
+    def initialize(composable_agents_dir: '.composable_agents')
+      @composable_agents_dir = composable_agents_dir
+    end
+
     # Safely run the agent with input validation before execution
     # and output validation after execution
     #
