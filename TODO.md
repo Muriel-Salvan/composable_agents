@@ -12,4 +12,3 @@
   * Resuming restores artifacts at each step
   * run_id should default to the agent name?
 * Check that yard is used correctly everywhere and check how to see corresponding generated doc.
-* Add logging capability in the base agent class.

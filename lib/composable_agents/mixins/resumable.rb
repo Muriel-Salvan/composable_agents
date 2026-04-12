@@ -77,7 +77,7 @@ module ComposableAgents
           step_info = File.exist?(step_json_file) ? JSON.parse(File.read(step_json_file), symbolize_names: true) : {}
           if @artifacts == step_info[:input_artifacts]
             @artifacts = step_info[:output_artifacts]
-            puts "[Step #{full_name}] - Already executed - Got #{@artifacts.size} from persistence: #{@artifacts.keys.join(', ')}"
+            log_debug "[Step #{full_name}] - Already executed - Got #{@artifacts.size} from persistence: #{@artifacts.keys.join(', ')}"
           else
             input_artifacts = @artifacts.dup
             @steps_idx << 0
@@ -91,7 +91,7 @@ module ComposableAgents
                 output_artifacts: @artifacts
               }.to_json
             )
-            puts "[Step #{full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
+            log_debug "[Step #{full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
           end
           @steps_idx[-1] += 1
         end
