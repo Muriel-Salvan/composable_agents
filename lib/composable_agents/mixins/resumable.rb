@@ -74,7 +74,9 @@ module ComposableAgents
           # If the file exists, it means the step was already executed.
           # Check the artifacts it got from this step.
           # If they are the same ones as the current ones, skip the step and set the artifacts to the step's output artifacts.
-          step_info = File.exist?(step_json_file) ? JSON.parse(File.read(step_json_file), symbolize_names: true) : {}
+          step_info = File.exist?(step_json_file) ? JSON.parse(File.read(step_json_file)).transform_keys(&:to_sym) : {}
+          step_info[:input_artifacts]&.transform_keys!(&:to_sym)
+          step_info[:output_artifacts]&.transform_keys!(&:to_sym)
           if @artifacts == step_info[:input_artifacts]
             @artifacts = step_info[:output_artifacts]
             log_debug "[Step #{full_name}] - Already executed - Got #{@artifacts.size} from persistence: #{@artifacts.keys.join(', ')}"

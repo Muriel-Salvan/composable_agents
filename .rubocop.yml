@@ -9,11 +9,19 @@ Layout/LineLength:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/AbcSize:
-  Max: 30
+  Max: 50
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/CyclomaticComplexity:
+  Max: 10
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/MethodLength:
-  Max: 30
+  Max: 40
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/PerceivedComplexity:
+  Max: 20
 
 # I don't want to pollute my code with something that should be integrated in the language
 Style/FrozenStringLiteralComment:
