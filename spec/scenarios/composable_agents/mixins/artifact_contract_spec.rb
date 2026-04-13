@@ -25,6 +25,26 @@ describe ComposableAgents::Mixins::ArtifactContract do
       expect(received_artifacts).to eq(input_artifacts)
     end
 
+    it 'filters extra input artifacts not defined in input_artifacts' do
+      received_artifacts = nil
+      input_artifacts = {
+        first: 10,
+        second: 20,
+        third: 30,
+        extra_one: 'should be filtered',
+        extra_two: 'also filtered'
+      }
+      input_agent_class.new(proc do |artifacts|
+        received_artifacts = artifacts
+        {}
+      end).run(input_artifacts:)
+      expect(received_artifacts).to eq(
+        first: 10,
+        second: 20,
+        third: 30
+      )
+    end
+
     it 'raises MissingInputArtifactError when some input artifacts are missing' do
       agent = input_agent_class.new(->(_) { {} })
 
@@ -68,6 +88,26 @@ describe ComposableAgents::Mixins::ArtifactContract do
         {}
       end).run(input_artifacts:)
       expect(received_artifacts).to eq(input_artifacts)
+    end
+
+    it 'filters extra input artifacts not defined in input_artifacts' do
+      received_artifacts = nil
+      input_artifacts = {
+        first: 10,
+        second: 20,
+        third: 30,
+        extra_one: 'should be filtered',
+        extra_two: 'also filtered'
+      }
+      input_agent_class.new(proc do |artifacts|
+        received_artifacts = artifacts
+        {}
+      end).run(input_artifacts:)
+      expect(received_artifacts).to eq(
+        first: 10,
+        second: 20,
+        third: 30
+      )
     end
 
     it 'raises MissingInputArtifactError when some input artifacts are missing' do

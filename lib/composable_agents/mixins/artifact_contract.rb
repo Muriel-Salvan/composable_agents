@@ -57,7 +57,7 @@ module ComposableAgents
       # @raise [MissingOutputArtifactError] If expected output artifacts are missing after run
       def run(input_artifacts: {})
         validate_input_artifacts(input_artifacts)
-        output_artifacts = super
+        output_artifacts = super(input_artifacts: input_artifacts.slice(*self.class.input_artifacts.keys))
         validate_output_artifacts(output_artifacts)
         output_artifacts
       end
