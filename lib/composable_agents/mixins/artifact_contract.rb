@@ -26,11 +26,9 @@ module ComposableAgents
         #   or nil to only get artifacts
         # @return [Hash<Symbol, String>] The full set of input artifacts
         def input_artifacts(artifacts = nil)
-          if artifacts
-            @input_artifacts = artifacts
-          else
-            @input_artifacts ||= {}
-          end
+          @input_artifacts ||= {}
+          @input_artifacts.merge!(artifacts) if artifacts
+          @input_artifacts
         end
 
         # Declare expected output artifacts for this agent
@@ -38,11 +36,9 @@ module ComposableAgents
         #   or nil to only get artifacts
         # @return [Hash<Symbol, String>] The full set of output artifacts
         def output_artifacts(artifacts = nil)
-          if artifacts
-            @output_artifacts = artifacts
-          else
-            @output_artifacts ||= {}
-          end
+          @output_artifacts ||= {}
+          @output_artifacts.merge!(artifacts) if artifacts
+          @output_artifacts
         end
 
         # Inherit artifact definitions from parent class
