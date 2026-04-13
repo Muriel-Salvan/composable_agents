@@ -10,14 +10,12 @@ module ComposableAgents
     #
     # @param processor [#call(Hash<Symbol, Object>) => Hash<Symbol, Object>] The agent logic.
     #   This proc will receive the input artifacts hash and must return a hash of output artifacts.
-    #   @param input_artifacts [Hash<Symbol, Object>] Input artifacts provided to the agent
-    #   @return [Hash<Symbol, Object>] Output artifacts produced by the agent
+    #   - Param input_artifacts [Hash<Symbol, Object>] Input artifacts provided to the agent
+    #   - Return [Hash<Symbol, Object>] Output artifacts produced by the agent
     def initialize(processor, *args, **kwargs)
       super(*args, **kwargs)
       @processor = processor
     end
-
-    private
 
     # Execute the agent by calling the wrapped Proc
     #
