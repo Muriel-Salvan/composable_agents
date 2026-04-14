@@ -28,4 +28,13 @@ describe ComposableAgents::RubyAgent do
     }
     expect(described_class.new(proc { expected_artifacts }).run).to eq expected_artifacts
   end
+
+  it 'exposes name attribute' do
+    test_name = 'test_ruby_agent'
+    expect(described_class.new(proc {}, name: test_name).name).to eq(test_name)
+  end
+
+  it 'handles nil name correctly' do
+    expect(described_class.new(proc {}, name: nil).name).to be_nil
+  end
 end

@@ -32,7 +32,12 @@ module ComposableAgents
       # @param message [String, #call => String] Message string or Proc returning message for lazy evaluation
       # @param severity [Symbol] Severity
       def log(message, severity: :info)
-        puts "[#{Time.now.utc.strftime('%F %T')}] [#{severity.to_s.upcase}] - #{message.is_a?(String) ? message : message.call}"
+        fields = [
+          Time.now.utc.strftime('%F %T'),
+          severity.to_s.upcase
+        ]
+        fields.concat(log_fields) if respond_to?(:log_fields, true)
+        puts "#{fields.map { |field| "[#{field}]" }.join(' ')} - #{message.is_a?(String) ? message : message.call}"
       end
     end
   end

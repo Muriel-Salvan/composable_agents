@@ -5,10 +5,17 @@ module ComposableAgents
   class Agent
     include Mixins::Logger
 
+    attr_reader :name
+
     # Constructor
     #
+    # @param name [String, NilClass] Agent name, or nil if none
     # @param composable_agents_dir [String] Base directory where composable agents can store data
-    def initialize(composable_agents_dir: '.composable_agents')
+    def initialize(
+      name: nil,
+      composable_agents_dir: '.composable_agents'
+    )
+      @name = name
       @composable_agents_dir = composable_agents_dir
     end
 
@@ -18,6 +25,15 @@ module ComposableAgents
     # @return Hash<Symbol,Object> Output artifacts content
     def run(input_artifacts: {})
       raise NotImplementedError, 'This method should be implemented by an Agent subclass'
+    end
+
+    private
+
+    # Fields to be logged
+    #
+    # @return [Array<String>] Fields to log
+    def log_fields
+      @name.nil? ? [] : [@name]
     end
   end
 end
