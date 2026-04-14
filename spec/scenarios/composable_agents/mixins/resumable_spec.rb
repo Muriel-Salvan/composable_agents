@@ -1,6 +1,4 @@
 require 'tmpdir'
-require 'composable_agents/mixins/resumable'
-require 'composable_agents/agent'
 
 describe ComposableAgents::Mixins::Resumable do
   attr_reader :composable_agents_dir

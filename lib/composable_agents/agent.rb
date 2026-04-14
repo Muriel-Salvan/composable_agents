@@ -1,5 +1,3 @@
-require 'composable_agents/mixins/logger'
-
 module ComposableAgents
   # Abstract computational unit that transforms inputs into outputs.
   # Agents may internally use LLMs, tools, or other agents.

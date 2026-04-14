@@ -1,6 +1,3 @@
-require 'composable_agents/ruby_agent'
-require 'composable_agents/mixins/artifact_contract'
-
 describe ComposableAgents::Mixins::ArtifactContract do
   context 'with subclass defining input artifacts' do
     let(:input_agent_class) do

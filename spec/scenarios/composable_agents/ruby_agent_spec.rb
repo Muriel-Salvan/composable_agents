@@ -1,5 +1,3 @@
-require 'composable_agents/ruby_agent'
-
 describe ComposableAgents::RubyAgent do
   it 'executes the provided proc correctly' do
     execution_flag = false

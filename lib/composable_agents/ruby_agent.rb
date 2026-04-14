@@ -1,5 +1,3 @@
-require 'composable_agents/agent'
-
 module ComposableAgents
   # Agent implementation that wraps a Ruby Proc for custom logic
   #
