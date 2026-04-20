@@ -3,6 +3,10 @@ describe ComposableAgents::AiAgents::Agent do
   #    for each call to AgentRunner#run.
   attr_accessor :mocked_output_artifacts
 
+  # [Array<Hash<Symbol, Object>>] List of mocked results that will be returned by AgentRunner#run,
+  #    for each call to AgentRunner#run.
+  attr_accessor :mocked_run_results
+
   # [Array<Agents::Agent>] List of agents that were given to AgentRunner.new
   attr_reader :agent_runner_agents
 
@@ -26,13 +30,22 @@ describe ComposableAgents::AiAgents::Agent do
           .instance_variable_get(:@artifacts)
           .merge!(artifacts)
       end
-      double(error: nil, context: { run_idx: }, output: "Output of AgentRunner run ##{run_idx}")
+      double(
+        **(
+          mocked_run_results.shift || {
+            error: nil,
+            context: { run_idx: },
+            output: "Output of AgentRunner run ##{run_idx}"
+          }
+        )
+      )
     end
     runner_instance
   end
 
   before do
     @mocked_output_artifacts = []
+    @mocked_run_results = []
     @agent_runner_runs = []
     allow(Agents::AgentRunner).to receive(:new) do |agents|
       @agent_runner_agents = agents
@@ -124,6 +137,17 @@ describe ComposableAgents::AiAgents::Agent do
       agent.run(input_artifacts:)
       expect(agent.render_calls).to include([:render_system_prompt, anything, input_artifacts])
       expect(agent.render_calls).to include([:render_user_prompt, '', input_artifacts])
+    end
+
+    it 'raises an exception with error content when AgentRunner#run returns an error' do
+      test_error = RuntimeError.new('Test error message')
+      allow(test_error).to receive(:backtrace).and_return(['backtrace line 1', 'backtrace line 2'])
+      mocked_run_results << {
+        error: test_error,
+        context: {},
+        output: nil
+      }
+      expect { run_agent(instructions: 'Test instruction') }.to raise_error(RuntimeError, "Error: Test error message\nbacktrace line 1\nbacktrace line 2")
     end
   end
 
