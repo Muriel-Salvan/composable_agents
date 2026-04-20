@@ -77,11 +77,11 @@ module ComposableAgents
         user_prompt = render_user_prompt(user_message, input_artifacts:)
         log_debug "User prompt: #{user_prompt}"
         prompt(user_prompt)
-        if self.class.respond_to?(:output_artifacts)
+        if instance_variable_defined?(:@output_artifacts)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
           loop do
-            missing_artifacts = self.class.output_artifacts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
+            missing_artifacts = @output_artifacts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
             break if missing_artifacts.empty?
 
             missing_output_user_prompt = render_missing_output_user_prompt(missing_artifacts)

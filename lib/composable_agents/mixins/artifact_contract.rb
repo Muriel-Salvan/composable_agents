@@ -10,46 +10,22 @@ module ComposableAgents
       class MissingOutputArtifactError < RuntimeError
       end
 
-      class << self
-        def included(base)
-          # Extend the base class with the class methods
-          base.extend ClassMethods
-        end
-
-        alias prepended included
+      # Initialize an agent with artifact definitions
+      #
+      # @param input_artifacts [Hash<Symbol, String>] Hash of input artifact names and their descriptions
+      # @param output_artifacts [Hash<Symbol, String>] Hash of output artifact names and their descriptions
+      def initialize(
+        *args,
+        input_artifacts: {},
+        output_artifacts: {},
+        **kwargs
+      )
+        @input_artifacts = input_artifacts
+        @output_artifacts = output_artifacts
+        super(*args, **kwargs)
       end
 
-      # Class methods for artifact declaration
-      module ClassMethods
-        # Declare expected input artifacts for this agent
-        # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions,
-        #   or nil to only get artifacts
-        # @return [Hash<Symbol, String>] The full set of input artifacts
-        def input_artifacts(artifacts = nil)
-          @input_artifacts ||= {}
-          @input_artifacts.merge!(artifacts) if artifacts
-          @input_artifacts
-        end
-
-        # Declare expected output artifacts for this agent
-        # @param artifacts [Hash<Symbol, String>] Hash of artifact names and their descriptions,
-        #   or nil to only get artifacts
-        # @return [Hash<Symbol, String>] The full set of output artifacts
-        def output_artifacts(artifacts = nil)
-          @output_artifacts ||= {}
-          @output_artifacts.merge!(artifacts) if artifacts
-          @output_artifacts
-        end
-
-        # Inherit artifact definitions from parent class
-        def inherited(subclass)
-          subclass.input_artifacts(input_artifacts)
-          subclass.output_artifacts(output_artifacts)
-          super
-        end
-      end
-
-      # Run the agent with a set of input artifacts and get the correspondong output artifacts.
+      # Run the agent with a set of input artifacts and get the corresponding output artifacts.
       #
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
       # @return Hash<Symbol,Object> Output artifacts content
@@ -57,7 +33,7 @@ module ComposableAgents
       # @raise [MissingOutputArtifactError] If expected output artifacts are missing after run
       def run(input_artifacts: {})
         validate_input_artifacts(input_artifacts)
-        output_artifacts = super(input_artifacts: input_artifacts.slice(*self.class.input_artifacts.keys))
+        output_artifacts = super(input_artifacts: input_artifacts.slice(*@input_artifacts.keys))
         validate_output_artifacts(output_artifacts)
         output_artifacts
       end
@@ -69,12 +45,12 @@ module ComposableAgents
       # @param artifacts [Hash<Symbol, Object>] Input artifacts to validate
       # @raise [MissingInputArtifactError] If any required artifacts are missing
       def validate_input_artifacts(artifacts)
-        missing_inputs = self.class.input_artifacts.keys - artifacts.keys
+        missing_inputs = @input_artifacts.keys - artifacts.keys
         return if missing_inputs.empty?
 
         raise MissingInputArtifactError, "Missing required input artifacts:\n#{
           missing_inputs.map do |key|
-            "* #{key}: #{self.class.input_artifacts[key]}"
+            "* #{key}: #{@input_artifacts[key]}"
           end.join("\n")
         }"
       end
@@ -84,12 +60,12 @@ module ComposableAgents
       # @param artifacts [Hash<Symbol, Object>] Output artifacts to validate
       # @raise [MissingOutputArtifactError] If any expected artifacts are missing
       def validate_output_artifacts(artifacts)
-        missing_outputs = self.class.output_artifacts.keys - artifacts.keys
+        missing_outputs = @output_artifacts.keys - artifacts.keys
         return if missing_outputs.empty?
 
         raise MissingOutputArtifactError, "Agent failed to produce expected output artifacts:\n#{
           missing_outputs.map do |key|
-            "* #{key}: #{self.class.output_artifacts[key]}"
+            "* #{key}: #{@output_artifacts[key]}"
           end.join("\n")
         }"
       end
