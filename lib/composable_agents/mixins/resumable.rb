@@ -98,6 +98,16 @@ module ComposableAgents
           @steps_idx[-1] += 1
         end
       end
+
+      # Define a step that will just run an agent.
+      # This will use the artifacts store for input and output artifacts.
+      #
+      # @param agent [Agent] The agent to run.
+      def step_agent(agent)
+        step(:"agent_run_#{agent.name}") do
+          @artifacts.merge!(agent.run(input_artifacts: @artifacts))
+        end
+      end
     end
   end
 end
