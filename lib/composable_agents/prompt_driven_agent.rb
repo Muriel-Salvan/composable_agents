@@ -51,7 +51,7 @@ module ComposableAgents
       @constraints = constraints
     end
 
-    # Execute the agent by rendering the prompts and delegating to the subclasses prompt handling
+    # Execute the agent to generate some output artifacts based on some input artifacts.
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @param user_message [String] Additional user message to give as a user prompt

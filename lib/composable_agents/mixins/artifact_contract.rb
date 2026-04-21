@@ -25,7 +25,7 @@ module ComposableAgents
         super(*args, **kwargs)
       end
 
-      # Run the agent with a set of input artifacts and get the corresponding output artifacts.
+      # Execute the agent to generate some output artifacts based on some input artifacts.
       #
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
       # @return Hash<Symbol,Object> Output artifacts content

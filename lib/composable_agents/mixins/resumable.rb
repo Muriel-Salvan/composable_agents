@@ -19,7 +19,7 @@ module ComposableAgents
         @run_id = run_id
       end
 
-      # Execute the agent by calling the wrapped Proc
+      # Execute the agent to generate some output artifacts based on some input artifacts.
       #
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @return [Hash<Symbol,Object>] The output artifacts returned by the Proc
