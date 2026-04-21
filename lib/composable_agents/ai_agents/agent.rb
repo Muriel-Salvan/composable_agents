@@ -21,6 +21,7 @@ module ComposableAgents
         @model = model
         @params = params
         @handoff_agents = handoff_agents
+        @context = {}
       end
 
       private
@@ -36,7 +37,6 @@ module ComposableAgents
           Tools::CreateArtifactTool.new(output_artifacts),
           Tools::GetArtifactTool.new(input_artifacts)
         ]
-        @context = {}
         @agent_runner = Agents::AgentRunner.new(
           (
             [

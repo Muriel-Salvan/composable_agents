@@ -204,4 +204,16 @@ describe ComposableAgents::AiAgents::Agent do
       ]
     end
   end
+
+  describe 'keep context between runs' do
+    it 'continues with the same context when prompted several times' do
+      agent = described_agent
+      3.times { agent.run }
+      expect(agent_runner_runs).to eq [
+        { user_prompt: 'USER_PROMPT: ', context: {} },
+        { user_prompt: 'USER_PROMPT: ', context: { run_idx: 1 } },
+        { user_prompt: 'USER_PROMPT: ', context: { run_idx: 2 } }
+      ]
+    end
+  end
 end
