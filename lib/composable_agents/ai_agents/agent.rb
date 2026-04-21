@@ -24,6 +24,20 @@ module ComposableAgents
         @context = {}
       end
 
+      # Export the agent state for persistence
+      #
+      # @return [Object] Serialized state that can be marshalled to JSON
+      def export_state
+        Marshal.dump(@context)
+      end
+
+      # Import the agent state from persistence
+      #
+      # @param state [Object] Serialized state
+      def import_state(state)
+        @context = Marshal.load(state)
+      end
+
       private
 
       # Prepare the context for a given rendered system prompt

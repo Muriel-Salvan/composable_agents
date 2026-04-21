@@ -35,6 +35,10 @@ Metrics/PerceivedComplexity:
 RSpec/NestedGroups:
   Max: 5
 
+# TODO: Remove this by using ruby-serial instead of Marshall
+Security/MarshalLoad:
+  Enabled: false
+
 # I don't want to pollute my code with something that should be integrated in the language
 Style/FrozenStringLiteralComment:
   EnforcedStyle: never

@@ -205,7 +205,7 @@ describe ComposableAgents::AiAgents::Agent do
     end
   end
 
-  describe 'keep context between runs' do
+  describe 'state' do
     it 'continues with the same context when prompted several times' do
       agent = described_agent
       3.times { agent.run }
@@ -214,6 +214,23 @@ describe ComposableAgents::AiAgents::Agent do
         { user_prompt: 'USER_PROMPT: ', context: { run_idx: 1 } },
         { user_prompt: 'USER_PROMPT: ', context: { run_idx: 2 } }
       ]
+    end
+
+    it 'exports state that is JSON-serializable' do
+      agent = described_agent
+      agent.run
+      state = agent.export_state
+      expect(JSON.parse(state.to_json)).to eq state
+    end
+
+    it 'imports state correctly restoring context' do
+      agent1 = described_agent
+      agent1.run
+      state = agent1.export_state
+
+      agent2 = described_agent
+      agent2.import_state(state)
+      expect(agent2.export_state).to eq state
     end
   end
 end
