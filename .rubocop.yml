@@ -17,7 +17,7 @@ Metrics/AbcSize:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
-  Max: 10
+  Max: 15
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/MethodLength:
@@ -30,6 +30,10 @@ Metrics/ParameterLists:
 # It's ok to have longer methods, while keeping readability.
 Metrics/PerceivedComplexity:
   Max: 20
+
+# It's ok to have nested groups in RSpec.
+RSpec/NestedGroups:
+  Max: 5
 
 # I don't want to pollute my code with something that should be integrated in the language
 Style/FrozenStringLiteralComment:

@@ -309,22 +309,6 @@ describe ComposableAgents::Mixins::Resumable do
   end
 
   context 'with step_agent method' do
-    # Creates a child agent for step_agent testing
-    let(:child_agent) do
-      Class.new(ComposableAgents::Agent) do
-        attr_accessor :run_inputs
-
-        def run(input_artifacts: {})
-          @run_inputs ||= []
-          @run_inputs << input_artifacts.dup
-          {
-            child_output: input_artifacts[:input] + 10,
-            shared_value: input_artifacts[:shared_value] * 2
-          }
-        end
-      end.new
-    end
-
     # Creates a resumable agent instance with sequential workflow
     #
     # @param skip_step2 [Boolean] Should the agent skip step2?
@@ -348,113 +332,248 @@ describe ComposableAgents::Mixins::Resumable do
       agent
     end
 
-    context 'without any run ID' do
-      let(:run_id) { nil }
+    context 'when using agents without states' do
+      # Creates a child agent for step_agent testing
+      let(:child_agent) do
+        Class.new(ComposableAgents::Agent) do
+          attr_accessor :run_inputs
 
-      it 'executes steps normally' do
-        expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
-          input: 1,
-          child_output: 11,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 }
-        ]
+          def run(input_artifacts: {})
+            @run_inputs ||= []
+            @run_inputs << input_artifacts.dup
+            {
+              child_output: input_artifacts[:input] + 10,
+              shared_value: input_artifacts[:shared_value] * 2
+            }
+          end
+        end.new
       end
 
-      it 'executes steps again' do
-        agent = resumable_agent
-        2.times do
-          expect(agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+      context 'without any run ID' do
+        let(:run_id) { nil }
+
+        it 'executes steps normally' do
+          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
           )
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 }
+          ]
         end
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 },
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 }
-        ]
+
+        it 'executes steps again' do
+          agent = resumable_agent
+          2.times do
+            expect(agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+              input: 1,
+              child_output: 11,
+              shared_value: 4
+            )
+          end
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 },
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 }
+          ]
+        end
+      end
+
+      context 'with a run ID' do
+        let(:run_id) { 'test-run' }
+
+        it 'executes steps normally' do
+          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+            input: 1,
+            child_output: 11,
+            shared_value: 4
+          )
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 }
+          ]
+        end
+
+        it 'does not execute same steps again' do
+          resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
+          child_agent.run_inputs = []
+          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+            input: 1,
+            child_output: 11,
+            shared_value: 4
+          )
+          expect(child_agent.run_inputs).to eq []
+        end
+
+        it 'executes remaining steps after being interrupted' do
+          resumable_agent(skip_step2: true).run(input_artifacts: { input: 1, shared_value: 1 })
+          child_agent.run_inputs = []
+          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+            input: 1,
+            child_output: 11,
+            shared_value: 4
+          )
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, child_output: 11, shared_value: 2 }
+          ]
+        end
+
+        it 're-executes steps for different input artifacts' do
+          agent = resumable_agent
+          agent.run(input_artifacts: { input: 1, shared_value: 1 })
+          expect(agent.run(input_artifacts: { input: 2, shared_value: 1 })).to eq(
+            input: 2,
+            child_output: 12,
+            shared_value: 4
+          )
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 },
+            { input: 2, shared_value: 1 },
+            { input: 2, child_output: 12, shared_value: 2 }
+          ]
+        end
+      end
+
+      context 'with different run ID' do
+        attr_accessor :run_id
+
+        it 're-executes steps for different run ID' do
+          @run_id = 'test-run-1'
+          resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
+          @run_id = 'test-run-2'
+          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+            input: 1,
+            child_output: 11,
+            shared_value: 4
+          )
+          expect(child_agent.run_inputs).to eq [
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 },
+            { input: 1, shared_value: 1 },
+            { input: 1, child_output: 11, shared_value: 2 }
+          ]
+        end
       end
     end
 
-    context 'with a run ID' do
-      let(:run_id) { 'test-run' }
+    context 'when using agents with states' do
+      # Creates a child agent for step_agent testing
+      let(:child_agent) do
+        Class.new(ComposableAgents::Agent) do
+          attr_accessor :runs
+          attr_accessor :state
 
-      it 'executes steps normally' do
-        expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
-          input: 1,
-          child_output: 11,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 }
-        ]
+          def initialize(*args, **kwargs)
+            super
+            @state = 0
+          end
+
+          def run(input_artifacts: {})
+            @runs ||= []
+            @runs << {
+              input: input_artifacts[:values],
+              state: @state
+            }
+            @state += 1
+            {
+              values: input_artifacts[:values] + [@state]
+            }
+          end
+
+          def export_state
+            { 'state' => @state }
+          end
+
+          def import_state(state)
+            @state = state['state']
+          end
+        end.new
       end
 
-      it 'does not execute same steps again' do
-        resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
-        child_agent.run_inputs = []
-        expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
-          input: 1,
-          child_output: 11,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq []
+      context 'without any run ID' do
+        let(:run_id) { nil }
+
+        it 'executes steps normally' do
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(child_agent.runs).to eq [
+            { input: [0], state: 0 },
+            { input: [0, 1], state: 1 }
+          ]
+        end
+
+        it 'executes steps again' do
+          agent = resumable_agent
+          expect(agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 3, 4]
+          expect(child_agent.runs).to eq [
+            { input: [0], state: 0 },
+            { input: [0, 1], state: 1 },
+            { input: [0], state: 2 },
+            { input: [0, 3], state: 3 }
+          ]
+        end
       end
 
-      it 'executes remaining steps after being interrupted' do
-        resumable_agent(skip_step2: true).run(input_artifacts: { input: 1, shared_value: 1 })
-        child_agent.run_inputs = []
-        expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
-          input: 1,
-          child_output: 11,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, child_output: 11, shared_value: 2 }
-        ]
+      context 'with a run ID' do
+        let(:run_id) { 'test-run' }
+
+        it 'executes steps normally' do
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(child_agent.runs).to eq [
+            { input: [0], state: 0 },
+            { input: [0, 1], state: 1 }
+          ]
+        end
+
+        it 'does not execute same steps again with a fresh state' do
+          resumable_agent.run(input_artifacts: { values: [0] })
+          child_agent.state = 0
+          child_agent.runs = []
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(child_agent.runs).to eq []
+        end
+
+        it 'executes steps again because of changing state' do
+          resumable_agent.run(input_artifacts: { values: [0] })
+          child_agent.runs = []
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 3, 4]
+          expect(child_agent.runs).to eq [
+            { input: [0], state: 2 },
+            { input: [0, 3], state: 3 }
+          ]
+        end
+
+        it 'executes remaining steps after being interrupted' do
+          resumable_agent(skip_step2: true).run(input_artifacts: { values: [0] })
+          child_agent.state = 0
+          child_agent.runs = []
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(child_agent.runs).to eq [
+            { input: [0, 1], state: 1 }
+          ]
+        end
       end
 
-      it 're-executes steps for different input artifacts' do
-        agent = resumable_agent
-        agent.run(input_artifacts: { input: 1, shared_value: 1 })
-        expect(agent.run(input_artifacts: { input: 2, shared_value: 1 })).to eq(
-          input: 2,
-          child_output: 12,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 },
-          { input: 2, shared_value: 1 },
-          { input: 2, child_output: 12, shared_value: 2 }
-        ]
-      end
-    end
+      context 'with different run ID' do
+        attr_accessor :run_id
 
-    context 'with different run ID' do
-      attr_accessor :run_id
-
-      it 're-executes steps for different run ID' do
-        @run_id = 'test-run-1'
-        resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
-        @run_id = 'test-run-2'
-        expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
-          input: 1,
-          child_output: 11,
-          shared_value: 4
-        )
-        expect(child_agent.run_inputs).to eq [
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 },
-          { input: 1, shared_value: 1 },
-          { input: 1, child_output: 11, shared_value: 2 }
-        ]
+        it 're-executes steps for different run ID' do
+          @run_id = 'test-run-1'
+          resumable_agent.run(input_artifacts: { values: [0] })
+          @run_id = 'test-run-2'
+          child_agent.state = 0
+          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(child_agent.runs).to eq [
+            { input: [0], state: 0 },
+            { input: [0, 1], state: 1 },
+            { input: [0], state: 0 },
+            { input: [0, 1], state: 1 }
+          ]
+        end
       end
     end
   end
