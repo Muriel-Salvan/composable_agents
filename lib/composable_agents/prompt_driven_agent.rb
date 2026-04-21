@@ -54,9 +54,8 @@ module ComposableAgents
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-    # @param user_message [String] Additional user message to give as a user prompt
     # @return [Hash<Symbol,Object>] The output artifacts
-    def run(input_artifacts: {}, user_message: '')
+    def run(input_artifacts: {})
       output_artifacts = {}
       system_prompt = render_system_prompt(
         (
@@ -74,7 +73,7 @@ module ComposableAgents
         input_artifacts:,
         output_artifacts:
       ) do
-        user_prompt = render_user_prompt(user_message, input_artifacts:)
+        user_prompt = render_user_prompt(input_artifacts.fetch(:user_message, ''), input_artifacts:)
         log_debug "User prompt: #{user_prompt}"
         prompt(user_prompt)
         if instance_variable_defined?(:@output_artifacts)

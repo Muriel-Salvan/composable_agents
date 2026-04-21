@@ -67,11 +67,11 @@ describe ComposableAgents::AiAgents::Agent do
   end
 
   # Helper method to run an Agent with default test parameters
-  # @param run_args [Hash] Arguments to pass to the #run method.
+  # @param input_artifacts [Hash] Input artifacts to pass to the #run method.
   # @param params [Hash] Parameters to pass to the agent constructor.
   # @return [Hash<Symbol, Object>] The output artifacts returned by the agent run
-  def run_agent(run_args: {}, **params)
-    described_agent(**params).run(**run_args)
+  def run_agent(input_artifacts: {}, **params)
+    described_agent(**params).run(input_artifacts:)
   end
 
   # Expect system instructions received by the agent to be a given String
@@ -127,7 +127,7 @@ describe ComposableAgents::AiAgents::Agent do
     end
 
     it 'passes correctly rendered user prompt to AgentRunner#run' do
-      run_agent(instructions: 'Test instruction', run_args: { user_message: 'Hello user' })
+      run_agent(instructions: 'Test instruction', input_artifacts: { user_message: 'Hello user' })
       expect(runner_double).to have_received(:run).with('USER_PROMPT: Hello user', anything)
     end
 
