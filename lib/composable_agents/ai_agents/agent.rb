@@ -5,6 +5,9 @@ module ComposableAgents
   module AiAgents
     # Agent implementation that uses an ai-agent's AgentRunner.
     class Agent < PromptDrivenAgent
+      # [String] Model used by this agent
+      attr_reader :model
+
       # Initialize a new agent with a list of ai-agents' Agents to be used with an AgentRunner
       #
       # @param model [String] Model to be used

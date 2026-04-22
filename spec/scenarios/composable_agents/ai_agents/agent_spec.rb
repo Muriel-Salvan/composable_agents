@@ -83,6 +83,19 @@ describe ComposableAgents::AiAgents::Agent do
     )
   end
 
+  describe 'attributes' do
+    describe '#model' do
+      it 'returns the model that was set in initialization' do
+        expect(described_agent(model: 'gpt-4o-test').model).to eq 'gpt-4o-test'
+      end
+
+      it 'uses default model when not specified explicitly' do
+        allow(Agents.configuration).to receive(:default_model).and_return('default-test-model')
+        expect(described_class.new.model).to eq 'default-test-model'
+      end
+    end
+  end
+
   describe 'instruction rendering' do
     {
       'single String': {
