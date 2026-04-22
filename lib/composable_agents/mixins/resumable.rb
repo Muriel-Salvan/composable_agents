@@ -139,7 +139,7 @@ module ComposableAgents
       # @param step_full_name [String] Step full name
       # @return [String] Corresponding JSON file that stores the step states
       def saved_step_states_json(step_full_name)
-        "#{@composable_agents_dir}/runs/#{@run_id}/#{step_full_name}.json"
+        "#{@composable_agents_dir}/runs/#{@run_id}/#{step_full_name.gsub(/[^\w.]/, '_')}.json"
       end
 
       # Get saved step states from a given full step name.
