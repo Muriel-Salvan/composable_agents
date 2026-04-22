@@ -169,13 +169,20 @@ describe ComposableAgents::AiAgents::Agent do
       (
         Class.new(described_class) do
           prepend ComposableAgents::Mixins::ArtifactContract
+
+          def input_artifacts_contracts
+            {}
+          end
+
+          def output_artifacts_contracts
+            { result: 'Final result', logs: 'Execution logs' }
+          end
         end
       ).new(
         objective: 'Test objective',
         strategy: ComposableAgentsTest::TestRenderingStrategy,
         model: 'test-model',
-        instructions: 'Test instructions',
-        output_artifacts: { result: 'Final result', logs: 'Execution logs' }
+        instructions: 'Test instructions'
       )
     end
 

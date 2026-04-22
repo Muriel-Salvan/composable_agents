@@ -6,6 +6,18 @@ describe ComposableAgents::Mixins::ArtifactContract do
 
         attr_reader :received_artifacts
 
+        def input_artifacts_contracts
+          {
+            first: 'First input artifact',
+            second: 'Second input artifact',
+            third: 'Third input artifact'
+          }
+        end
+
+        def output_artifacts_contracts
+          {}
+        end
+
         # Run the agent with a set of input artifacts and get the corresponding output artifacts.
         #
         # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
@@ -13,13 +25,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         def run(input_artifacts: {})
           @received_artifacts = input_artifacts
         end
-      end.new(
-        input_artifacts: {
-          first: 'First input artifact',
-          second: 'Second input artifact',
-          third: 'Third input artifact'
-        }
-      )
+      end.new
     end
 
     it 'validates all input artifacts' do
@@ -66,6 +72,18 @@ describe ComposableAgents::Mixins::ArtifactContract do
 
         attr_accessor :mocked_output_artifacts
 
+        def input_artifacts_contracts
+          {}
+        end
+
+        def output_artifacts_contracts
+          {
+            result_one: 'First output artifact',
+            result_two: 'Second output artifact',
+            result_three: 'Third output artifact'
+          }
+        end
+
         # Run the agent with a set of input artifacts and get the corresponding output artifacts.
         #
         # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
@@ -73,13 +91,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         def run(input_artifacts: {})
           mocked_output_artifacts
         end
-      end.new(
-        output_artifacts: {
-          result_one: 'First output artifact',
-          result_two: 'Second output artifact',
-          result_three: 'Third output artifact'
-        }
-      )
+      end.new
     end
 
     it 'validates all output artifacts' do

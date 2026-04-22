@@ -1,6 +1,7 @@
 module ComposableAgents
   module Mixins
-    # Mixin providing input/output artifact validation functionality for Agents
+    # Mixin providing input/output artifact validation functionality for Agents.
+    # The contracts should be provided by methods named #input_artifacts_contracts and #output_artifacts_contracts
     module ArtifactContract
       # Raised when required input artifacts are missing
       class MissingInputArtifactError < RuntimeError
@@ -8,21 +9,6 @@ module ComposableAgents
 
       # Raised when expected output artifacts are missing
       class MissingOutputArtifactError < RuntimeError
-      end
-
-      # Initialize an agent with artifact definitions
-      #
-      # @param input_artifacts [Hash<Symbol, String>] Hash of input artifact names and their descriptions
-      # @param output_artifacts [Hash<Symbol, String>] Hash of output artifact names and their descriptions
-      def initialize(
-        *args,
-        input_artifacts: {},
-        output_artifacts: {},
-        **kwargs
-      )
-        @input_artifacts = input_artifacts
-        @output_artifacts = output_artifacts
-        super(*args, **kwargs)
       end
 
       # Execute the agent to generate some output artifacts based on some input artifacts.
@@ -33,7 +19,7 @@ module ComposableAgents
       # @raise [MissingOutputArtifactError] If expected output artifacts are missing after run
       def run(input_artifacts: {})
         validate_input_artifacts(input_artifacts)
-        output_artifacts = super(input_artifacts: input_artifacts.slice(*@input_artifacts.keys))
+        output_artifacts = super(input_artifacts: input_artifacts.slice(*input_artifacts_contracts.keys))
         validate_output_artifacts(output_artifacts)
         output_artifacts
       end
@@ -45,12 +31,13 @@ module ComposableAgents
       # @param artifacts [Hash<Symbol, Object>] Input artifacts to validate
       # @raise [MissingInputArtifactError] If any required artifacts are missing
       def validate_input_artifacts(artifacts)
-        missing_inputs = @input_artifacts.keys - artifacts.keys
+        artifacts_contracts = input_artifacts_contracts
+        missing_inputs = artifacts_contracts.keys - artifacts.keys
         return if missing_inputs.empty?
 
         raise MissingInputArtifactError, "Missing required input artifacts:\n#{
           missing_inputs.map do |key|
-            "* #{key}: #{@input_artifacts[key]}"
+            "* #{key}: #{artifacts_contracts[key]}"
           end.join("\n")
         }"
       end
@@ -60,12 +47,13 @@ module ComposableAgents
       # @param artifacts [Hash<Symbol, Object>] Output artifacts to validate
       # @raise [MissingOutputArtifactError] If any expected artifacts are missing
       def validate_output_artifacts(artifacts)
-        missing_outputs = @output_artifacts.keys - artifacts.keys
+        artifacts_contracts = output_artifacts_contracts
+        missing_outputs = artifacts_contracts.keys - artifacts.keys
         return if missing_outputs.empty?
 
         raise MissingOutputArtifactError, "Agent failed to produce expected output artifacts:\n#{
           missing_outputs.map do |key|
-            "* #{key}: #{@output_artifacts[key]}"
+            "* #{key}: #{artifacts_contracts[key]}"
           end.join("\n")
         }"
       end
