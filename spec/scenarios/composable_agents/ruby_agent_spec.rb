@@ -17,7 +17,7 @@ describe ComposableAgents::RubyAgent do
     described_class.new(proc do |input_artifacts|
       received_artifacts = input_artifacts
       {}
-    end).run(input_artifacts: expected_artifacts)
+    end).run(**expected_artifacts)
     expect(received_artifacts).to eq expected_artifacts
   end
 

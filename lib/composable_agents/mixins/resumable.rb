@@ -25,7 +25,7 @@ module ComposableAgents
       #
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @return [Hash<Symbol,Object>] The output artifacts returned by the Proc
-      def run(input_artifacts: {})
+      def run(**input_artifacts)
         # The artifacts store, JSON serializable
         @artifacts = input_artifacts.dup
         # List of the levels' next step index, following the hierarchy of recusive step calls.
@@ -79,7 +79,7 @@ module ComposableAgents
       # @param agent [Agent] The agent to run.
       def step_agent(agent)
         internal_step(name: :"agent_run_#{agent.name}", agent:) do
-          @artifacts.merge!(agent.run(input_artifacts: @artifacts))
+          @artifacts.merge!(agent.run(**@artifacts))
         end
       end
 

@@ -22,26 +22,24 @@ describe ComposableAgents::Mixins::ArtifactContract do
         #
         # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
         # @return Hash<Symbol,Object> Output artifacts content
-        def run(input_artifacts: {})
+        def run(**input_artifacts)
           @received_artifacts = input_artifacts
         end
       end.new
     end
 
     it 'validates all input artifacts' do
-      agent.run(input_artifacts: { first: 10, second: 20, third: 30 })
+      agent.run(first: 10, second: 20, third: 30)
       expect(agent.received_artifacts).to eq({ first: 10, second: 20, third: 30 })
     end
 
     it 'filters extra input artifacts not defined in input_artifacts' do
       agent.run(
-        input_artifacts: {
-          first: 10,
-          second: 20,
-          third: 30,
-          extra_one: 'should be filtered',
-          extra_two: 'also filtered'
-        }
+        first: 10,
+        second: 20,
+        third: 30,
+        extra_one: 'should be filtered',
+        extra_two: 'also filtered'
       )
       expect(agent.received_artifacts).to eq(
         first: 10,
@@ -53,7 +51,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
     it 'raises MissingInputArtifactError when some input artifacts are missing' do
       expect do
         # Only providing 1 out of 3 required artifacts
-        agent.run(input_artifacts: { first: 10 })
+        agent.run(first: 10)
       end.to(
         raise_error(ComposableAgents::Mixins::ArtifactContract::MissingInputArtifactError) do |error|
           expect(error.message).to include('Missing required input artifacts')
@@ -88,7 +86,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         #
         # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
         # @return Hash<Symbol,Object> Output artifacts content
-        def run(input_artifacts: {})
+        def run(**_input_artifacts)
           mocked_output_artifacts
         end
       end.new

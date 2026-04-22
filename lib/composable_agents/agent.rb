@@ -23,7 +23,7 @@ module ComposableAgents
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
     # @return Hash<Symbol,Object> Output artifacts content
-    def run(input_artifacts: {})
+    def run(**input_artifacts)
       raise NotImplementedError, 'This method should be implemented by an Agent subclass'
     end
 

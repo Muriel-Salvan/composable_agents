@@ -19,7 +19,7 @@ module ComposableAgents
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @return [Hash<Symbol,Object>] The output artifacts returned by the Proc
-    def run(input_artifacts: {})
+    def run(**input_artifacts)
       @processor.call(input_artifacts)
     end
   end

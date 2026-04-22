@@ -71,7 +71,7 @@ describe ComposableAgents::AiAgents::Agent do
   # @param params [Hash] Parameters to pass to the agent constructor.
   # @return [Hash<Symbol, Object>] The output artifacts returned by the agent run
   def run_agent(input_artifacts: {}, **params)
-    described_agent(**params).run(input_artifacts:)
+    described_agent(**params).run(**input_artifacts)
   end
 
   # Expect system instructions received by the agent to be a given String
@@ -147,7 +147,7 @@ describe ComposableAgents::AiAgents::Agent do
     it 'passes input artifacts to prompt rendering' do
       input_artifacts = { data: 'test data', config: { key: 'value' } }
       agent = described_agent(instructions: 'Test instruction')
-      agent.run(input_artifacts:)
+      agent.run(**input_artifacts)
       expect(agent.render_calls).to include([:render_system_prompt, anything, input_artifacts])
       expect(agent.render_calls).to include([:render_user_prompt, '', input_artifacts])
     end

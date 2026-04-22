@@ -55,7 +55,7 @@ module ComposableAgents
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @return [Hash<Symbol,Object>] The output artifacts
-    def run(input_artifacts: {})
+    def run(**input_artifacts)
       output_artifacts = {}
       system_prompt = render_system_prompt(
         (

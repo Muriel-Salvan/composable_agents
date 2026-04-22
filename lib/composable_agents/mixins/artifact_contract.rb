@@ -17,9 +17,9 @@ module ComposableAgents
       # @return Hash<Symbol,Object> Output artifacts content
       # @raise [MissingInputArtifactError] If required input artifacts are missing
       # @raise [MissingOutputArtifactError] If expected output artifacts are missing after run
-      def run(input_artifacts: {})
+      def run(**input_artifacts)
         validate_input_artifacts(input_artifacts)
-        output_artifacts = super(input_artifacts: input_artifacts.slice(*input_artifacts_contracts.keys))
+        output_artifacts = super(**input_artifacts.slice(*input_artifacts_contracts.keys))
         validate_output_artifacts(output_artifacts)
         output_artifacts
       end

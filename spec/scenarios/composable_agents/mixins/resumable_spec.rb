@@ -22,7 +22,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :executed_steps
         attr_accessor :skip_step2
 
-        def run(input_artifacts: {})
+        def run(**input_artifacts)
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input] + 1
@@ -46,7 +46,7 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 'executes steps normally' do
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step2_output: 3
@@ -58,7 +58,7 @@ describe ComposableAgents::Mixins::Resumable do
         agent = resumable_agent
         2.times do
           agent.executed_steps = []
-          expect(agent.run(input_artifacts: { input: 1 })).to eq(
+          expect(agent.run(input: 1)).to eq(
             input: 1,
             step1_output: 2,
             step2_output: 3
@@ -73,7 +73,7 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 'executes steps normally' do
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step2_output: 3
@@ -82,9 +82,9 @@ describe ComposableAgents::Mixins::Resumable do
       end
 
       it 'does not execute same steps again' do
-        resumable_agent.run(input_artifacts: { input: 1 })
+        resumable_agent.run(input: 1)
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step2_output: 3
@@ -93,9 +93,9 @@ describe ComposableAgents::Mixins::Resumable do
       end
 
       it 'executes remaining steps after being interrupted' do
-        resumable_agent(skip_step2: true).run(input_artifacts: { input: 1 })
+        resumable_agent(skip_step2: true).run(input: 1)
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step2_output: 3
@@ -105,9 +105,9 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 're-executes steps for different input artifacts' do
         agent = resumable_agent
-        agent.run(input_artifacts: { input: 1 })
+        agent.run(input: 1)
         agent.executed_steps = []
-        expect(agent.run(input_artifacts: { input: 2 })).to eq(
+        expect(agent.run(input: 2)).to eq(
           input: 2,
           step1_output: 3,
           step2_output: 4
@@ -121,10 +121,10 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 're-executes steps for different run ID' do
         @run_id = 'test-run-1'
-        resumable_agent.run(input_artifacts: { input: 1 })
+        resumable_agent.run(input: 1)
         @run_id = 'test-run-2'
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step2_output: 3
@@ -146,7 +146,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :executed_steps
         attr_accessor :interrupt_step12
 
-        def run(input_artifacts: {})
+        def run(**input_artifacts)
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input] + 1
@@ -186,7 +186,7 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 'executes steps normally' do
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step11_output: 3,
@@ -204,7 +204,7 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 'executes steps normally' do
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step11_output: 3,
@@ -218,12 +218,12 @@ describe ComposableAgents::Mixins::Resumable do
 
       it 'executes remaining steps after being interrupted' do
         begin
-          resumable_agent(interrupt_step12: true).run(input_artifacts: { input: 1 })
+          resumable_agent(interrupt_step12: true).run(input: 1)
         rescue RuntimeError
           # We expect this exception
         end
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: 1 })).to eq(
+        expect(agent.run(input: 1)).to eq(
           input: 1,
           step1_output: 2,
           step11_output: 3,
@@ -251,7 +251,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :executed_steps
         attr_accessor :skip_step2
 
-        def run(input_artifacts: {})
+        def run(**input_artifacts)
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input]
@@ -296,9 +296,9 @@ describe ComposableAgents::Mixins::Resumable do
       }
     }.each do |kind, data|
       it "resumes properly with artifacts of type #{kind}" do
-        resumable_agent(skip_step2: true).run(input_artifacts: { input: data })
+        resumable_agent(skip_step2: true).run(input: data)
         agent = resumable_agent
-        expect(agent.run(input_artifacts: { input: data })).to eq(
+        expect(agent.run(input: data)).to eq(
           input: data,
           step1_output: data,
           step2_output: data
@@ -320,7 +320,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :child_agent
         attr_accessor :skip_step2
 
-        def run(input_artifacts: {})
+        def run(**input_artifacts)
           @artifacts.merge!(input_artifacts)
           step_agent(child_agent)
           step_agent(child_agent) unless skip_step2
@@ -338,7 +338,7 @@ describe ComposableAgents::Mixins::Resumable do
         Class.new(ComposableAgents::Agent) do
           attr_accessor :run_inputs
 
-          def run(input_artifacts: {})
+          def run(**input_artifacts)
             @run_inputs ||= []
             @run_inputs << input_artifacts.dup
             {
@@ -353,7 +353,7 @@ describe ComposableAgents::Mixins::Resumable do
         let(:run_id) { nil }
 
         it 'executes steps normally' do
-          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+          expect(resumable_agent.run(input: 1, shared_value: 1)).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
@@ -367,7 +367,7 @@ describe ComposableAgents::Mixins::Resumable do
         it 'executes steps again' do
           agent = resumable_agent
           2.times do
-            expect(agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+            expect(agent.run(input: 1, shared_value: 1)).to eq(
               input: 1,
               child_output: 11,
               shared_value: 4
@@ -386,7 +386,7 @@ describe ComposableAgents::Mixins::Resumable do
         let(:run_id) { 'test-run' }
 
         it 'executes steps normally' do
-          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+          expect(resumable_agent.run(input: 1, shared_value: 1)).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
@@ -398,9 +398,9 @@ describe ComposableAgents::Mixins::Resumable do
         end
 
         it 'does not execute same steps again' do
-          resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
+          resumable_agent.run(input: 1, shared_value: 1)
           child_agent.run_inputs = []
-          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+          expect(resumable_agent.run(input: 1, shared_value: 1)).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
@@ -409,9 +409,9 @@ describe ComposableAgents::Mixins::Resumable do
         end
 
         it 'executes remaining steps after being interrupted' do
-          resumable_agent(skip_step2: true).run(input_artifacts: { input: 1, shared_value: 1 })
+          resumable_agent(skip_step2: true).run(input: 1, shared_value: 1)
           child_agent.run_inputs = []
-          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+          expect(resumable_agent.run(input: 1, shared_value: 1)).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
@@ -423,8 +423,8 @@ describe ComposableAgents::Mixins::Resumable do
 
         it 're-executes steps for different input artifacts' do
           agent = resumable_agent
-          agent.run(input_artifacts: { input: 1, shared_value: 1 })
-          expect(agent.run(input_artifacts: { input: 2, shared_value: 1 })).to eq(
+          agent.run(input: 1, shared_value: 1)
+          expect(agent.run(input: 2, shared_value: 1)).to eq(
             input: 2,
             child_output: 12,
             shared_value: 4
@@ -443,9 +443,9 @@ describe ComposableAgents::Mixins::Resumable do
 
         it 're-executes steps for different run ID' do
           @run_id = 'test-run-1'
-          resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })
+          resumable_agent.run(input: 1, shared_value: 1)
           @run_id = 'test-run-2'
-          expect(resumable_agent.run(input_artifacts: { input: 1, shared_value: 1 })).to eq(
+          expect(resumable_agent.run(input: 1, shared_value: 1)).to eq(
             input: 1,
             child_output: 11,
             shared_value: 4
@@ -472,7 +472,7 @@ describe ComposableAgents::Mixins::Resumable do
             @state = 0
           end
 
-          def run(input_artifacts: {})
+          def run(**input_artifacts)
             @runs ||= []
             @runs << {
               input: input_artifacts[:values],
@@ -498,7 +498,7 @@ describe ComposableAgents::Mixins::Resumable do
         let(:run_id) { nil }
 
         it 'executes steps normally' do
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 1, 2]
           expect(child_agent.runs).to eq [
             { input: [0], state: 0 },
             { input: [0, 1], state: 1 }
@@ -507,8 +507,8 @@ describe ComposableAgents::Mixins::Resumable do
 
         it 'executes steps again' do
           agent = resumable_agent
-          expect(agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
-          expect(agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 3, 4]
+          expect(agent.run(values: [0])[:values]).to eq [0, 1, 2]
+          expect(agent.run(values: [0])[:values]).to eq [0, 3, 4]
           expect(child_agent.runs).to eq [
             { input: [0], state: 0 },
             { input: [0, 1], state: 1 },
@@ -522,7 +522,7 @@ describe ComposableAgents::Mixins::Resumable do
         let(:run_id) { 'test-run' }
 
         it 'executes steps normally' do
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 1, 2]
           expect(child_agent.runs).to eq [
             { input: [0], state: 0 },
             { input: [0, 1], state: 1 }
@@ -530,17 +530,17 @@ describe ComposableAgents::Mixins::Resumable do
         end
 
         it 'does not execute same steps again with a fresh state' do
-          resumable_agent.run(input_artifacts: { values: [0] })
+          resumable_agent.run(values: [0])
           child_agent.state = 0
           child_agent.runs = []
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 1, 2]
           expect(child_agent.runs).to eq []
         end
 
         it 'executes steps again because of changing state' do
-          resumable_agent.run(input_artifacts: { values: [0] })
+          resumable_agent.run(values: [0])
           child_agent.runs = []
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 3, 4]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 3, 4]
           expect(child_agent.runs).to eq [
             { input: [0], state: 2 },
             { input: [0, 3], state: 3 }
@@ -548,10 +548,10 @@ describe ComposableAgents::Mixins::Resumable do
         end
 
         it 'executes remaining steps after being interrupted' do
-          resumable_agent(skip_step2: true).run(input_artifacts: { values: [0] })
+          resumable_agent(skip_step2: true).run(values: [0])
           child_agent.state = 0
           child_agent.runs = []
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 1, 2]
           expect(child_agent.runs).to eq [
             { input: [0, 1], state: 1 }
           ]
@@ -563,10 +563,10 @@ describe ComposableAgents::Mixins::Resumable do
 
         it 're-executes steps for different run ID' do
           @run_id = 'test-run-1'
-          resumable_agent.run(input_artifacts: { values: [0] })
+          resumable_agent.run(values: [0])
           @run_id = 'test-run-2'
           child_agent.state = 0
-          expect(resumable_agent.run(input_artifacts: { values: [0] })[:values]).to eq [0, 1, 2]
+          expect(resumable_agent.run(values: [0])[:values]).to eq [0, 1, 2]
           expect(child_agent.runs).to eq [
             { input: [0], state: 0 },
             { input: [0, 1], state: 1 },
