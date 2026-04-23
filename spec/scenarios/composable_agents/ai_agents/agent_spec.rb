@@ -187,7 +187,7 @@ describe ComposableAgents::AiAgents::Agent do
 
     it 'does not retry when all expected artifacts are returned on first run' do
       mocked_output_artifacts << { result: 'ok', logs: 'logs' }
-      expect(agent.run).to eq(result: 'ok', logs: 'logs')
+      expect(agent.run).to include(result: 'ok', logs: 'logs')
       expect(runner_double).to have_received(:run).once
     end
 
@@ -196,7 +196,7 @@ describe ComposableAgents::AiAgents::Agent do
         { result: 'partial' },
         { result: 'partial', logs: 'complete' }
       )
-      expect(agent.run).to eq(result: 'partial', logs: 'complete')
+      expect(agent.run).to include(result: 'partial', logs: 'complete')
       expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: 'Execution logs' }])
       expect(agent_runner_runs).to eq [
         { user_prompt: 'USER_PROMPT: ', context: {} },
@@ -210,7 +210,7 @@ describe ComposableAgents::AiAgents::Agent do
         { result: 'first' },
         { result: 'second', logs: 'final' }
       )
-      expect(agent.run).to eq(result: 'second', logs: 'final')
+      expect(agent.run).to include(result: 'second', logs: 'final')
       expect(agent_runner_runs).to eq [
         { user_prompt: 'USER_PROMPT: ', context: {} },
         { user_prompt: 'USER_PROMPT: MISSING_PROMPT: result (Final result), logs (Execution logs)', context: { run_idx: 1 } },
@@ -245,6 +245,82 @@ describe ComposableAgents::AiAgents::Agent do
       agent2 = described_agent
       agent2.import_state(state)
       expect(agent2.export_state).to eq state
+    end
+  end
+
+  describe 'conversation output artifact' do
+    # Expect conversations to follow a given sequence.
+    # This validates the authors and messages.
+    # It also makes sure that timestamps are ordered properly and with a proper format.
+    #
+    # @param conversations [Array<Hash<String, String>>] The recorded conversations
+    # @param expected_conversations [Array<Hash<Symbol, String>>] The expected conversations
+    def expect_conversation(conversations, expected_conversations)
+      expect(conversations.map { |conversation| conversation.transform_keys(&:to_sym).except(:at) }).to eq expected_conversations
+      timestamps = conversations.map do |conversation|
+        expect(conversation['at'])
+        expect(conversation['at']).to match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)
+      end
+      expect(timestamps.sort).to eq timestamps
+    end
+
+    context 'without output artifacts contracts' do
+      it 'records the prompt' do
+        expect_conversation(
+          run_agent(name: 'Test Agent Name', input_artifacts: { user_message: 'Test user prompt' })[:conversation],
+          [
+            { author: 'User', message: 'Test user prompt' },
+            { author: 'Agent Test Agent Name', message: 'Output of AgentRunner run #1' }
+          ]
+        )
+      end
+    end
+
+    context 'with output artifacts contracts' do
+      let(:agent) do
+        Class.new(described_class) do
+          prepend ComposableAgents::Mixins::ArtifactContract
+        end.new(
+          strategy: ComposableAgentsTest::TestRenderingStrategy,
+          input_artifacts: {},
+          output_artifacts: { result: 'Final result', logs: 'Execution logs' }
+        )
+      end
+
+      it 'records retry prompts when there are output artifact contracts and 1 retry' do
+        mocked_output_artifacts.push(
+          {},
+          { result: 'complete', logs: 'success' }
+        )
+        expect_conversation(
+          agent.run[:conversation],
+          [
+            { author: 'User', message: '' },
+            { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
+            { author: 'User', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+            { author: 'Agent Executor', message: 'Output of AgentRunner run #2' }
+          ]
+        )
+      end
+
+      it 'records all retries when there are multiple missing artifacts and several retries' do
+        mocked_output_artifacts.push(
+          {},
+          { result: 'first' },
+          { result: 'second', logs: 'final' }
+        )
+        expect_conversation(
+          agent.run[:conversation],
+          [
+            { author: 'User', message: '' },
+            { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
+            { author: 'User', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+            { author: 'Agent Executor', message: 'Output of AgentRunner run #2' },
+            { author: 'User', message: 'MISSING_PROMPT: logs (Execution logs)' },
+            { author: 'Agent Executor', message: 'Output of AgentRunner run #3' }
+          ]
+        )
+      end
     end
   end
 end
