@@ -76,7 +76,7 @@ module ComposableAgents
         user_prompt = render_user_prompt(input_artifacts.fetch(:user_message, ''), input_artifacts:)
         log_debug "User prompt: #{user_prompt}"
         prompt(user_prompt)
-        if respond_to?(:output_artifacts_contracts)
+        if respond_to?(:output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
           loop do

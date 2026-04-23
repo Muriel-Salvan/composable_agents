@@ -11,6 +11,23 @@ module ComposableAgents
       class MissingOutputArtifactError < RuntimeError
       end
 
+      # Constructor
+      #
+      # @param input_artifacts [Hash<Symbol, String>, NilClass] Hash of input artifact names and their descriptions,
+      #   or nil if provided through the input_artifacts_contracts method
+      # @param output_artifacts [Hash<Symbol, String>, NilClass] Hash of output artifact names and their descriptions,
+      #   or nil if provided through the output_artifacts_contracts method
+      def initialize(
+        *args,
+        input_artifacts: nil,
+        output_artifacts: nil,
+        **kwargs
+      )
+        super(*args, **kwargs)
+        @input_artifacts_contracts = input_artifacts
+        @output_artifacts_contracts = output_artifacts
+      end
+
       # Execute the agent to generate some output artifacts based on some input artifacts.
       #
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
@@ -25,6 +42,22 @@ module ComposableAgents
       end
 
       private
+
+      # Define input artifacts contracts
+      #
+      # @return [Hash<Symbol, String>] Set of input artifacts description, per artifact name
+      def input_artifacts_contracts
+        # If the contracts were given by the constructor, use them
+        @input_artifacts_contracts || super
+      end
+
+      # Define output artifacts contracts
+      #
+      # @return [Hash<Symbol, String>] Set of output artifacts description, per artifact name
+      def output_artifacts_contracts
+        # If the contracts were given by the constructor, use them
+        @output_artifacts_contracts || super
+      end
 
       # Validate that all required input artifacts are present
       #
