@@ -77,7 +77,13 @@ module ComposableAgents
       # @return [String] The output of the prompt
       def prompt(user_prompt)
         result = @agent_runner.run(user_prompt, context: @context)
-        raise "Error: #{result.error}\n#{result.error.backtrace.join("\n")}" unless result.error.nil?
+        unless result.error.nil?
+          raise <<~EO_ERROR.strip
+            Error: #{result.error.detailed_message}
+            #{result.error.backtrace.join("\n")}
+            #{result.error.response.response_body}
+          EO_ERROR
+        end
 
         @context = result.context
         result.output

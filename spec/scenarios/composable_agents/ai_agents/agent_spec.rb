@@ -153,14 +153,24 @@ describe ComposableAgents::AiAgents::Agent do
     end
 
     it 'raises an exception with error content when AgentRunner#run returns an error' do
-      test_error = RuntimeError.new('Test error message')
-      allow(test_error).to receive(:backtrace).and_return(['backtrace line 1', 'backtrace line 2'])
       mocked_run_results << {
-        error: test_error,
+        error: double(
+          backtrace: ['backtrace line 1', 'backtrace line 2'],
+          detailed_message: 'Test error message',
+          response: double(response_body: 'Detailed error message')
+        ),
         context: {},
         output: nil
       }
-      expect { run_agent(instructions: 'Test instruction') }.to raise_error(RuntimeError, "Error: Test error message\nbacktrace line 1\nbacktrace line 2")
+      expect { run_agent(instructions: 'Test instruction') }.to raise_error(
+        RuntimeError,
+        <<~EO_ERROR.strip
+          Error: Test error message
+          backtrace line 1
+          backtrace line 2
+          Detailed error message
+        EO_ERROR
+      )
     end
   end
 
