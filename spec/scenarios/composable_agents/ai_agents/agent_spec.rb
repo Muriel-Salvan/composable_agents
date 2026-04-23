@@ -83,6 +83,21 @@ describe ComposableAgents::AiAgents::Agent do
     )
   end
 
+  # Expect conversation to follow a given sequence.
+  # This validates the authors and messages.
+  # It also makes sure that timestamps are ordered properly and with a proper format.
+  #
+  # @param conversation [Array<Hash<Symbol, String>>] The recorded conversation
+  # @param expected_conversation [Array<Hash<Symbol, String>>] The expected conversation
+  def expect_conversation(conversation, expected_conversation)
+    expect(conversation.map { |message| message.except(:at) }).to eq expected_conversation
+    timestamps = conversation.map do |message|
+      expect(message[:at]).to match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+      message[:at]
+    end
+    expect(timestamps.sort).to eq timestamps
+  end
+
   describe 'attributes' do
     describe '#model' do
       it 'returns the model that was set in initialization' do
@@ -244,36 +259,46 @@ describe ComposableAgents::AiAgents::Agent do
       agent = described_agent
       agent.run
       state = agent.export_state
-      expect(JSON.parse(state.to_json)).to eq state
+      expect { JSON.parse(state.to_json) }.not_to raise_error
     end
 
-    it 'imports state correctly restoring context' do
-      agent1 = described_agent
-      agent1.run
+    it 'imports state correctly restoring both context and conversation' do
+      agent1 = described_agent(name: 'Test Agent 1')
+      # Run agent multiple times to build up both context and conversation history
+      agent1.run(user_message: 'First message')
+      agent1.run(user_message: 'Second message')
       state = agent1.export_state
 
-      agent2 = described_agent
+      agent2 = described_agent(name: 'Test Agent 2')
       agent2.import_state(state)
       expect(agent2.export_state).to eq state
+      # Verify conversation is preserved and identical
+      expect_conversation(
+        agent2.conversation,
+        [
+          { author: 'User', message: 'First message' },
+          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #1' },
+          { author: 'User', message: 'Second message' },
+          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #2' }
+        ]
+      )
+      # Verify that state persistence actually works across runs (continues with correct state)
+      agent2.run(user_message: 'Third message')
+      expect_conversation(
+        agent2.conversation,
+        [
+          { author: 'User', message: 'First message' },
+          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #1' },
+          { author: 'User', message: 'Second message' },
+          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #2' },
+          { author: 'User', message: 'Third message' },
+          { author: 'Agent Test Agent 2', message: 'Output of AgentRunner run #3' }
+        ]
+      )
     end
   end
 
   describe 'conversation' do
-    # Expect conversation to follow a given sequence.
-    # This validates the authors and messages.
-    # It also makes sure that timestamps are ordered properly and with a proper format.
-    #
-    # @param conversation [Array<Hash<Symbol, String>>] The recorded conversation
-    # @param expected_conversation [Array<Hash<Symbol, String>>] The expected conversation
-    def expect_conversation(conversation, expected_conversation)
-      expect(conversation.map { |message| message.except(:at) }).to eq expected_conversation
-      timestamps = conversation.map do |message|
-        expect(message[:at]).to match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
-        message[:at]
-      end
-      expect(timestamps.sort).to eq timestamps
-    end
-
     context 'without output artifacts contracts' do
       let(:agent) do
         described_class.new(

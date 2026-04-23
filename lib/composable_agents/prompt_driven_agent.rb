@@ -118,6 +118,22 @@ module ComposableAgents
       output_artifacts
     end
 
+    # Export the agent state for persistence
+    #
+    # @return [Object] Serialized state that can be marshalled to JSON
+    def export_state
+      {
+        'conversation' => @conversation
+      }
+    end
+
+    # Import the agent state from persistence
+    #
+    # @param state [Object] Serialized state
+    def import_state(state)
+      @conversation = state['conversation'].map { |message| message.transform_keys(&:to_sym) }
+    end
+
     private
 
     # Prompt a user prompt and record it with its response in the conversation output artifact.

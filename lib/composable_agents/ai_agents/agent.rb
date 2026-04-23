@@ -31,14 +31,17 @@ module ComposableAgents
       #
       # @return [Object] Serialized state that can be marshalled to JSON
       def export_state
-        Marshal.dump(@context)
+        super.merge(
+          'context' => Marshal.dump(@context)
+        )
       end
 
       # Import the agent state from persistence
       #
       # @param state [Object] Serialized state
       def import_state(state)
-        @context = Marshal.load(state)
+        super
+        @context = Marshal.load(state['context'])
       end
 
       private
