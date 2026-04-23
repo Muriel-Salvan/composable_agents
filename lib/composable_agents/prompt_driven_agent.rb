@@ -10,6 +10,32 @@ module ComposableAgents
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
   # This agent autmatically records non-rendered conversation (prompts + outputs) in a `conversation` output artifact.
   class PromptDrivenAgent < Agent
+    # [Array<Hash<Symbol, Object>>] The conversation (user prompts, reesponses) that happened with this agent.
+    #   Each item of a conversation has the following properties:
+    #   * author [String] Author of the message
+    #   * at [String] UTC timestamp of the message at format YYYY-mm-dd HH:MM:SS
+    #   * message [String] The message itself
+    attr_reader :conversation
+
+    # Define input artifacts contracts
+    #
+    # @return [Hash<Symbol, String>] Set of input artifacts description, per artifact name
+    def input_artifacts_contracts
+      {
+        user_message: {
+          description: 'User prompt',
+          optional: true
+        }
+      }
+    end
+
+    # Define output artifacts contracts
+    #
+    # @return [Hash<Symbol, String>] Set of output artifacts description, per artifact name
+    def output_artifacts_contracts
+      {}
+    end
+
     # Initialize a new PromptDrivenAgent with the information needed for prompts and the selected prompt rendering strategy.
     # If no name is provided, it will default to 'Executor'.
     #
@@ -50,13 +76,15 @@ module ComposableAgents
         instructions.is_a?(Array) ? instructions : [instructions]
       ).map { |instruction_desc| instruction_desc.is_a?(Hash) ? instruction_desc : { text: instruction_desc } }
       @constraints = constraints
+      @conversation = []
     end
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
+    # @param user_message [String] The user prompt
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @return [Hash<Symbol,Object>] The output artifacts
-    def run(**input_artifacts)
+    def run(user_message: '', **input_artifacts)
       output_artifacts = {}
       system_prompt = render_system_prompt(
         (
@@ -74,7 +102,7 @@ module ComposableAgents
         input_artifacts:,
         output_artifacts:
       ) do
-        converse(input_artifacts.fetch(:user_message, ''), input_artifacts:, output_artifacts:)
+        converse(user_message, input_artifacts:, output_artifacts:)
         if respond_to?(:output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
@@ -100,18 +128,17 @@ module ComposableAgents
     def converse(user_prompt, input_artifacts:, output_artifacts:)
       rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
-      output_artifacts[:conversation] ||= []
-      output_artifacts[:conversation] << {
-        'author' => 'User',
-        'at' => Time.now.utc.strftime('%F %T'),
-        'message' => user_prompt
+      @conversation << {
+        author: 'User',
+        at: Time.now.utc.strftime('%F %T'),
+        message: user_prompt
       }
       response = prompt(rendered_user_prompt)
       log_debug "Raw Agent #{name} response: #{response}"
-      output_artifacts[:conversation] << {
-        'author' => "Agent #{name}",
-        'at' => Time.now.utc.strftime('%F %T'),
-        'message' => response
+      @conversation << {
+        author: "Agent #{name}",
+        at: Time.now.utc.strftime('%F %T'),
+        message: response
       }
     end
 

@@ -62,6 +62,41 @@ describe ComposableAgents::Mixins::ArtifactContract do
           end
         )
       end
+
+      context 'with optional input artifacts' do
+        let(:agent) do
+          Class.new(ComposableAgents::Agent) do
+            prepend ComposableAgents::Mixins::ArtifactContract
+
+            attr_reader :received_artifacts
+
+            def input_artifacts_contracts
+              {
+                required: 'Required input artifact',
+                optional: { description: 'Optional input artifact', optional: true }
+              }
+            end
+
+            def output_artifacts_contracts
+              {}
+            end
+
+            def run(**input_artifacts)
+              @received_artifacts = input_artifacts
+            end
+          end.new
+        end
+
+        it 'does not fail validation when optional artifacts are missing' do
+          agent.run(required: 10)
+          expect(agent.received_artifacts).to eq({ required: 10 })
+        end
+
+        it 'accepts optional artifacts when they are provided' do
+          agent.run(required: 10, optional: 20)
+          expect(agent.received_artifacts).to eq({ required: 10, optional: 20 })
+        end
+      end
     end
 
     context 'with output artifacts definitions' do
@@ -117,6 +152,41 @@ describe ComposableAgents::Mixins::ArtifactContract do
             expect(error.message).to include('result_three: Third output artifact')
           end
         )
+      end
+
+      context 'with optional output artifacts' do
+        let(:agent) do
+          Class.new(ComposableAgents::Agent) do
+            prepend ComposableAgents::Mixins::ArtifactContract
+
+            attr_accessor :mocked_output_artifacts
+
+            def input_artifacts_contracts
+              {}
+            end
+
+            def output_artifacts_contracts
+              {
+                required: 'Required output artifact',
+                optional: { description: 'Optional output artifact', optional: true }
+              }
+            end
+
+            def run(**_input_artifacts)
+              mocked_output_artifacts
+            end
+          end.new
+        end
+
+        it 'does not fail validation when optional artifacts are missing' do
+          agent.mocked_output_artifacts = { required: 'abc' }
+          expect(agent.run).to eq({ required: 'abc' })
+        end
+
+        it 'accepts optional artifacts when they are produced' do
+          agent.mocked_output_artifacts = { required: 'abc', optional: 'def' }
+          expect(agent.run).to eq({ required: 'abc', optional: 'def' })
+        end
       end
     end
   end
@@ -188,6 +258,27 @@ describe ComposableAgents::Mixins::ArtifactContract do
           end
         )
       end
+
+      context 'with optional input artifacts' do
+        let(:agent) do
+          described_agent(
+            input_artifacts: {
+              required: 'Required input artifact',
+              optional: { description: 'Optional input artifact', optional: true }
+            }
+          )
+        end
+
+        it 'does not fail validation when optional artifacts are missing' do
+          agent.run(required: 10)
+          expect(agent.received_artifacts).to eq({ required: 10 })
+        end
+
+        it 'accepts optional artifacts when they are provided' do
+          agent.run(required: 10, optional: 20)
+          expect(agent.received_artifacts).to eq({ required: 10, optional: 20 })
+        end
+      end
     end
 
     context 'with output artifacts definitions' do
@@ -225,6 +316,27 @@ describe ComposableAgents::Mixins::ArtifactContract do
             expect(error.message).to include('result_three: Third output artifact')
           end
         )
+      end
+
+      context 'with optional output artifacts' do
+        let(:agent) do
+          described_agent(
+            output_artifacts: {
+              required: 'Required output artifact',
+              optional: { description: 'Optional output artifact', optional: true }
+            }
+          )
+        end
+
+        it 'does not fail validation when optional artifacts are missing' do
+          agent.mocked_output_artifacts = { required: 'abc' }
+          expect(agent.run).to eq({ required: 'abc' })
+        end
+
+        it 'accepts optional artifacts when they are produced' do
+          agent.mocked_output_artifacts = { required: 'abc', optional: 'def' }
+          expect(agent.run).to eq({ required: 'abc', optional: 'def' })
+        end
       end
     end
   end
