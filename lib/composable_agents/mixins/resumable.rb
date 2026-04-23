@@ -67,7 +67,6 @@ module ComposableAgents
       #
       # @param name [Symbol] Step name.
       # @yield The code called for this step
-      # @yieldparam step_full_name [String, NilClass] The step full name, as a unique identifier, or nil if no run ID
       def step(name = :step, &)
         internal_step(name:, agent: nil, &)
       end
