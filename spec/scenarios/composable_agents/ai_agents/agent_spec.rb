@@ -197,10 +197,10 @@ describe ComposableAgents::AiAgents::Agent do
         { result: 'partial', logs: 'complete' }
       )
       expect(agent.run).to eq(result: 'partial', logs: 'complete')
-      expect(agent.render_calls).to include([:render_missing_output_user_prompt, { logs: 'Execution logs' }])
+      expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: 'Execution logs' }])
       expect(agent_runner_runs).to eq [
         { user_prompt: 'USER_PROMPT: ', context: {} },
-        { user_prompt: 'MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 1 } }
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 1 } }
       ]
     end
 
@@ -213,8 +213,8 @@ describe ComposableAgents::AiAgents::Agent do
       expect(agent.run).to eq(result: 'second', logs: 'final')
       expect(agent_runner_runs).to eq [
         { user_prompt: 'USER_PROMPT: ', context: {} },
-        { user_prompt: 'MISSING_PROMPT: result (Final result), logs (Execution logs)', context: { run_idx: 1 } },
-        { user_prompt: 'MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 2 } }
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: result (Final result), logs (Execution logs)', context: { run_idx: 1 } },
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 2 } }
       ]
     end
   end

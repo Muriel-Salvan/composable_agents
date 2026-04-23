@@ -404,10 +404,10 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
     end
   end
 
-  describe '#render_missing_output_user_prompt' do
-    it 'renders missing artifacts as bullet points' do
+  describe '#missing_output_user_prompt' do
+    it 'prompts for missing artifacts as bullet points' do
       expect(
-        agent.render_missing_output_user_prompt(
+        agent.missing_output_user_prompt(
           report: 'Final report document',
           summary: 'Executive summary',
           logs: 'Execution logs'
@@ -421,7 +421,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
     end
 
     it 'handles single missing artifact correctly' do
-      expect(agent.render_missing_output_user_prompt(result: 'Calculation result')).to eq <<~EO_PROMPT
+      expect(agent.missing_output_user_prompt(result: 'Calculation result')).to eq <<~EO_PROMPT
         Some artifacts are missing:
         - You must create an artifact named `result`: Calculation result
       EO_PROMPT

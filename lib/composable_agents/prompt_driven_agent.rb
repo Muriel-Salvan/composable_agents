@@ -83,9 +83,9 @@ module ComposableAgents
             missing_artifacts = output_artifacts_contracts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
             break if missing_artifacts.empty?
 
-            missing_output_user_prompt = render_missing_output_user_prompt(missing_artifacts)
-            log_debug "Missing output user prompt: #{missing_output_user_prompt}"
-            prompt(missing_output_user_prompt)
+            user_prompt = render_user_prompt(missing_output_user_prompt(missing_artifacts), input_artifacts:)
+            log_debug "Missing output user prompt: #{user_prompt}"
+            prompt(user_prompt)
           end
         end
       end

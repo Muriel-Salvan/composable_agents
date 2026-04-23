@@ -61,11 +61,11 @@ module ComposableAgents
         user_message
       end
 
-      # Render the user prompt for missing output artifacts
+      # Get a user prompt for missing output artifacts
       #
       # @param missing_output_artifacts [Hash<Symbol,Object>] The missing output artifacts description, per artifact name
-      # @return [Object] The rendered user prompt
-      def render_missing_output_user_prompt(missing_output_artifacts)
+      # @return [Object] The user prompt
+      def missing_output_user_prompt(missing_output_artifacts)
         <<~EO_PROMPT
           Some artifacts are missing:
           #{

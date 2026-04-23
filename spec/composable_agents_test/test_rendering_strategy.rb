@@ -26,8 +26,8 @@ module ComposableAgentsTest
       "USER_PROMPT: #{user_message}"
     end
 
-    def render_missing_output_user_prompt(missing_output_artifacts)
-      render_calls << [:render_missing_output_user_prompt, missing_output_artifacts]
+    def missing_output_user_prompt(missing_output_artifacts)
+      render_calls << [:missing_output_user_prompt, missing_output_artifacts]
       "MISSING_PROMPT: #{missing_output_artifacts.map { |name, description| "#{name} (#{description})" }.join(', ')}"
     end
   end
