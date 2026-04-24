@@ -53,21 +53,19 @@ module ComposableAgents
       # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
       # @yield Code to be executed with the context prepared
       def with_system_prompt(system_prompt, input_artifacts:, output_artifacts:)
-        artifact_tools = [
-          Tools::CreateArtifactTool.new(output_artifacts),
-          Tools::GetArtifactTool.new(input_artifacts)
-        ]
         @agent_runner = Agents::AgentRunner.new(
-          (
-            [
-              Agents::Agent.new(
-                model: @model,
-                name: @name,
-                params: @params,
-                instructions: system_prompt
-              )
-            ] + @handoff_agents
-          ).map { |agent| agent.clone(tools: agent.tools + artifact_tools) }
+          [
+            Agents::Agent.new(
+              model: @model,
+              name: @name,
+              params: @params,
+              instructions: system_prompt,
+              tools: [
+                Tools::CreateArtifactTool.new(output_artifacts),
+                Tools::GetArtifactTool.new(input_artifacts)
+              ] + agent_tools
+            )
+          ] + @handoff_agents
         )
         yield
       end
@@ -90,6 +88,13 @@ module ComposableAgents
 
         @context = result.context
         result.output
+      end
+
+      # Returns the list of tools available for this agent
+      #
+      # @return [Array<Agents::Tool>] List of tools
+      def agent_tools
+        []
       end
     end
   end
