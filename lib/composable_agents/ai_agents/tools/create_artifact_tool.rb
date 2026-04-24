@@ -5,7 +5,11 @@ module ComposableAgents
       class CreateArtifactTool < Agents::Tool
         include Mixins::Logger
 
-        description 'Create an output artifact'
+        description <<~EO_DESCRIPTION
+          Create an output artifact.
+          Only create artifacts when the user is asking you to create an artifact named `{name}`.
+          Do not create artifacts unless the user is asking you to.
+        EO_DESCRIPTION
         param :name, type: 'string', desc: 'Artifact name'
         param :content, type: 'string', desc: 'Artifact content'
 
