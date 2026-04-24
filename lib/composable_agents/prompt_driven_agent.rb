@@ -145,18 +145,10 @@ module ComposableAgents
     def converse(user_prompt, input_artifacts:, output_artifacts:, author: 'Orchestrator')
       rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
-      @conversation << {
-        author:,
-        at: Time.now.utc.strftime('%F %T'),
-        message: user_prompt
-      }
+      track_message(message: user_prompt, author:)
       response = prompt(rendered_user_prompt)
       log_debug "Raw Agent #{name} response: #{response}"
-      @conversation << {
-        author: "Agent #{name}",
-        at: Time.now.utc.strftime('%F %T'),
-        message: response
-      }
+      track_message(message: response, author: "Agent #{name}")
     end
 
     # Prepare the context for a given rendered system prompt
@@ -177,6 +169,20 @@ module ComposableAgents
     # @return [String] The output of the prompt
     def prompt(user_prompt)
       raise NotImplementedError, 'This method should be implemented by a PromptDrivenAgent subclass'
+    end
+
+    # Track a message that is part of the conversation with this agent
+    #
+    # @param message [String] The message content
+    # @param author [String] Author of the message
+    # @param question [Boolean] Is this message a question expecting a reply?
+    def track_message(message:, author: 'Orchestrator', question: false)
+      @conversation << {
+        at: Time.now.utc.strftime('%F %T'),
+        author:,
+        message:,
+        question:
+      }
     end
   end
 end

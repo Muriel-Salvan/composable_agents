@@ -90,7 +90,14 @@ describe ComposableAgents::AiAgents::Agent do
   # @param conversation [Array<Hash<Symbol, String>>] The recorded conversation
   # @param expected_conversation [Array<Hash<Symbol, String>>] The expected conversation
   def expect_conversation(conversation, expected_conversation)
-    expect(conversation.map { |message| message.except(:at) }).to eq expected_conversation
+    expect(conversation.map { |message| message.except(:at) }).to eq(
+      # Normalize expected_conversation with some default values
+      expected_conversation.map do |message|
+        {
+          question: false
+        }.merge(message)
+      end
+    )
     timestamps = conversation.map do |message|
       expect(message[:at]).to match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
       message[:at]

@@ -12,6 +12,14 @@ module ComposableAgents
         EO_DESCRIPTION
         param :question, type: 'string', desc: 'Question to be asked to the user'
 
+        # Constructor
+        #
+        # @param agent [Agent] The agent that is using this tool
+        def initialize(agent)
+          super()
+          @agent = agent
+        end
+
         # Perform the tool's action.
         # This is called by ai-agents when the model requires it.
         #
@@ -19,11 +27,7 @@ module ComposableAgents
         # @param question [String] The question asked
         # @return [String] The tool's response
         def perform(_tool_context, question:)
-          puts
-          puts "Agent is asking a question:\n#{question}"
-          puts
-          puts 'Write answer and hit Enter...'
-          $stdin.gets.strip
+          @agent.answer_to(question)
         end
       end
     end
