@@ -102,7 +102,7 @@ module ComposableAgents
         input_artifacts:,
         output_artifacts:
       ) do
-        converse(user_message, input_artifacts:, output_artifacts:)
+        converse(user_message, input_artifacts:, output_artifacts:, author: 'User')
         if respond_to?(:output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
@@ -141,11 +141,12 @@ module ComposableAgents
     # @param user_prompt [String] The user prompt
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled for the conversation
-    def converse(user_prompt, input_artifacts:, output_artifacts:)
+    # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
+    def converse(user_prompt, input_artifacts:, output_artifacts:, author: 'Orchestrator')
       rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       @conversation << {
-        author: 'User',
+        author:,
         at: Time.now.utc.strftime('%F %T'),
         message: user_prompt
       }

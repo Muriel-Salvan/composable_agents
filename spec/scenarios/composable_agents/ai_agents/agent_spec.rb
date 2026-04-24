@@ -358,7 +358,7 @@ describe ComposableAgents::AiAgents::Agent do
           [
             { author: 'User', message: '' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
-            { author: 'User', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+            { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #2' }
           ]
         )
@@ -378,9 +378,9 @@ describe ComposableAgents::AiAgents::Agent do
           [
             { author: 'User', message: '' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
-            { author: 'User', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+            { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #2' },
-            { author: 'User', message: 'MISSING_PROMPT: logs (Execution logs)' },
+            { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #3' },
             { author: 'User', message: 'Again' },
             { author: 'Agent Executor', message: 'Output of AgentRunner run #4' }
