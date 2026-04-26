@@ -1,3 +1,5 @@
+require 'time'
+
 module ComposableAgents
   # Agent implementation that uses a prompt rendering strategy to render prompts for a prompting engine.
   # The following prompts are considered:
@@ -123,7 +125,9 @@ module ComposableAgents
     # @return [Object] Serialized state that can be marshalled to JSON
     def export_state
       {
-        'conversation' => @conversation
+        'conversation' => @conversation.map do |message|
+          message.merge(at: message[:at].strftime('%F %T'))
+        end
       }
     end
 
@@ -131,7 +135,10 @@ module ComposableAgents
     #
     # @param state [Object] Serialized state
     def import_state(state)
-      @conversation = state['conversation'].map { |message| message.transform_keys(&:to_sym) }
+      @conversation = state['conversation'].map do |message|
+        message = message.transform_keys(&:to_sym)
+        message.merge(at: Time.parse("#{message.delete(:at)} UTC"))
+      end
     end
 
     private
@@ -178,7 +185,7 @@ module ComposableAgents
     # @param question [Boolean] Is this message a question expecting a reply?
     def track_message(message:, author: 'Orchestrator', question: false)
       @conversation << {
-        at: Time.now.utc.strftime('%F %T'),
+        at: Time.now.utc,
         author:,
         message:,
         question:

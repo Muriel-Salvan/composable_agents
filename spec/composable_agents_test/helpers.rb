@@ -15,10 +15,7 @@ module ComposableAgentsTest
           }.merge(message)
         end
       )
-      timestamps = conversation.map do |message|
-        expect(message[:at]).to match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
-        message[:at]
-      end
+      timestamps = conversation.map { |message| message[:at] }
       expect(timestamps.sort).to eq timestamps
     end
   end
