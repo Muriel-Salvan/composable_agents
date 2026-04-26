@@ -107,7 +107,7 @@ module ComposableAgents
           # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
           if step_state == saved_input_state
             set_current_step_state(saved_output_state, agent:)
-            log_debug "[Step #{full_name}] - Already executed - Got #{@artifacts.size} from persistence: #{@artifacts.keys.join(', ')}"
+            log_debug "[Step #{full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
           else
             # Clone state before yielding because it will certainly be modified
             input_step_state = clone_step_state(step_state)
