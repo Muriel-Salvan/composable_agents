@@ -10,7 +10,7 @@ module ComposableAgents
   #
   # Prompt rendering strategies are useful because different prompt-driven agents would benefit from different
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
-  # This agent autmatically records non-rendered conversation (prompts + outputs) in a `conversation` output artifact.
+  # This agent automatically records non-rendered conversation (prompts + outputs) in a `conversation` store, part of its state.
   class PromptDrivenAgent < Agent
     # [Array<Hash<Symbol, Object>>] The conversation (user prompts, reesponses) that happened with this agent.
     #   Each item of a conversation has the following properties:
@@ -104,7 +104,7 @@ module ComposableAgents
         input_artifacts:,
         output_artifacts:
       ) do
-        converse(user_message, input_artifacts:, output_artifacts:, author: 'User')
+        converse(user_message, input_artifacts:, author: 'User')
         if respond_to?(:output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
@@ -113,7 +113,7 @@ module ComposableAgents
             missing_artifacts = output_artifacts_contracts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
             break if missing_artifacts.empty?
 
-            converse(missing_output_user_prompt(missing_artifacts), input_artifacts:, output_artifacts:)
+            converse(missing_output_user_prompt(missing_artifacts), input_artifacts:)
           end
         end
       end
@@ -143,13 +143,12 @@ module ComposableAgents
 
     private
 
-    # Prompt a user prompt and record it with its response in the conversation output artifact.
+    # Prompt a user prompt and record it with its response in the .
     #
     # @param user_prompt [String] The user prompt
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-    # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled for the conversation
     # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
-    def converse(user_prompt, input_artifacts:, output_artifacts:, author: 'Orchestrator')
+    def converse(user_prompt, input_artifacts:, author: 'Orchestrator')
       rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: user_prompt, author:)
