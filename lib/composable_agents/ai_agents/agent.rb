@@ -1,3 +1,4 @@
+require 'base64'
 require 'agents'
 
 module ComposableAgents
@@ -32,7 +33,7 @@ module ComposableAgents
       # @return [Object] Serialized state that can be marshalled to JSON
       def export_state
         super.merge(
-          'context' => Marshal.dump(@context)
+          'context' => Base64.encode64(Marshal.dump(@context))
         )
       end
 
@@ -41,7 +42,7 @@ module ComposableAgents
       # @param state [Object] Serialized state
       def import_state(state)
         super
-        @context = Marshal.load(state['context'])
+        @context = Marshal.load(Base64.decode64(state['context']))
       end
 
       private

@@ -3,20 +3,21 @@ require 'time'
 module ComposableAgents
   # Agent implementation that uses a prompt rendering strategy to render prompts for a prompting engine.
   # The following prompts are considered:
-  # * A system prompt, that defines the Agent's behaviour, or persona.
-  # * User prompts, that are used as user inputs guiding the agent.
-  # * Retry prompts, used to tell the Agent that the task at hand is still incomplete and needs more work.
+  # - A system prompt, that defines the Agent's behaviour, or persona.
+  # - User prompts, that are used as user inputs guiding the agent.
+  # - Retry prompts, used to tell the Agent that the task at hand is still incomplete and needs more work.
   #     For example when an artifact has not been created, and the agent needs to try it again.
   #
   # Prompt rendering strategies are useful because different prompt-driven agents would benefit from different
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
   # This agent automatically records non-rendered conversation (prompts + outputs) in a `conversation` store, part of its state.
   class PromptDrivenAgent < Agent
-    # [Array<Hash<Symbol, Object>>] The conversation (user prompts, reesponses) that happened with this agent.
+    # [Array<Hash{Symbol => Object}>] The conversation (user prompts, responses) that happened with this agent.
     #   Each item of a conversation has the following properties:
-    #   * author [String] Author of the message
-    #   * at [String] UTC timestamp of the message at format YYYY-mm-dd HH:MM:SS
-    #   * message [String] The message itself
+    #   - author [String] Author of the message
+    #   - at [String] UTC timestamp of the message at format YYYY-mm-dd HH:MM:SS
+    #   - message [String] The message itself
+    #   - question [Boolean] Is this message a question expecting a reply? Defaults to false.
     attr_reader :conversation
 
     # Define input artifacts contracts

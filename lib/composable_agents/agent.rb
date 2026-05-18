@@ -5,6 +5,7 @@ module ComposableAgents
   class Agent
     include Mixins::Logger
 
+    # @return [String, nil] The agent name, if any
     attr_reader :name
 
     # Constructor

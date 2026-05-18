@@ -3,8 +3,15 @@ plugins: rubocop-rspec
 AllCops:
   NewCops: enable
 
+# Be consistent on indentations
+Layout/LineEndStringConcatenationIndentation:
+  EnforcedStyle: indented
+
 # It's ok to have longer lines
 Layout/LineLength:
+  Exclude:
+    # Examples contain stdout copy/pastes that exceed the max limit
+    - 'examples/*.rb'
   Max: 160
 
 # Not all plugins use all keyword arguments, it's normal.
@@ -31,6 +38,20 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 20
 
+# These tests are not describing any class or module
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/scenarios/code_quality_spec.rb'
+    - 'spec/scenarios/packaging_spec.rb'
+
+# It's ok to have scenarios having multiple lines
+RSpec/ExampleLength:
+  Max: 30
+
+# It's ok to have test scenarios having several expectations
+RSpec/MultipleExpectations:
+  Max: 10
+
 # It's ok to have nested groups in RSpec.
 RSpec/NestedGroups:
   Max: 5
@@ -47,16 +68,7 @@ Style/FrozenStringLiteralComment:
 Style/MutableConstant:
   Enabled: false
 
-# These tests are not describing any class or module
-RSpec/DescribeClass:
+# Examples can define multiple classes
+Style/OneClassPerFile:
   Exclude:
-    - 'spec/scenarios/code_quality_spec.rb'
-    - 'spec/scenarios/packaging_spec.rb'
-
-# It's ok to have test scenarios having several expectations
-RSpec/MultipleExpectations:
-  Max: 10
-
-# It's ok to have scenarios having multiple lines
-RSpec/ExampleLength:
-  Max: 30
+    - 'examples/*.rb'

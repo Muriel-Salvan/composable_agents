@@ -1,3 +1,4 @@
+* Fix yard documentation (Hash<Symbol, Object>, NilClass, Public API groups).
 * README.rb.
 * Check Rubocop-rspec exceptions and try to remove them.
 * Check that yard is used correctly everywhere and check how to see corresponding generated doc.
