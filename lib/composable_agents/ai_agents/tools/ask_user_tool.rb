@@ -27,7 +27,7 @@ module ComposableAgents
         # @param question [String] The question asked
         # @return [String] The tool's response
         def perform(_tool_context, question:)
-          @agent.answer_to(question)
+          @agent.ask(question)
         end
       end
     end

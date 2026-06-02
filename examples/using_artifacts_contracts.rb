@@ -6,7 +6,7 @@ require 'composable_agents'
 # Seaside in France
 # 2. Ask the itinerary agent to get a list of cities for those preferences...
 # 3. Ask the budget agent about money for the given itinerary...
-# Budget for the cities ["Nice", "Cannes", "Saint-Tropez", "Marseille", "Biarritz", "Antibes", "Toulon", "La Rochelle", "Montpellier", "Calais"] is $10000        
+# Budget for the cities ["Nice", "Cannes", "Saint-Tropez", "Marseille", "Biarritz", "Antibes", "Toulon", "La Rochelle", "Montpellier", "Calais"] is $10000
 
 # Configure ai-agents as we are going to use it
 require 'agents'

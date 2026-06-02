@@ -52,7 +52,7 @@ RubyLLM::Models.refresh!
 # Agent gathering user preferences
 class PreferencesAgent < ComposableAgents::AiAgents::Agent
   prepend ComposableAgents::Mixins::ArtifactContract
-  prepend ComposableAgents::Mixins::UserInteraction
+  prepend ComposableAgents::Mixins::AiAgentUserInteraction
 
   def output_artifacts_contracts
     { preferences: 'The User\'s holidays preferences' }

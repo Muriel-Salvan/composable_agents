@@ -3,6 +3,7 @@ plugins: rubocop-rspec
 AllCops:
   NewCops: enable
 
+
 # Be consistent on indentations
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
@@ -13,6 +14,10 @@ Layout/LineLength:
     # Examples contain stdout copy/pastes that exceed the max limit
     - 'examples/*.rb'
   Max: 160
+
+# Be consistent on indentations
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
 
 # Not all plugins use all keyword arguments, it's normal.
 Lint/UnusedMethodArgument:
@@ -46,7 +51,7 @@ RSpec/DescribeClass:
 
 # It's ok to have scenarios having multiple lines
 RSpec/ExampleLength:
-  Max: 30
+  Max: 50
 
 # It's ok to have test scenarios having several expectations
 RSpec/MultipleExpectations:
