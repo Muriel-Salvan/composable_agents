@@ -6,7 +6,7 @@ module ComposableAgents
       #
       # @return [Boolean] True if debug mode is enabled
       def self.debug?
-        !ENV['COMPOSABLE_AGENTS_DEBUG'].nil?
+        ENV['COMPOSABLE_AGENTS_DEBUG'] == '1'
       end
 
       private
