@@ -20,7 +20,9 @@ module ComposableAgents
           return markdown if min_level.nil? || min_level == level
 
           adjust_header_levels(doc, level - min_level)
-          doc.to_commonmark
+          # Unescape dots in headers
+          # TODO: Remove this gsub when CommonMarker will be fixed.
+          doc.to_commonmark.gsub(/^\#{1,6}\s+\h+\K\\\. /, '. ')
         end
 
         # Find the minimum header level in a CommonMarker document

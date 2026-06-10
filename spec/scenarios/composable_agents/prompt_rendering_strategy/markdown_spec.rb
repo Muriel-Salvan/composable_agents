@@ -82,7 +82,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           role: <<~EO_ROLE
             # Role Header 1
 
-            ## Role Header 1.1
+            ## 1. Role Header 1.1
 
             Test Agent Role
           EO_ROLE
@@ -92,7 +92,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Role Header 1
 
-        ### Role Header 1.1
+        ### 1. Role Header 1.1
 
         Test Agent Role
 
@@ -110,7 +110,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           role: <<~EO_ROLE
             #### Role Header 1
 
-            ##### Role Header 1.1
+            ##### 1. Role Header 1.1
 
             Test Agent Role
           EO_ROLE
@@ -120,7 +120,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Role Header 1
 
-        ### Role Header 1.1
+        ### 1. Role Header 1.1
 
         Test Agent Role
 
@@ -139,9 +139,9 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
             <<~EO_INSTRUCTION,
               # Header 1
 
-              ## Header 1.1
+              ## 1. Header 1.1
 
-              ## Header 1.2
+              ## 2. Header 1.2
             EO_INSTRUCTION
             <<~EO_INSTRUCTION
               ### Header 2
@@ -161,9 +161,9 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Header 1
 
-        ### Header 1.1
+        ### 1. Header 1.1
 
-        ### Header 1.2
+        ### 2. Header 1.2
 
         ## Header 2
 
@@ -215,7 +215,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           objective: <<~EO_OBJECTIVE
             # Objective Header 1
 
-            ## Objective Header 1.1
+            ## 1. Objective Header 1.1
 
             Complete the assigned task
           EO_OBJECTIVE
@@ -229,7 +229,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Objective Header 1
 
-        ### Objective Header 1.1
+        ### 1. Objective Header 1.1
 
         Complete the assigned task
 
@@ -247,7 +247,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           objective: <<~EO_OBJECTIVE
             #### Objective Header 1
 
-            ##### Objective Header 1.1
+            ##### 1. Objective Header 1.1
 
             Complete the assigned task
           EO_OBJECTIVE
@@ -261,7 +261,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Objective Header 1
 
-        ### Objective Header 1.1
+        ### 1. Objective Header 1.1
 
         Complete the assigned task
 
@@ -315,7 +315,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           constraints: <<~EO_CONSTRAINTS
             # Constraints Header 1
 
-            ## Constraints Header 1.1
+            ## 1. Constraints Header 1.1
 
             Do not exceed token limits
           EO_CONSTRAINTS
@@ -335,7 +335,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Constraints Header 1
 
-        ### Constraints Header 1.1
+        ### 1. Constraints Header 1.1
 
         Do not exceed token limits
       EO_SYSTEM_PROMPT
@@ -347,7 +347,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
           constraints: <<~EO_CONSTRAINTS
             #### Constraints Header 1
 
-            ##### Constraints Header 1.1
+            ##### 1. Constraints Header 1.1
 
             Do not exceed token limits
           EO_CONSTRAINTS
@@ -367,7 +367,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown do
 
         ## Constraints Header 1
 
-        ### Constraints Header 1.1
+        ### 1. Constraints Header 1.1
 
         Do not exceed token limits
       EO_SYSTEM_PROMPT
