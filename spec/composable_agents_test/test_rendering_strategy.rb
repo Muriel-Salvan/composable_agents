@@ -18,17 +18,17 @@ module ComposableAgentsTest
 
     def render_system_prompt(rendered_instructions, input_artifacts: {})
       render_calls << [:render_system_prompt, rendered_instructions, input_artifacts]
-      "SYSTEM_PROMPT[#{rendered_instructions.join(' | ')}]"
+      "SYSTEM_PROMPT[#{rendered_instructions.join(' | ')} with #{input_artifacts.keys.join(', ')}]"
     end
 
     def render_user_prompt(user_message, input_artifacts: {})
       render_calls << [:render_user_prompt, user_message, input_artifacts]
-      "USER_PROMPT: #{user_message}"
+      "USER_PROMPT: #{user_message} with #{input_artifacts.keys.join(', ')}"
     end
 
     def missing_output_user_prompt(missing_output_artifacts)
       render_calls << [:missing_output_user_prompt, missing_output_artifacts]
-      "MISSING_PROMPT: #{missing_output_artifacts.map { |name, description| "#{name} (#{description})" }.join(', ')}"
+      "MISSING_PROMPT: #{missing_output_artifacts.map { |name, contract| "#{name} (#{contract[:description]})" }.join(', ')}"
     end
   end
 end

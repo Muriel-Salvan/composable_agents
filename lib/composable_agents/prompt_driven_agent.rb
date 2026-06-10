@@ -106,15 +106,15 @@ module ComposableAgents
         output_artifacts:
       ) do
         converse(user_message, input_artifacts:, author: 'User')
-        if respond_to?(:output_artifacts_contracts, true)
+        if respond_to?(:normalized_output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
           # TODO: Implement a max number of retries and throw an exception if it exceeds.
           loop do
-            missing_artifacts = output_artifacts_contracts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
+            missing_artifacts = normalized_output_artifacts_contracts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
             break if missing_artifacts.empty?
 
-            converse(missing_output_user_prompt(missing_artifacts), input_artifacts:)
+            converse(missing_output_user_prompt(missing_artifacts))
           end
         end
       end
@@ -144,12 +144,12 @@ module ComposableAgents
 
     private
 
-    # Prompt a user prompt and record it with its response in the .
+    # Prompt a user prompt and record it with its response in the conversation.
     #
     # @param user_prompt [String] The user prompt
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
-    def converse(user_prompt, input_artifacts:, author: 'Orchestrator')
+    def converse(user_prompt, input_artifacts: {}, author: 'Orchestrator')
       rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: user_prompt, author:)

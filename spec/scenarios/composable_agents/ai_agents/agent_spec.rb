@@ -127,21 +127,27 @@ describe ComposableAgents::AiAgents::Agent do
       }
     }.each do |description, test_data|
       it "handles #{description}" do
-        run_agent(instructions: test_data[:instructions])
-        expect_instructions_to_be "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
+        run_agent(input_artifacts: { test_artifact: 'Content' }, instructions: test_data[:instructions])
+        expect_instructions_to_be "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact]"
       end
     end
   end
 
   describe 'prompt passing to AgentRunner' do
     it 'passes correctly rendered system prompt to AgentRunner' do
-      run_agent(instructions: 'Test instruction')
-      expect_instructions_to_be 'SYSTEM_PROMPT[RENDERED_TEXT: Test instruction]'
+      run_agent(input_artifacts: { test_artifact: 'Content' }, instructions: 'Test instruction')
+      expect_instructions_to_be 'SYSTEM_PROMPT[RENDERED_TEXT: Test instruction with test_artifact]'
     end
 
     it 'passes correctly rendered user prompt to AgentRunner#run' do
-      run_agent(instructions: 'Test instruction', input_artifacts: { user_message: 'Hello user' })
-      expect(runner_double).to have_received(:run).with('USER_PROMPT: Hello user', anything)
+      run_agent(
+        input_artifacts: {
+          user_message: 'Hello user',
+          test_artifact: 'Content'
+        },
+        instructions: 'Test instruction'
+      )
+      expect(runner_double).to have_received(:run).with('USER_PROMPT: Hello user with test_artifact', anything)
     end
 
     it 'passes input artifacts to prompt rendering' do
@@ -185,7 +191,7 @@ describe ComposableAgents::AiAgents::Agent do
         strategy: ComposableAgentsTest::TestRenderingStrategy,
         model: 'test-model',
         instructions: 'Test instructions',
-        input_artifacts: {},
+        input_artifacts: { requirements: { description: 'Inital requirements', optional: true } },
         output_artifacts: { result: 'Final result', logs: 'Execution logs' }
       )
     end
@@ -206,11 +212,11 @@ describe ComposableAgents::AiAgents::Agent do
         { result: 'partial' },
         { result: 'partial', logs: 'complete' }
       )
-      expect(agent.run).to include(result: 'partial', logs: 'complete')
-      expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: 'Execution logs' }])
+      expect(agent.run(requirements: 'Content')).to include(result: 'partial', logs: 'complete')
+      expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: { description: 'Execution logs', optional: false } }])
       expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT: ', context: {} },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 1 } }
+        { user_prompt: 'USER_PROMPT:  with requirements', context: {} },
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs) with ', context: { run_idx: 1 } }
       ]
     end
 
@@ -222,9 +228,9 @@ describe ComposableAgents::AiAgents::Agent do
       )
       expect(agent.run).to include(result: 'second', logs: 'final')
       expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT: ', context: {} },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: result (Final result), logs (Execution logs)', context: { run_idx: 1 } },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs)', context: { run_idx: 2 } }
+        { user_prompt: 'USER_PROMPT:  with ', context: {} },
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: result (Final result), logs (Execution logs) with ', context: { run_idx: 1 } },
+        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs) with ', context: { run_idx: 2 } }
       ]
     end
   end
@@ -234,9 +240,9 @@ describe ComposableAgents::AiAgents::Agent do
       agent = described_agent
       3.times { agent.run }
       expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT: ', context: {} },
-        { user_prompt: 'USER_PROMPT: ', context: { run_idx: 1 } },
-        { user_prompt: 'USER_PROMPT: ', context: { run_idx: 2 } }
+        { user_prompt: 'USER_PROMPT:  with ', context: {} },
+        { user_prompt: 'USER_PROMPT:  with ', context: { run_idx: 1 } },
+        { user_prompt: 'USER_PROMPT:  with ', context: { run_idx: 2 } }
       ]
     end
 
