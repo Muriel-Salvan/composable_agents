@@ -14,7 +14,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     input_artifacts: {},
     **kwargs
   )
-    agent_for_markdown_heavy(input_artifacts: input_artifacts_contracts, role:, **kwargs).render_system_prompt(rendered_instructions, input_artifacts:)
+    agent_for_markdown_heavy(input_artifacts_contracts:, role:, **kwargs).render_system_prompt(rendered_instructions, input_artifacts:)
   end
 
   it 'includes role, instructions sections without input artifacts intro if there aren\'t any artifacts' do
@@ -307,7 +307,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     it 'includes output artifacts concept section' do
       expect(
         system_prompt(
-          output_artifacts: {
+          output_artifacts_contracts: {
             report: 'The final report',
             summary: 'Executive summary'
           }
@@ -349,7 +349,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     it 'combines output artifacts with objective and constraints' do
       expect(
         system_prompt(
-          output_artifacts: {
+          output_artifacts_contracts: {
             report: 'The final report'
           },
           objective: 'Generate monthly report',
@@ -400,7 +400,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           input_artifacts_contracts: {
             plan: 'The plan'
           },
-          output_artifacts: {
+          output_artifacts_contracts: {
             report: 'The final report'
           }
         )

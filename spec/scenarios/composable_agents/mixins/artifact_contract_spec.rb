@@ -192,11 +192,11 @@ describe ComposableAgents::Mixins::ArtifactContract do
   end
 
   context 'with artifacts contracts taken from the constructor' do
-    # Create an agent configured with the given input and output artifacts
+    # Create an agent configured with the given input and output artifacts contracts
     #
-    # @param input_artifacts [Hash<Symbol, Object>] The input artifacts contracts
-    # @param output_artifacts [Hash<Symbol, Object>] The output artifacts contracts
-    def described_agent(input_artifacts: {}, output_artifacts: {})
+    # @param input_artifacts_contracts [Hash<Symbol, Object>] The input artifacts contracts
+    # @param output_artifacts_contracts [Hash<Symbol, Object>] The output artifacts contracts
+    def described_agent(input_artifacts_contracts: {}, output_artifacts_contracts: {})
       Class.new(ComposableAgents::Agent) do
         prepend ComposableAgents::Mixins::ArtifactContract
 
@@ -211,13 +211,13 @@ describe ComposableAgents::Mixins::ArtifactContract do
           @received_artifacts = input_artifacts
           mocked_output_artifacts || {}
         end
-      end.new(input_artifacts:, output_artifacts:)
+      end.new(input_artifacts_contracts:, output_artifacts_contracts:)
     end
 
     context 'with input artifacts definitions' do
       let(:agent) do
         described_agent(
-          input_artifacts: {
+          input_artifacts_contracts: {
             first: 'First input artifact',
             second: 'Second input artifact',
             third: 'Third input artifact'
@@ -262,7 +262,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
       context 'with optional input artifacts' do
         let(:agent) do
           described_agent(
-            input_artifacts: {
+            input_artifacts_contracts: {
               required: 'Required input artifact',
               optional: { description: 'Optional input artifact', optional: true }
             }
@@ -284,7 +284,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
     context 'with output artifacts definitions' do
       let(:agent) do
         described_agent(
-          output_artifacts: {
+          output_artifacts_contracts: {
             result_one: 'First output artifact',
             result_two: 'Second output artifact',
             result_three: 'Third output artifact'
@@ -321,7 +321,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
       context 'with optional output artifacts' do
         let(:agent) do
           described_agent(
-            output_artifacts: {
+            output_artifacts_contracts: {
               required: 'Required output artifact',
               optional: { description: 'Optional output artifact', optional: true }
             }

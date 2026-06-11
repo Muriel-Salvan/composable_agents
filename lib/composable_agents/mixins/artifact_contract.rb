@@ -18,19 +18,19 @@ module ComposableAgents
 
       # Constructor
       #
-      # @param input_artifacts [Hash<Symbol, Object>, NilClass] Hash of input artifact names and their contracts,
+      # @param input_artifacts_contracts [Hash<Symbol, Object>, NilClass] Hash of input artifact names and their contracts,
       #   or nil if provided through the input_artifacts_contracts method
-      # @param output_artifacts [Hash<Symbol, Object>, NilClass] Hash of output artifact names and their contracts,
+      # @param output_artifacts_contracts [Hash<Symbol, Object>, NilClass] Hash of output artifact names and their contracts,
       #   or nil if provided through the output_artifacts_contracts method
       def initialize(
         *args,
-        input_artifacts: nil,
-        output_artifacts: nil,
+        input_artifacts_contracts: nil,
+        output_artifacts_contracts: nil,
         **kwargs
       )
         super(*args, **kwargs)
-        @input_artifacts_contracts = input_artifacts
-        @output_artifacts_contracts = output_artifacts
+        @input_artifacts_contracts = input_artifacts_contracts
+        @output_artifacts_contracts = output_artifacts_contracts
       end
 
       # Execute the agent to generate some output artifacts based on some input artifacts.

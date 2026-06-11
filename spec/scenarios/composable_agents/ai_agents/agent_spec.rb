@@ -191,8 +191,8 @@ describe ComposableAgents::AiAgents::Agent do
         strategy: ComposableAgentsTest::TestRenderingStrategy,
         model: 'test-model',
         instructions: 'Test instructions',
-        input_artifacts: { requirements: { description: 'Inital requirements', optional: true } },
-        output_artifacts: { result: 'Final result', logs: 'Execution logs' }
+        input_artifacts_contracts: { requirements: { description: 'Inital requirements', optional: true } },
+        output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
       )
     end
 
@@ -333,8 +333,8 @@ describe ComposableAgents::AiAgents::Agent do
           prepend ComposableAgents::Mixins::ArtifactContract
         end.new(
           strategy: ComposableAgentsTest::TestRenderingStrategy,
-          input_artifacts: {},
-          output_artifacts: { result: 'Final result', logs: 'Execution logs' }
+          input_artifacts_contracts: {},
+          output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
         )
       end
 
