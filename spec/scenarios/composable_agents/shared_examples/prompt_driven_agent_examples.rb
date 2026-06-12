@@ -20,6 +20,12 @@ shared_examples 'a prompt driven agent' do |opts|
   #       - output_artifacts [Hash{Symbol -> Object}] The output artifacts that should be mocked by the run.
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
+  # - contracts [Boolean] Is the agent using artifacts contracts? Defaults to `false`.
+  opts.replace(
+    {
+      contracts: false
+    }.merge(opts)
+  )
 
   # @return [Hash{Symbol, Object}] The shared examples options, now accessible to examples' helpers
   attr_reader :opts
@@ -84,19 +90,27 @@ shared_examples 'a prompt driven agent' do |opts|
         }
       }.each do |description, test_data|
         context "when handling #{description}" do
-          let(:agent) { new_agent(instructions: test_data[:instructions]) }
-
           it 'sets the system prompt without artifacts' do
+            agent = new_agent(instructions: test_data[:instructions])
             agent.run
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
 
           it 'does not use the user message in the system prompt' do
+            agent = new_agent(instructions: test_data[:instructions])
             agent.run(user_message: 'Do this')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
 
           it 'uses the input artifacts in the system prompt' do
+            agent = new_agent(
+              **(
+                {
+                  instructions: test_data[:instructions],
+                  input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
+                }.compact
+              )
+            )
             agent.run(user_message: 'Do this', test_artifact: 'Content')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact (Content)]"
           end
@@ -113,19 +127,23 @@ shared_examples 'a prompt driven agent' do |opts|
       expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[You must do this]']
     end
 
-    it 'sends the artifacts in the user prompt' do
-      agent.run(user_message: 'You must do this', requirements: 'Feature specs')
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[You must do this with requirements (Feature specs)]']
-    end
-
-    it 'handles missing user messages' do
-      agent.run(requirements: 'Feature specs')
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[ with requirements (Feature specs)]']
-    end
-
     it 'handles missing user messages and no input artifact' do
       agent.run
       expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
+    end
+
+    context 'with input artifacts' do
+      let(:agent) { new_agent(**({ input_artifacts_contracts: opts[:contracts] ? { requirements: 'Features specs' } : nil }).compact) }
+
+      it 'sends the artifacts in the user prompt' do
+        agent.run(user_message: 'You must do this', requirements: 'Feature specs')
+        expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[You must do this with requirements (Feature specs)]']
+      end
+
+      it 'handles missing user messages' do
+        agent.run(requirements: 'Feature specs')
+        expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[ with requirements (Feature specs)]']
+      end
     end
   end
 

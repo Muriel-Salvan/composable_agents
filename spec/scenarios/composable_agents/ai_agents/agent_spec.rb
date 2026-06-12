@@ -5,7 +5,7 @@ describe ComposableAgents::AiAgents::Agent do
   # Mock an agent runner run for a given agent.
   # This will mock calls to Agents::AgentRunner and set spies in an agent.
   #
-  # @param agent [ComposableAgents::Agent] The agent to be used to spy on Agentrunner
+  # @param agent [ComposableAgents::Agent] The agent to be used to spy on AgentRunner
   # @param mocked_run_results [Array<Hash{Symbol => Object}>, Hash{Symbol => Object}] List of (or single)
   #   mocked results that will be returned by AgentRunner#run, for each call to AgentRunner#run.
   #   The following properties are used by our mock:
