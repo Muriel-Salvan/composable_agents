@@ -12,6 +12,9 @@ module ComposableAgents
     #   * Any agent that implements the methods export_state and import_state will benefit from its state's serialization automatically.
     # * An instance variable @artifacts that stores artifacts (initialized with input ones) that are JSON serialized by steps.
     # Artifacts used with this mixin, and states returned by used agents should be JSON-serializable.
+    # This mixin uses the following methods from the agent:
+    # - `#export_state -> Object` Optional method returning the current JSON-serializable state of the agent.
+    # - `#import_state(state)` Optional method that sets the agent state from a JSON-serializable object.
     module Resumable
       # Constructor
       #

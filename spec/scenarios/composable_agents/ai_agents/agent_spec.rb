@@ -1,174 +1,132 @@
+require_relative '../shared_examples/prompt_driven_agent_examples'
+require_relative '../shared_examples/prompt_driven_agent_with_contracts_examples'
+
 describe ComposableAgents::AiAgents::Agent do
-  # [Array<Hash<Symbol, Object>>] List of mocked output artifacts that will be set in the CreateArtifact tool,
-  #    for each call to AgentRunner#run.
-  attr_accessor :mocked_output_artifacts
-
-  # [Array<Hash<Symbol, Object>>] List of mocked results that will be returned by AgentRunner#run,
-  #    for each call to AgentRunner#run.
-  attr_accessor :mocked_run_results
-
-  # [Array<Agents::Agent>] List of agents that were given to AgentRunner.new
-  attr_reader :agent_runner_agents
-
-  # [Array<Hash<Symbol, Object>>] List of AgentRunner#run call arguments that have been performed
-  attr_reader :agent_runner_runs
-
-  let(:runner_double) do
-    runner_instance = instance_double(Agents::AgentRunner)
-    allow(runner_instance).to receive(:run) do |user_prompt, context:|
-      agent_runner_runs << {
-        user_prompt:,
-        context:
-      }
-      run_idx = (context[:run_idx] || 0) + 1
-      artifacts = mocked_output_artifacts.shift
-      unless artifacts.nil?
-        agent_runner_agents
-          .first
-          .tools
-          .find { |tool| tool.is_a?(ComposableAgents::AiAgents::Tools::CreateArtifactTool) }
-          .instance_variable_get(:@artifacts)
-          .merge!(artifacts)
-      end
-      double(
-        **(
-          mocked_run_results.shift || {
-            error: nil,
-            context: { run_idx: },
-            output: "Output of AgentRunner run ##{run_idx}"
-          }
-        )
-      )
-    end
-    runner_instance
-  end
-
-  before do
-    @mocked_output_artifacts = []
-    @mocked_run_results = []
-    @agent_runner_runs = []
+  # Mock an agent runner run for a given agent.
+  # This will mock calls to Agents::AgentRunner and set spies in an agent.
+  #
+  # @param agent [ComposableAgents::Agent] The agent to be used to spy on Agentrunner
+  # @param mocked_run_results [Array<Hash{Symbol => Object}>, Hash{Symbol => Object}] List of (or single)
+  #   mocked results that will be returned by AgentRunner#run, for each call to AgentRunner#run.
+  #   The following properties are used by our mock:
+  #   - output_artifacts [Hash{Symbol -> Object}] The output artifacts that should also be returned by this run.
+  def mock_agent_runner_for(agent, mocked_run_results = [])
+    mocked_run_results = [mocked_run_results] unless mocked_run_results.is_a?(Array)
     allow(Agents::AgentRunner).to receive(:new) do |agents|
-      @agent_runner_agents = agents
-      runner_double
+      agent.spy_system_prompt = agents.first.instructions
+      instance = instance_double(Agents::AgentRunner)
+      allow(instance).to receive(:run) do |user_prompt, context:|
+        agent.spy_user_prompts ||= []
+        agent.spy_user_prompts << user_prompt
+        agent.spy_contexts ||= []
+        agent.spy_contexts << context
+        mocked_run_result = mocked_run_results.shift
+        mocked_output_artifacts = mocked_run_result&.delete(:output_artifacts)
+        if mocked_output_artifacts
+          # Use a mocked call to the corresponding tool
+          agents
+            .first
+            .tools
+            .find { |tool| tool.is_a?(ComposableAgents::AiAgents::Tools::CreateArtifactTool) }
+            .instance_variable_get(:@artifacts)
+            .merge!(mocked_output_artifacts)
+        end
+        run_idx = (context[:run_idx] || 0) + 1
+        double(
+          **(
+            mocked_run_result || {
+              error: nil,
+              context: { run_idx: },
+              output: "Output of AgentRunner run ##{run_idx}"
+            }
+          )
+        )
+      end
+      instance
+    end
+    # Add spies to the agent for the mock to work properly and make it inspectable.
+    class << agent
+      include ComposableAgentsTest::PromptDrivenAgentSpies
+
+      # @return [Array<Hash>] List of AgentRunner contexts that have been used for each run.
+      attr_accessor :spy_contexts
     end
   end
 
-  # Helper method to instantiate an Agent with default test parameters
+  # Convert the desired mocked outputs to the AgentRunner mocked outputs
+  #
+  # @param mocked_assistant_outputs [Array<Object>, Object] List of (or single) assistant outputs (see shared examples)
+  # @return [Array<Hash{Symbol -> Object}>] The corresponding AgentRunner mocked results
+  def mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
+    # Normalize the mocked outputs
+    (mocked_assistant_outputs.is_a?(Array) ? mocked_assistant_outputs : [mocked_assistant_outputs]).map do |desc|
+      desc = { text: desc } unless desc.is_a?(Hash)
+      {
+        error: nil,
+        context: {},
+        output: desc[:text],
+        output_artifacts: desc[:output_artifacts]
+      }
+    end
+  end
+
+  it_behaves_like(
+    'a prompt driven agent',
+    new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
+      example.instance_eval do
+        agent = described_class.new(**kwargs)
+        mock_agent_runner_for(
+          agent,
+          mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
+        )
+        agent
+      end
+    end
+  )
+
+  it_behaves_like(
+    'a prompt driven agent with artifacts contracts',
+    new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
+      agent = Class.new(described_class) do
+        prepend ComposableAgents::Mixins::ArtifactContract
+      end.new(**kwargs)
+      example.instance_eval do
+        mock_agent_runner_for(
+          agent,
+          mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
+        )
+      end
+      agent
+    end
+  )
+
+  # Helper method to instantiate an Agent with test rendering strategy.
+  #
   # @param params [Hash] Parameters to pass to the agent constructor.
   # @return [ComposableAgents::Agent] The agent
   def described_agent(**params)
     described_class.new(
-      objective: 'Test objective',
       strategy: ComposableAgentsTest::TestRenderingStrategy,
-      model: 'test-model',
-      instructions: 'Test instruction',
       **params
     )
   end
 
-  # Helper method to run an Agent with default test parameters
-  # @param input_artifacts [Hash] Input artifacts to pass to the #run method.
-  # @param params [Hash] Parameters to pass to the agent constructor.
-  # @return [Hash<Symbol, Object>] The output artifacts returned by the agent run
-  def run_agent(input_artifacts: {}, **params)
-    described_agent(**params).run(**input_artifacts)
-  end
-
-  # Expect system instructions received by the agent to be a given String
-  #
-  # @param expected_instructions [String] The expected instructions
-  def expect_instructions_to_be(expected_instructions)
-    expect(Agents::AgentRunner).to have_received(:new).with(
-      satisfy { |agents| agents.first.instructions == expected_instructions }
-    )
-  end
-
-  describe 'attributes' do
-    describe '#model' do
-      it 'returns the model that was set in initialization' do
-        expect(described_agent(model: 'gpt-4o-test').model).to eq 'gpt-4o-test'
-      end
-
-      it 'uses default model when not specified explicitly' do
-        allow(Agents.configuration).to receive(:default_model).and_return('default-test-model')
-        expect(described_class.new.model).to eq 'default-test-model'
-      end
-    end
-  end
-
-  describe 'instruction rendering' do
-    {
-      'single String': {
-        instructions: 'Single instruction',
-        system_prompt: 'RENDERED_TEXT: Single instruction'
-      },
-      'single Hash with :text key': {
-        instructions: { text: 'Hash text instruction' },
-        system_prompt: 'RENDERED_TEXT: Hash text instruction'
-      },
-      'single Hash with :ordered_list key': {
-        instructions: { ordered_list: ['Step 1', 'Step 2', 'Step 3'] },
-        system_prompt: 'RENDERED_LIST: Step 1, Step 2, Step 3'
-      },
-      'Hash with multiple types': {
-        instructions: {
-          text: 'Do this task:',
-          ordered_list: ['First step', 'Second step']
-        },
-        system_prompt: 'RENDERED_TEXT: Do this task: | RENDERED_LIST: First step, Second step'
-      },
-      'Array of mixed types': {
-        instructions: [
-          'First instruction',
-          { text: 'Second instruction' },
-          { ordered_list: ['Step A', 'Step B'] }
-        ],
-        system_prompt: 'RENDERED_TEXT: First instruction | RENDERED_TEXT: Second instruction | RENDERED_LIST: Step A, Step B'
-      }
-    }.each do |description, test_data|
-      it "handles #{description}" do
-        run_agent(input_artifacts: { test_artifact: 'Content' }, instructions: test_data[:instructions])
-        expect_instructions_to_be "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact]"
-      end
-    end
-  end
-
-  describe 'prompt passing to AgentRunner' do
-    it 'passes correctly rendered system prompt to AgentRunner' do
-      run_agent(input_artifacts: { test_artifact: 'Content' }, instructions: 'Test instruction')
-      expect_instructions_to_be 'SYSTEM_PROMPT[RENDERED_TEXT: Test instruction with test_artifact]'
-    end
-
-    it 'passes correctly rendered user prompt to AgentRunner#run' do
-      run_agent(
-        input_artifacts: {
-          user_message: 'Hello user',
-          test_artifact: 'Content'
-        },
-        instructions: 'Test instruction'
-      )
-      expect(runner_double).to have_received(:run).with('USER_PROMPT: Hello user with test_artifact', anything)
-    end
-
-    it 'passes input artifacts to prompt rendering' do
-      input_artifacts = { data: 'test data', config: { key: 'value' } }
-      agent = described_agent(instructions: 'Test instruction')
-      agent.run(**input_artifacts)
-      expect(agent.render_calls).to include([:render_system_prompt, anything, input_artifacts])
-      expect(agent.render_calls).to include([:render_user_prompt, '', input_artifacts])
-    end
-
+  describe 'executing a prompt' do
     it 'raises an exception with error content when AgentRunner#run returns an error' do
-      mocked_run_results << {
-        error: double(
-          backtrace: ['backtrace line 1', 'backtrace line 2'],
-          detailed_message: 'Test error message',
-          response: double(response_body: 'Detailed error message')
-        ),
-        context: {},
-        output: nil
-      }
-      expect { run_agent(instructions: 'Test instruction') }.to raise_error(
+      agent = described_agent
+      mock_agent_runner_for(
+        agent,
+        {
+          error: double(
+            backtrace: ['backtrace line 1', 'backtrace line 2'],
+            detailed_message: 'Test error message',
+            response: double(response_body: 'Detailed error message')
+          ),
+          context: {},
+          output: nil
+        }
+      )
+      expect { agent.run }.to raise_error(
         RuntimeError,
         <<~EO_ERROR.strip
           Error: Test error message
@@ -180,204 +138,36 @@ describe ComposableAgents::AiAgents::Agent do
     end
   end
 
-  describe 'retry until all output artifacts have been provided' do
-    let(:agent) do
-      (
-        Class.new(described_class) do
-          prepend ComposableAgents::Mixins::ArtifactContract
-        end
-      ).new(
-        objective: 'Test objective',
-        strategy: ComposableAgentsTest::TestRenderingStrategy,
-        model: 'test-model',
-        instructions: 'Test instructions',
-        input_artifacts_contracts: { requirements: { description: 'Inital requirements', optional: true } },
-        output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
-      )
-    end
-
-    it 'does not retry when there are no expected output artifacts' do
-      run_agent(instructions: 'Test')
-      expect(runner_double).to have_received(:run).once
-    end
-
-    it 'does not retry when all expected artifacts are returned on first run' do
-      mocked_output_artifacts << { result: 'ok', logs: 'logs' }
-      expect(agent.run).to include(result: 'ok', logs: 'logs')
-      expect(runner_double).to have_received(:run).once
-    end
-
-    it 'retries once when some artifacts are missing on first run' do
-      mocked_output_artifacts.push(
-        { result: 'partial' },
-        { result: 'partial', logs: 'complete' }
-      )
-      expect(agent.run(requirements: 'Content')).to include(result: 'partial', logs: 'complete')
-      expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: { description: 'Execution logs', optional: false } }])
-      expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT:  with requirements', context: {} },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs) with ', context: { run_idx: 1 } }
-      ]
-    end
-
-    it 'retries multiple times until all artifacts are present' do
-      mocked_output_artifacts.push(
-        {},
-        { result: 'first' },
-        { result: 'second', logs: 'final' }
-      )
-      expect(agent.run).to include(result: 'second', logs: 'final')
-      expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT:  with ', context: {} },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: result (Final result), logs (Execution logs) with ', context: { run_idx: 1 } },
-        { user_prompt: 'USER_PROMPT: MISSING_PROMPT: logs (Execution logs) with ', context: { run_idx: 2 } }
-      ]
-    end
-  end
-
-  describe 'state' do
+  describe 'the agent\'s context' do
     it 'continues with the same context when prompted several times' do
       agent = described_agent
+      mock_agent_runner_for(agent)
       3.times { agent.run }
-      expect(agent_runner_runs).to eq [
-        { user_prompt: 'USER_PROMPT:  with ', context: {} },
-        { user_prompt: 'USER_PROMPT:  with ', context: { run_idx: 1 } },
-        { user_prompt: 'USER_PROMPT:  with ', context: { run_idx: 2 } }
+      expect(agent.spy_contexts).to eq [
+        {},
+        { run_idx: 1 },
+        { run_idx: 2 }
       ]
     end
 
-    it 'exports state that is JSON-serializable' do
-      agent = described_agent
-      agent.run
-      state = agent.export_state
-      expect { JSON.parse(state.to_json) }.not_to raise_error
-    end
-
-    it 'imports state correctly restoring both context and conversation' do
+    it 'persists the context through a JSON-serializable state' do
       agent1 = described_agent(name: 'Test Agent 1')
-      # Run agent multiple times to build up both context and conversation history
+      mock_agent_runner_for(agent1)
       agent1.run(user_message: 'First message')
       agent1.run(user_message: 'Second message')
       state = agent1.export_state
-
+      # Check that context is JSON-serializable
+      expect { JSON.parse(state.to_json) }.not_to raise_error
+      # Import the context in another agent
       agent2 = described_agent(name: 'Test Agent 2')
+      mock_agent_runner_for(agent2)
       agent2.import_state(state)
       expect(agent2.export_state).to eq state
-      # Verify conversation is preserved and identical
-      expect_conversation(
-        agent2.conversation,
-        [
-          { author: 'User', message: 'First message' },
-          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #1' },
-          { author: 'User', message: 'Second message' },
-          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #2' }
-        ]
-      )
-      # Verify that state persistence actually works across runs (continues with correct state)
+      # Verify context is preserved and identical
       agent2.run(user_message: 'Third message')
-      expect_conversation(
-        agent2.conversation,
-        [
-          { author: 'User', message: 'First message' },
-          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #1' },
-          { author: 'User', message: 'Second message' },
-          { author: 'Agent Test Agent 1', message: 'Output of AgentRunner run #2' },
-          { author: 'User', message: 'Third message' },
-          { author: 'Agent Test Agent 2', message: 'Output of AgentRunner run #3' }
-        ]
-      )
-    end
-  end
-
-  describe 'conversation' do
-    context 'without output artifacts contracts' do
-      let(:agent) do
-        described_class.new(
-          name: 'Test Agent Name',
-          strategy: ComposableAgentsTest::TestRenderingStrategy
-        )
-      end
-
-      it 'records the prompt' do
-        agent.run(user_message: 'Test user prompt')
-        expect_conversation(
-          agent.conversation,
-          [
-            { author: 'User', message: 'Test user prompt' },
-            { author: 'Agent Test Agent Name', message: 'Output of AgentRunner run #1' }
-          ]
-        )
-      end
-
-      it 'records the prompts of several runs' do
-        agent.run(user_message: 'Test user prompt')
-        agent.run(user_message: 'Test another user prompt')
-        agent.run(user_message: 'What?')
-        expect_conversation(
-          agent.conversation,
-          [
-            { author: 'User', message: 'Test user prompt' },
-            { author: 'Agent Test Agent Name', message: 'Output of AgentRunner run #1' },
-            { author: 'User', message: 'Test another user prompt' },
-            { author: 'Agent Test Agent Name', message: 'Output of AgentRunner run #2' },
-            { author: 'User', message: 'What?' },
-            { author: 'Agent Test Agent Name', message: 'Output of AgentRunner run #3' }
-          ]
-        )
-      end
-    end
-
-    context 'with output artifacts contracts' do
-      let(:agent) do
-        Class.new(described_class) do
-          prepend ComposableAgents::Mixins::ArtifactContract
-        end.new(
-          strategy: ComposableAgentsTest::TestRenderingStrategy,
-          input_artifacts_contracts: {},
-          output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
-        )
-      end
-
-      it 'records retry prompts when there are output artifact contracts and 1 retry' do
-        mocked_output_artifacts.push(
-          {},
-          { result: 'complete', logs: 'success' }
-        )
-        agent.run
-        expect_conversation(
-          agent.conversation,
-          [
-            { author: 'User', message: '' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
-            { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #2' }
-          ]
-        )
-      end
-
-      it 'records all retries when there are multiple missing artifacts, several retries and runs' do
-        mocked_output_artifacts.push(
-          {},
-          { result: 'first' },
-          { result: 'second', logs: 'final' },
-          { result: 'second', logs: 'final' }
-        )
-        agent.run
-        agent.run(user_message: 'Again')
-        expect_conversation(
-          agent.conversation,
-          [
-            { author: 'User', message: '' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #1' },
-            { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #2' },
-            { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #3' },
-            { author: 'User', message: 'Again' },
-            { author: 'Agent Executor', message: 'Output of AgentRunner run #4' }
-          ]
-        )
-      end
+      expect(agent2.spy_contexts).to eq [
+        { run_idx: 2 }
+      ]
     end
   end
 end
