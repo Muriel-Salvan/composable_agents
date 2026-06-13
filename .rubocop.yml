@@ -3,7 +3,6 @@ plugins: rubocop-rspec
 AllCops:
   NewCops: enable
 
-
 # Be consistent on indentations
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
@@ -25,7 +24,11 @@ Lint/UnusedMethodArgument:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/AbcSize:
-  Max: 50
+  Max: 70
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/ClassLength:
+  Max: 140
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
@@ -33,7 +36,11 @@ Metrics/CyclomaticComplexity:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/MethodLength:
-  Max: 40
+  Max: 60
+
+# It's ok to have longer methods, while keeping readability.
+Metrics/ModuleLength:
+  Max: 130
 
 # kwargs should not count towards max parameters list.
 Metrics/ParameterLists:
@@ -61,6 +68,12 @@ RSpec/MultipleExpectations:
 RSpec/NestedGroups:
   Max: 5
 
+# Some test files can output to stdout and stderr
+RSpec/Output:
+  Exclude:
+    # This file handles test debug output
+    - spec/composable_agents_test/helpers.rb
+
 # TODO: Remove this by using ruby-serial instead of Marshall
 Security/MarshalLoad:
   Enabled: false
@@ -77,3 +90,7 @@ Style/MutableConstant:
 Style/OneClassPerFile:
   Exclude:
     - 'examples/*.rb'
+
+# Some objects have a lot of optional nested attributes
+Style/SafeNavigationChainLength:
+  Max: 3

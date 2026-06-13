@@ -1,0 +1,215 @@
+require 'cline'
+require 'json'
+
+module ComposableAgents
+  # All agents from this module work with the awesome cline-rb Rubygem
+  module Cline
+    # Agent implementation that uses an ai-agent's AgentRunner.
+    class Agent < PromptDrivenAgent
+      prepend Mixins::ArtifactContract
+
+      # Initialize a new agent that uses the Cline CLI in a dedicated config
+      #
+      # @param strategy [Module] The prompt rendering strategy
+      # @param provider [String] Provider to be used
+      # @param model [String] Model to be used
+      # @param api_key [String] API key to be used
+      # @param plan_mode [Boolean] Should this agent perform in Plan mode?
+      # @param configure [#call(provider_settings), nil] Optional block used to configure the provider settings
+      #   * Param provider_settings [Cline::Providers::ProviderSettings] Settings that can be tuned for this agent
+      # @param skills [Array<String>] List of skills to allow for this agent
+      # @param cli_options [Hash{Symbol => Object}] Task options to give to Cline CLI (see Cline::Cli.COMMANDS)
+      def initialize(
+        *args,
+        strategy: PromptRenderingStrategy::MarkdownHeavy,
+        provider: 'cline',
+        model: 'anthropic/claude-sonnet-4.6',
+        api_key: ENV.fetch('CLINE_API_KEY', nil),
+        plan_mode: false,
+        configure: nil,
+        skills: [],
+        cli_options: {},
+        **kwargs
+      )
+        super(*args, strategy:, **kwargs)
+        @provider = provider
+        @model = model
+        @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil
+        @plan_mode = plan_mode
+        @configure = configure
+        @skills = skills
+        @cli_options = cli_options
+        @context = []
+      end
+
+      # Export the agent state for persistence
+      #
+      # @return [Object] Serialized state that can be marshalled to JSON
+      def export_state
+        super.merge(
+          context: @context
+        )
+      end
+
+      # Import the agent state from persistence
+      #
+      # @param state [Object] Serialized state
+      def import_state(state)
+        super
+        @context = state[:context]
+      end
+
+      private
+
+      # Prepare the context for a given rendered system prompt
+      #
+      # @param system_prompt [Object] The rendered system prompt
+      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+      # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
+      # @yield Code to be executed with the context prepared
+      def with_system_prompt(system_prompt, input_artifacts:, output_artifacts:)
+        # Resolve all the skills and their dependencies (taken from their YAML front matter).
+        selected_skills = []
+        @skills.each do |skill|
+          find_skill(skill, selected_skills)
+        end
+        # Setup the temporary Cline global config dir
+        agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
+        ::Cline.configure do |config|
+          config.debug = Mixins::Logger.debug?
+          config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
+        end
+        cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
+        # Copy all selected global skills in this config's skills
+        (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
+          new_skill = cline_config.skills.new(skill_name)
+          new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
+          new_skill.enable
+          log_debug "[Cline] - Enable global skill #{skill_name}"
+          new_skill.save
+        end
+        # Enable/disable project skills to make sure only selected ones are enabled
+        ::Cline::Config.project&.skills&.each do |skill_name, skill|
+          selected_skill = selected_skills.include?(skill_name)
+          unless skill.enabled? == selected_skill
+            if selected_skill
+              log_debug "[Cline] - Enable project skill #{skill_name}"
+              skill.enable
+            else
+              log_debug "[Cline] - Disable project skill #{skill_name}"
+              skill.disable
+            end
+          end
+        end
+        # Set the configuration
+        providers = cline_config.providers(create: true)
+        providers.version = 1
+        providers.last_used_provider = @provider
+        # TODO: Find a better way without exposing class names
+        provider_settings = ::Cline::Providers::ProviderSettings.new(
+          provider: @provider,
+          api_key: @api_key,
+          model: @model
+        )
+        @configure&.call(providers_settings)
+        providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
+        providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
+          token_source: 'manual',
+          updated_at: Time.now.utc.strftime('%FT%T.%LZ'),
+          settings: provider_settings
+        )
+        providers.save
+        @cline_cli = cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
+        @system_prompt = system_prompt
+        # Save the output artifacts to be completed with the subsequent prompts
+        @output_artifacts_to_fill = output_artifacts
+        yield
+      end
+
+      # Process a user prompt.
+      # Prerequisites:
+      # * This method is always called within a with_system_prompt block.
+      #
+      # @param user_prompt [Object] The rendered user prompt
+      # @return [String] The output of the prompt
+      def prompt(user_prompt)
+        # Call the Cline CLI
+        result = @cline_cli.task(
+          user_prompt,
+          system: @system_prompt,
+          on_question: respond_to?(:ask, true) ? proc { |question| ask(question) } : nil,
+          **@cli_options
+        )
+        raise "Error: #{result[:error].err.message}".strip if result[:error]
+
+        # Handle output artifacts
+        #
+        # Scan the assistant's answer for JSON documents with artifact markers in the format:
+        # ```json artifact=ARTIFACT_<NAME>
+        # {artifact_content}
+        # ```
+        assistant_answer = result[:message]&.content&.last&.text
+        assistant_answer&.scan(/```json\s+artifact=(\S+)\n(.*?)```/m) do
+          raw_name = Regexp.last_match(1)
+          content = Regexp.last_match(2).strip
+          # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
+          if raw_name.start_with?('ARTIFACT_')
+            artifact_name = raw_name.sub(/^ARTIFACT_/, '').downcase.to_sym
+            begin
+              @output_artifacts_to_fill[artifact_name] = JSON.parse(content)
+            rescue JSON::ParserError
+              log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
+                'but JSON could not be parsed from the assistant\'s answer.'
+            end
+          end
+        end
+
+        # Keep the context in case we need to resume it
+        if @cline_cli.session&.messages
+          @context.concat(
+            @cline_cli.session.messages.map do |message|
+              {
+                role: message.role,
+                content: message.content.map do |content|
+                  {
+                    type: content.type,
+                    text: content.text,
+                    input:
+                      if content.input
+                        {
+                          question: content.input.question,
+                          options: content.input.options
+                        }.compact
+                      end,
+                    content: content.content
+                  }.compact
+                end
+              }
+            end
+          )
+        end
+
+        assistant_answer || ''
+      end
+
+      # Find a skill among the current Cline environment (global and local) and recursively finds all its dependencies.
+      #
+      # @param skill [String] The skill name we are looking for
+      # @param found_skills [Array<String>] In place list of skills that are already found (so we don't need to look for them again)
+      #   If found, the skill and its dependencies will be added to this array.
+      def find_skill(skill, found_skills)
+        return if found_skills.include?(skill)
+
+        # Find the skill among the global or local configs
+        found_skill = ::Cline::Config.global.skills[skill] || ::Cline::Config.local.skills[skill]
+        raise "Cline Skill #{skill} is unknown, neither in the global nor local configurations" unless found_skill
+
+        found_skills << skill
+        # Now look for its dependencies
+        (found_skill.yaml_front_matter.dig(*%i[metadata dependencies]) || []).each do |skill_dep|
+          find_skill(skill_dep, found_skills)
+        end
+      end
+    end
+  end
+end

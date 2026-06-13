@@ -1,2 +1,13 @@
 # This repo builds a Rubygem. No lock file then.
 Gemfile.lock
+
+# This repo uses cline-rb that needs some node modules.
+node_modules/
+package.json
+package-lock.json
+
+# Running examples creates composable agents directory.
+.composable_agents/
+
+# Running tests creates composable agents test directory.
+.composable_agents_test/
