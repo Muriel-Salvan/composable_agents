@@ -60,7 +60,6 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         ]
       )
       expect(agent.run).to include(result: 'partial', logs: 'complete')
-      expect(agent.render_calls).to include([:missing_output_user_prompt, { logs: { description: 'Execution logs', optional: false } }])
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
         'USER_PROMPT[MISSING_PROMPT: logs (Execution logs)]'

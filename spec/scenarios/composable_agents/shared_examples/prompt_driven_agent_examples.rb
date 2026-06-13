@@ -133,7 +133,13 @@ shared_examples 'a prompt driven agent' do |opts|
     end
 
     context 'with input artifacts' do
-      let(:agent) { new_agent(**({ input_artifacts_contracts: opts[:contracts] ? { requirements: 'Features specs' } : nil }).compact) }
+      let(:agent) do
+        new_agent(
+          **{
+            input_artifacts_contracts: opts[:contracts] ? { requirements: 'Features specs' } : nil
+          }.compact
+        )
+      end
 
       it 'sends the artifacts in the user prompt' do
         agent.run(user_message: 'You must do this', requirements: 'Feature specs')
