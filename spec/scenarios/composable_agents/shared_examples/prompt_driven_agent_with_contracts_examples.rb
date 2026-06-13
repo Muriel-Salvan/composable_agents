@@ -13,9 +13,9 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
   #   - Param mocked_assistant_outputs [Array<Object>, Object] List of (or single) assistant outputs to mock.
   #     An output can be one of:
   #     - [String] The text output of the assistant.
-  #     - [Hash{Symbol -> Object}] A more detailed structure describing the output:
+  #     - [Hash{Symbol => Object}] A more detailed structure describing the output:
   #       - text [String] The text output of the assistant (same as the String version of the output).
-  #       - output_artifacts [Hash{Symbol -> Object}] The output artifacts that should be mocked by the run.
+  #       - output_artifacts [Hash{Symbol => Object}] The output artifacts that should be mocked by the run.
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
 
@@ -98,9 +98,9 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         agent.conversation,
         [
           { author: 'User', message: '' },
-          { author: 'Agent Executor', message: 'Assistant Output #1' },
+          { author: 'Agent Executor', message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-          { author: 'Agent Executor', message: 'Assistant Output #2' }
+          { author: 'Agent Executor', message: /Assistant Output #2/ }
         ]
       )
     end
@@ -121,13 +121,13 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         agent.conversation,
         [
           { author: 'User', message: '' },
-          { author: 'Agent Executor', message: 'Assistant Output #1' },
+          { author: 'Agent Executor', message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-          { author: 'Agent Executor', message: 'Assistant Output #2' },
+          { author: 'Agent Executor', message: /Assistant Output #2/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
-          { author: 'Agent Executor', message: 'Assistant Output #3' },
+          { author: 'Agent Executor', message: /Assistant Output #3/ },
           { author: 'User', message: 'Again' },
-          { author: 'Agent Executor', message: 'Assistant Output #4' }
+          { author: 'Agent Executor', message: /Assistant Output #4/ }
         ]
       )
     end

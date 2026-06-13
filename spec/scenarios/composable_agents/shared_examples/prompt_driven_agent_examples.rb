@@ -15,9 +15,9 @@ shared_examples 'a prompt driven agent' do |opts|
   #   - Param mocked_assistant_outputs [Array<Object>, Object] List of (or single) assistant outputs to mock.
   #     An output can be one of:
   #     - [String] The text output of the assistant.
-  #     - [Hash{Symbol -> Object}] A more detailed structure describing the output:
+  #     - [Hash{Symbol => Object}] A more detailed structure describing the output:
   #       - text [String] The text output of the assistant (same as the String version of the output).
-  #       - output_artifacts [Hash{Symbol -> Object}] The output artifacts that should be mocked by the run.
+  #       - output_artifacts [Hash{Symbol => Object}] The output artifacts that should be mocked by the run.
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
   # - contracts [Boolean] Is the agent using artifacts contracts? Defaults to `false`.
@@ -104,12 +104,10 @@ shared_examples 'a prompt driven agent' do |opts|
 
           it 'uses the input artifacts in the system prompt' do
             agent = new_agent(
-              **(
-                {
-                  instructions: test_data[:instructions],
-                  input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
-                }.compact
-              )
+              **{
+                instructions: test_data[:instructions],
+                input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
+              }.compact
             )
             agent.run(user_message: 'Do this', test_artifact: 'Content')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact (Content)]"
@@ -120,7 +118,7 @@ shared_examples 'a prompt driven agent' do |opts|
   end
 
   describe 'the user prompt' do
-    let(:agent) { new_agent }
+    let(:agent) { new_agent(mocked_assistant_outputs: 'Assistant Output') }
 
     it 'sends the user message in the user prompt' do
       agent.run(user_message: 'You must do this')

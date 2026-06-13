@@ -1,20 +1,45 @@
 module ComposableAgentsTest
   module Helpers
+    # @return [Boolean] Are we in test debug mode?
+    def self.debug?
+      ENV['TEST_DEBUG'] == '1'
+    end
+
+    # Log debug a message
+    #
+    # @param message [String, nil] The message to log debug, or nil if given by a proc returning the message for lazy evaluation
+    # @yield The optional code returning the message to log in case of debug
+    # @yieldreturn [String] The message to log
+    def log_debug(message = nil)
+      return unless Debug.debug?
+
+      puts "[CLINE TEST DEBUG] - #{block_given? ? yield : message}"
+    end
+
     # Expect conversation to follow a given sequence.
     # This validates the authors and messages.
     # It also makes sure that timestamps are ordered properly and with a proper format.
     #
-    # @param conversation [Array<Hash<Symbol, String>>] The recorded conversation
-    # @param expected_conversation [Array<Hash<Symbol, String>>] The expected conversation
+    # @param conversation [Array<Hash{Symbol => Object}>] The recorded conversation.
+    # @param expected_conversation [Array<Hash{Symbol => Object}>] The expected conversation.
+    #   If object values of the expected conversation ar Regexp, then pattern matching is used instead of equality.
     def expect_conversation(conversation, expected_conversation)
-      expect(conversation.map { |message| message.except(:at) }).to eq(
-        # Normalize expected_conversation with some default values
-        expected_conversation.map do |message|
-          {
-            question: false
-          }.merge(message)
+      expect(conversation.size).to eq expected_conversation.size
+      conversation.zip(expected_conversation).each do |message, expected_message|
+        # Normalize messages with some default values
+        message = message.except(:at)
+        expected_message = {
+          question: false
+        }.merge(expected_message)
+        expect(message.size).to eq expected_message.size
+        message.each do |message_attr, message_value|
+          if expected_message[message_attr].is_a?(Regexp)
+            expect(message_value).to match expected_message[message_attr]
+          else
+            expect(message_value).to eq expected_message[message_attr]
+          end
         end
-      )
+      end
       timestamps = conversation.map { |message| message[:at] }
       expect(timestamps.sort).to eq timestamps
     end

@@ -9,7 +9,7 @@ describe ComposableAgents::AiAgents::Agent do
   # @param mocked_run_results [Array<Hash{Symbol => Object}>, Hash{Symbol => Object}] List of (or single)
   #   mocked results that will be returned by AgentRunner#run, for each call to AgentRunner#run.
   #   The following properties are used by our mock:
-  #   - output_artifacts [Hash{Symbol -> Object}] The output artifacts that should also be returned by this run.
+  #   - output_artifacts [Hash{Symbol => Object}] The output artifacts that should also be returned by this run.
   def mock_agent_runner_for(agent, mocked_run_results = [])
     mocked_run_results = [mocked_run_results] unless mocked_run_results.is_a?(Array)
     allow(Agents::AgentRunner).to receive(:new) do |agents|
@@ -56,7 +56,7 @@ describe ComposableAgents::AiAgents::Agent do
   # Convert the desired mocked outputs to the AgentRunner mocked outputs
   #
   # @param mocked_assistant_outputs [Array<Object>, Object] List of (or single) assistant outputs (see shared examples)
-  # @return [Array<Hash{Symbol -> Object}>] The corresponding AgentRunner mocked results
+  # @return [Array<Hash{Symbol => Object}>] The corresponding AgentRunner mocked results
   def mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
     # Normalize the mocked outputs
     (mocked_assistant_outputs.is_a?(Array) ? mocked_assistant_outputs : [mocked_assistant_outputs]).map do |desc|

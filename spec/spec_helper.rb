@@ -27,6 +27,18 @@ RSpec.configure do |config|
   # Include test helpers
   config.include ComposableAgentsTest::Helpers
 
+  # Around hook for all test cases
+  # Don't use a before hook for that purpose, as before hooks are always run after around hooks.
+  config.around do |example|
+    original_debug = ENV.fetch('COMPOSABLE_AGENTS_DEBUG', nil)
+    ENV['COMPOSABLE_AGENTS_DEBUG'] = '1' if ComposableAgentsTest::Helpers.debug?
+    begin
+      example.run
+    ensure
+      ENV['COMPOSABLE_AGENTS_DEBUG'] = original_debug
+    end
+  end
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
