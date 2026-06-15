@@ -1,3 +1,6 @@
+# Require the Cline CLI stub provided by the cline-rb Rubygem
+require "#{Gem.loaded_specs['cline-rb'].full_gem_path}/spec/cline_test/cli_stub"
+
 module ComposableAgentsTest
   module Helpers
     # Provide helpers for Cline agent tests

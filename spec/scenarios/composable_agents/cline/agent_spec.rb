@@ -1,9 +1,6 @@
 require_relative '../shared_examples/prompt_driven_agent_examples'
 require_relative '../shared_examples/prompt_driven_agent_with_contracts_examples'
 require 'fileutils'
-require 'yaml'
-# Require the Cline CLI stub provided by the cline-rb Rubygem
-require "#{Gem.loaded_specs['cline-rb'].full_gem_path}/spec/cline_test/cli_stub"
 
 describe ComposableAgents::Cline::Agent do
   around do |example|

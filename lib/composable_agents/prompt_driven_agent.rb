@@ -180,14 +180,14 @@ module ComposableAgents
 
     # Track a message that is part of the conversation with this agent
     #
-    # @param message [String] The message content
+    # @param message [String, #to_hash] The message content, as a String or an object that can be hashed
     # @param author [String] Author of the message
     # @param question [Boolean] Is this message a question expecting a reply?
     def track_message(message:, author: 'Orchestrator', question: false)
       @conversation << {
         at: Time.now.utc,
         author:,
-        message:,
+        message: message.is_a?(String) ? message : message&.to_hash,
         question:
       }
     end

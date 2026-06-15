@@ -1,3 +1,5 @@
+require 'yaml'
+
 describe ComposableAgents::Cline::Agent do
   describe 'skills' do
     # Run an agent and stub its output to dump the skills configuration.
