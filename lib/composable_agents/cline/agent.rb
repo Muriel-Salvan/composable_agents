@@ -4,6 +4,10 @@ require 'json'
 module ComposableAgents
   # All agents from this module work with the awesome cline-rb Rubygem
   module Cline
+    # Missin skill error
+    class MissingSkillError < RuntimeError
+    end
+
     # Agent implementation that uses an ai-agent's AgentRunner.
     class Agent < PromptDrivenAgent
       prepend Mixins::ArtifactContract
@@ -14,7 +18,6 @@ module ComposableAgents
       # @param provider [String] Provider to be used
       # @param model [String] Model to be used
       # @param api_key [String] API key to be used
-      # @param plan_mode [Boolean] Should this agent perform in Plan mode?
       # @param configure [#call(provider_settings), nil] Optional block used to configure the provider settings
       #   * Param provider_settings [Cline::Providers::ProviderSettings] Settings that can be tuned for this agent
       # @param skills [Array<String>] List of skills to allow for this agent
@@ -25,7 +28,6 @@ module ComposableAgents
         provider: 'cline',
         model: 'anthropic/claude-sonnet-4.6',
         api_key: ENV.fetch('CLINE_API_KEY', nil),
-        plan_mode: false,
         configure: nil,
         skills: [],
         cli_options: {},
@@ -35,7 +37,6 @@ module ComposableAgents
         @provider = provider
         @model = model
         @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil
-        @plan_mode = plan_mode
         @configure = configure
         @skills = skills
         @cli_options = cli_options
@@ -81,25 +82,28 @@ module ComposableAgents
         end
         cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
         # Copy all selected global skills in this config's skills
-        (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
-          new_skill = cline_config.skills.new(skill_name)
-          new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
-          new_skill.enable
-          log_debug "[Cline] - Enable global skill #{skill_name}"
-          new_skill.save
+        if ::Cline::Config.global.skills
+          (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
+            new_skill = cline_config.skills.new(skill_name)
+            new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
+            new_skill.enable
+            log_debug "[Cline] - Enable global skill #{skill_name}"
+            new_skill.save
+          end
         end
         # Enable/disable project skills to make sure only selected ones are enabled
         ::Cline::Config.project&.skills&.each do |skill_name, skill|
           selected_skill = selected_skills.include?(skill_name)
-          unless skill.enabled? == selected_skill
-            if selected_skill
-              log_debug "[Cline] - Enable project skill #{skill_name}"
-              skill.enable
-            else
-              log_debug "[Cline] - Disable project skill #{skill_name}"
-              skill.disable
-            end
+          next if skill.enabled? == selected_skill
+
+          if selected_skill
+            log_debug "[Cline] - Enable project skill #{skill_name}"
+            skill.enable
+          else
+            log_debug "[Cline] - Disable project skill #{skill_name}"
+            skill.disable
           end
+          skill.save
         end
         # Set the configuration
         providers = cline_config.providers(create: true)
@@ -111,7 +115,7 @@ module ComposableAgents
           api_key: @api_key,
           model: @model
         )
-        @configure&.call(providers_settings)
+        @configure&.call(provider_settings)
         providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
         providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
           token_source: 'manual',
@@ -192,7 +196,7 @@ module ComposableAgents
         assistant_answer || ''
       end
 
-      # Find a skill among the current Cline environment (global and local) and recursively finds all its dependencies.
+      # Find a skill among the current Cline environment (global and project) and recursively finds all its dependencies.
       #
       # @param skill [String] The skill name we are looking for
       # @param found_skills [Array<String>] In place list of skills that are already found (so we don't need to look for them again)
@@ -201,8 +205,9 @@ module ComposableAgents
         return if found_skills.include?(skill)
 
         # Find the skill among the global or local configs
-        found_skill = ::Cline::Config.global.skills[skill] || ::Cline::Config.local.skills[skill]
-        raise "Cline Skill #{skill} is unknown, neither in the global nor local configurations" unless found_skill
+        found_skill = (::Cline::Config.global.skills && ::Cline::Config.global.skills[skill]) ||
+          (::Cline::Config.project.skills && ::Cline::Config.project.skills[skill])
+        raise MissingSkillError, "Cline Skill #{skill} is unknown, neither in the global nor project configurations" unless found_skill
 
         found_skills << skill
         # Now look for its dependencies

@@ -1,67 +1,17 @@
 require_relative '../shared_examples/prompt_driven_agent_examples'
 require_relative '../shared_examples/prompt_driven_agent_with_contracts_examples'
 require 'fileutils'
+require 'yaml'
 # Require the Cline CLI stub provided by the cline-rb Rubygem
 require "#{Gem.loaded_specs['cline-rb'].full_gem_path}/spec/cline_test/cli_stub"
 
 describe ComposableAgents::Cline::Agent do
-  # @return [ClineTest::CliStub] The Cline CLI stub that is used in tests
-  attr_reader :cli_stub
-
-  # Mock a Cline CLI execution process for a given agent.
-  # This will use the ClineTest CLI stub and set spies in an agent for expectations.
-  #
-  # @param agent [ComposableAgents::Agent] The agent to be used to spy on Cline CLI
-  # @param mocked_run_results [Array<Hash{Symbol => Object}>, Hash{Symbol => Object}] List of (or single)
-  #   mocked results that will be returned by the stub, for each call to the stub.
-  def mock_cline_for(agent, mocked_run_results = [])
-    mocked_run_results = [mocked_run_results] unless mocked_run_results.is_a?(Array)
-    @cli_stub = ClineTest::CliStub.new(
-      example: self,
-      debug: ComposableAgentsTest::Helpers.debug?,
-      temp_dir: '.composable_agents_test/cline_stub'
-    )
-    cli_stub.mock_commands(
-      mocked_run_results.map do |mocked_run_result|
-        {
-          log: {},
-          session: {
-            messages: [{ ts: 100, content: [{ text: mocked_run_result[:stdout] }] }]
-          },
-          exit: mocked_run_result[:exit_status]
-        }
-      end
-    )
-    # Add spies to the agent for the mock to work properly and make it inspectable.
-    class << agent
-      include ComposableAgentsTest::ClineAgentSpies
-    end
-    agent.cli_stub = cli_stub
-  end
-
-  # Convert the desired mocked outputs to the Cline mocked outputs
-  #
-  # @param mocked_assistant_outputs [Array<Object>, Object] List of (or single) assistant outputs (see shared examples)
-  # @return [Array<Hash{Symbol => Object}>] The corresponding Cline mocked results
-  def mocked_outputs_to_cline_outputs(mocked_assistant_outputs)
-    # Normalize the mocked outputs
-    (mocked_assistant_outputs.is_a?(Array) ? mocked_assistant_outputs : [mocked_assistant_outputs]).map do |desc|
-      desc = { text: desc } unless desc.is_a?(Hash)
-      stdout = desc[:text] || ''
-      if desc[:output_artifacts] && !desc[:output_artifacts].empty?
-        stdout << "\n\n"
-        stdout << (desc[:output_artifacts] || {}).map do |artifact_name, artifact_content|
-          <<~EO_STDOUT
-            ```json artifact=ARTIFACT_#{artifact_name.to_s.upcase}
-            #{artifact_content.to_json}
-            ```
-          EO_STDOUT
-        end.join("\n")
-      end
-      {
-        stdout:,
-        exit_status: 0
-      }
+  around do |example|
+    original_key = ENV.delete('CLINE_API_KEY')
+    begin
+      example.call
+    ensure
+      ENV['CLINE_API_KEY'] = original_key if original_key
     end
   end
 
@@ -108,5 +58,210 @@ describe ComposableAgents::Cline::Agent do
       strategy: ComposableAgentsTest::TestRenderingStrategy,
       **params
     )
+  end
+
+  describe 'dedicated config directory' do
+    it 'uses a dedicated directory to run the Cline CLI config' do
+      agent = described_agent
+      mock_cline_for(
+        agent,
+        {
+          stdout: {
+            eval: <<~EO_RUBY
+              config_dir
+            EO_RUBY
+          }
+        }
+      )
+      agent.run
+      used_config_dir = agent.conversation.last[:message]
+      expect(used_config_dir).not_to eq Cline::Config.global.dir
+      # Could be that project dir does not exist. Check all possible cases.
+      expect(used_config_dir).not_to eq Cline::Config.project&.dir
+      expect(used_config_dir).not_to eq '.cline'
+    end
+  end
+
+  describe 'constructor parameters' do
+    # Run an agent and stub its output to dump the content of its providers settings.
+    #
+    # @param kwargs [Hash] Parameters to give to the agent's constructor
+    # @return [Hash] The corresponding providers' settings that this agent was given
+    def capture_provider_settings(**kwargs)
+      agent = described_agent(**kwargs)
+      mock_cline_for(
+        agent,
+        {
+          stdout: {
+            eval: <<~EO_RUBY
+              JSON.parse(File.read("\#{config_dir}/data/settings/providers.json")).to_json
+            EO_RUBY
+          }
+        }
+      )
+      agent.run
+      JSON.parse(agent.conversation.last[:message], symbolize_names: true)
+    end
+
+    describe 'provider' do
+      it 'defaults to "cline"' do
+        provider_settings = capture_provider_settings
+        expect(provider_settings[:lastUsedProvider]).to eq 'cline'
+        expect(provider_settings[:providers][:cline][:settings][:provider]).to eq 'cline'
+      end
+
+      it 'accepts a custom provider string' do
+        provider_settings = capture_provider_settings(provider: 'openai')
+        expect(provider_settings[:lastUsedProvider]).to eq 'openai'
+        expect(provider_settings[:providers][:openai][:settings][:provider]).to eq 'openai'
+      end
+    end
+
+    describe 'model' do
+      it 'defaults to "anthropic/claude-sonnet-4.6"' do
+        expect(capture_provider_settings[:providers][:cline][:settings][:model]).to eq 'anthropic/claude-sonnet-4.6'
+      end
+
+      it 'accepts a custom model string' do
+        expect(capture_provider_settings(model: 'gpt-4o')[:providers][:cline][:settings][:model]).to eq 'gpt-4o'
+      end
+
+      it 'accepts a nil model' do
+        expect(capture_provider_settings(model: nil)[:providers][:cline][:settings][:model]).to be_nil
+      end
+    end
+
+    describe 'api_key' do
+      it 'defaults to nil when CLINE_API_KEY is not set' do
+        expect(capture_provider_settings[:providers][:cline][:settings][:apiKey]).to be_nil
+      end
+
+      it 'defaults to ENV["CLINE_API_KEY"] when set' do
+        ENV['CLINE_API_KEY'] = 'env-key-123'
+        expect(capture_provider_settings[:providers][:cline][:settings][:apiKey]).to eq 'env-key-123'
+      end
+
+      it 'prefers an explicit api_key over ENV' do
+        ENV['CLINE_API_KEY'] = 'env-key-123'
+        expect(capture_provider_settings(api_key: 'explicit-key-456')[:providers][:cline][:settings][:apiKey]).to eq 'explicit-key-456'
+      end
+
+      it 'accepts an empty api_key' do
+        expect(capture_provider_settings(api_key: '')[:providers][:cline][:settings][:apiKey]).to eq ''
+      end
+
+      it 'accepts a nil api_key' do
+        expect(capture_provider_settings(api_key: nil)[:providers][:cline][:settings][:apiKey]).to be_nil
+      end
+    end
+
+    describe 'configure' do
+      it 'does not change the provider settings if not given' do
+        expect(capture_provider_settings[:providers][:cline][:settings]).to eq(
+          {
+            provider: 'cline',
+            model: 'anthropic/claude-sonnet-4.6'
+          }
+        )
+      end
+
+      it 'gets the provider settings as a parameter and can modify it' do
+        expect(
+          capture_provider_settings(
+            provider: 'openai',
+            configure: proc do |settings|
+              expect(settings.provider).to eq 'openai'
+              settings.model = 'my-new-model'
+            end
+          )[:providers][:openai][:settings][:model]
+        ).to eq 'my-new-model'
+      end
+    end
+
+    describe 'cli_options' do
+      # Capture the CLI options that were given to Cline CLI.
+      # Don't capture the --config option.
+      #
+      # @param cli_options [Hash] CLI options to give to the agent's constructor.
+      # @return [Array<String>] The CLI options given to Cline CLI.
+      def capture_cli_options(cli_options = {})
+        agent = described_agent(cli_options:)
+        mock_cline_for(agent)
+        agent.run
+        agent.cli_stub.issued_commands.last[:command][2..]
+      end
+
+      it 'defaults to no option' do
+        expect(capture_cli_options).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes plan: true to the CLI task command' do
+        expect(capture_cli_options(plan: true)).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--plan',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes model option to the CLI task command' do
+        expect(capture_cli_options(model: 'custom-cli-model')).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--model', 'custom-cli-model',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes auto_approve: true to the CLI task command' do
+        expect(capture_cli_options(auto_approve: true)).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--auto-approve',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes thinking option to the CLI task command' do
+        expect(capture_cli_options(thinking: 'high')).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--thinking', 'high',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes timeout option to the CLI task command' do
+        expect(capture_cli_options(timeout: 300)).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--timeout', '300',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes multiple options simultaneously' do
+        expect(capture_cli_options(plan: true, model: 'multi-model', auto_approve: true)).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--plan',
+          '--model', 'multi-model',
+          '--auto-approve',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'passes data_dir option to the CLI task command' do
+        expect(capture_cli_options(data_dir: '/custom/data/path')).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--data-dir', '/custom/data/path',
+          'USER_PROMPT[]'
+        ]
+      end
+
+      it 'does not include false options' do
+        expect(capture_cli_options(plan: false)).to eq [
+          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          'USER_PROMPT[]'
+        ]
+      end
+    end
   end
 end

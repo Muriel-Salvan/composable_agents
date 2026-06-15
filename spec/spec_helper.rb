@@ -31,7 +31,7 @@ RSpec.configure do |config|
   # Don't use a before hook for that purpose, as before hooks are always run after around hooks.
   config.around do |example|
     original_debug = ENV.fetch('COMPOSABLE_AGENTS_DEBUG', nil)
-    ENV['COMPOSABLE_AGENTS_DEBUG'] = '1' if ComposableAgentsTest::Helpers.debug?
+    ENV['COMPOSABLE_AGENTS_DEBUG'] = '1' if ComposableAgentsTest::Helpers::Debug.debug?
     begin
       example.run
     ensure

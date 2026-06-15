@@ -18,6 +18,10 @@ Layout/LineLength:
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 
+# Be consistent on indentations
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
 # Not all plugins use all keyword arguments, it's normal.
 Lint/UnusedMethodArgument:
   AllowUnusedKeywordArguments: true
@@ -28,7 +32,7 @@ Metrics/AbcSize:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ClassLength:
-  Max: 140
+  Max: 150
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
@@ -58,7 +62,7 @@ RSpec/DescribeClass:
 
 # It's ok to have scenarios having multiple lines
 RSpec/ExampleLength:
-  Max: 50
+  Max: 60
 
 # It's ok to have test scenarios having several expectations
 RSpec/MultipleExpectations:
@@ -72,7 +76,7 @@ RSpec/NestedGroups:
 RSpec/Output:
   Exclude:
     # This file handles test debug output
-    - spec/composable_agents_test/helpers.rb
+    - spec/composable_agents_test/helpers/debug.rb
 
 # TODO: Remove this by using ruby-serial instead of Marshall
 Security/MarshalLoad:
