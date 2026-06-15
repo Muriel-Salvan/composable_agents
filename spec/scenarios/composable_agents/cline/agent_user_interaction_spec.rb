@@ -43,16 +43,7 @@ describe ComposableAgents::Cline::Agent do
   end
 
   around do |example|
-    original_key = ENV.delete('CLINE_API_KEY')
-    begin
-      example.call
-    ensure
-      ENV['CLINE_API_KEY'] = original_key if original_key
-    end
-  end
-
-  before do
-    FileUtils.rm_rf('.composable_agents_test')
+    with_cline_api_key_cleared { example.call }
   end
 
   describe 'user interaction' do

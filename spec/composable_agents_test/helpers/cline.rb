@@ -5,6 +5,18 @@ module ComposableAgentsTest
   module Helpers
     # Provide helpers for Cline agent tests
     module Cline
+      # Safe-remove the CLINE_API_KEY env variable for some code to run.
+      #
+      # @yield Code called with the CLINE_API_KEY env variable removed.
+      def with_cline_api_key_cleared
+        original_key = ENV.delete('CLINE_API_KEY')
+        begin
+          yield
+        ensure
+          ENV['CLINE_API_KEY'] = original_key if original_key
+        end
+      end
+
       # @return [ClineTest::CliStub] The Cline CLI stub that is used in tests
       attr_reader :cli_stub
 
