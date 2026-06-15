@@ -66,7 +66,6 @@ describe ComposableAgents::Cline::Agent do
     end
 
     around do |example|
-      FileUtils.rm_rf('.composable_agents_test')
       # Set a test project config directory
       project_dir = '.composable_agents_test/cline_project'
       FileUtils.rm_rf project_dir

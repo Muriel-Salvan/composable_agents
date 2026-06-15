@@ -30,6 +30,7 @@ RSpec.configure do |config|
   # Around hook for all test cases
   # Don't use a before hook for that purpose, as before hooks are always run after around hooks.
   config.around do |example|
+    FileUtils.rm_rf('.composable_agents_test')
     original_debug = ENV.fetch('COMPOSABLE_AGENTS_DEBUG', nil)
     ENV['COMPOSABLE_AGENTS_DEBUG'] = '1' if ComposableAgentsTest::Helpers::Debug.debug?
     begin
