@@ -48,13 +48,13 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
 
       ## `ARTIFACT_PLAN`
 
-      ```json artifact=ARTIFACT_PLAN
+      ```json input_artifact=ARTIFACT_PLAN
       "Build a house"
       ```
 
       ## `ARTIFACT_BUDGET`
 
-      ```json artifact=ARTIFACT_BUDGET
+      ```json input_artifact=ARTIFACT_BUDGET
       {"amount":50000,"currency":"EUR"}
       ```
 
@@ -88,13 +88,13 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
 
       ## `ARTIFACT_PLAN`
 
-      ```json artifact=ARTIFACT_PLAN
+      ```json input_artifact=ARTIFACT_PLAN
       "Complete the report"
       ```
 
       ## `ARTIFACT_DRAFT`
 
-      ```json artifact=ARTIFACT_DRAFT
+      ```json input_artifact=ARTIFACT_DRAFT
       "Partial draft content"
       ```
 
@@ -117,7 +117,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
 
       ## `ARTIFACT_PLAN`
 
-      ```json artifact=ARTIFACT_PLAN
+      ```json input_artifact=ARTIFACT_PLAN
       "Just the plan"
       ```
     EO_PROMPT
@@ -150,7 +150,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
 
       ## `ARTIFACT_DOC`
 
-      ```json artifact=ARTIFACT_DOC
+      ```json input_artifact=ARTIFACT_DOC
       "Some content"
       ```
 

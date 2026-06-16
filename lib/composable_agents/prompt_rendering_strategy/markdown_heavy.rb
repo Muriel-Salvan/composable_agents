@@ -103,7 +103,7 @@ module ComposableAgents
 
             - The user will ask you to provide some artifacts as output.
             - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-              ```json artifact=#{MarkdownHeavy.assistant_artifact_name(:name)}
+              ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(:name)}
               {artifact_content}
               ```
             - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
@@ -115,7 +115,7 @@ module ComposableAgents
                   "- The content of output artifact `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}` should describe this: #{artifact_contract[:description]}",
                   <<~EO_ITEM.strip
                     - The output artifact `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}` should be given in a block like this:
-                      ```json artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
+                      ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
                       {artifact_content}
                       ```
                   EO_ITEM
@@ -157,7 +157,7 @@ module ComposableAgents
                 <<~EO_ARTIFACT_SECTION.strip
                   ## `#{name}`
 
-                  ```json artifact=#{name}
+                  ```json input_artifact=#{name}
                   #{artifact_content.to_json}
                   ```
                 EO_ARTIFACT_SECTION
@@ -192,7 +192,7 @@ module ComposableAgents
           #{
             missing_output_artifacts.map do |artifact_name, _desc|
               <<~EO_MARKDOWN.strip
-                ```json artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
+                ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
                 {#{MarkdownHeavy.assistant_artifact_name(artifact_name)} artifact content}
                 ```
               EO_MARKDOWN

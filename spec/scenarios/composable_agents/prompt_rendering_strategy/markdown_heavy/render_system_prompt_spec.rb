@@ -327,7 +327,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The user will ask you to provide some artifacts as output.
         - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-          ```json artifact=ARTIFACT_NAME
+          ```json output_artifact=ARTIFACT_NAME
           {artifact_content}
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
@@ -335,12 +335,12 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - You can return several output artifacts in your final response if needed.
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json artifact=ARTIFACT_REPORT
+          ```json output_artifact=ARTIFACT_REPORT
           {artifact_content}
           ```
         - The content of output artifact `ARTIFACT_SUMMARY` should describe this: Executive summary
         - The output artifact `ARTIFACT_SUMMARY` should be given in a block like this:
-          ```json artifact=ARTIFACT_SUMMARY
+          ```json output_artifact=ARTIFACT_SUMMARY
           {artifact_content}
           ```
       EO_SYSTEM_PROMPT
@@ -378,7 +378,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The user will ask you to provide some artifacts as output.
         - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-          ```json artifact=ARTIFACT_NAME
+          ```json output_artifact=ARTIFACT_NAME
           {artifact_content}
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
@@ -386,7 +386,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - You can return several output artifacts in your final response if needed.
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json artifact=ARTIFACT_REPORT
+          ```json output_artifact=ARTIFACT_REPORT
           {artifact_content}
           ```
       EO_SYSTEM_PROMPT
@@ -429,7 +429,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The user will ask you to provide some artifacts as output.
         - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-          ```json artifact=ARTIFACT_NAME
+          ```json output_artifact=ARTIFACT_NAME
           {artifact_content}
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
@@ -437,7 +437,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - You can return several output artifacts in your final response if needed.
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json artifact=ARTIFACT_REPORT
+          ```json output_artifact=ARTIFACT_REPORT
           {artifact_content}
           ```
       EO_SYSTEM_PROMPT

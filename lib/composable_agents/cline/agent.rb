@@ -162,7 +162,7 @@ module ComposableAgents
         # {artifact_content}
         # ```
         assistant_answer = result[:message]&.content&.last&.text
-        assistant_answer&.scan(/```json\s+artifact=(\S+)\n(.*?)```/m) do
+        assistant_answer&.scan(/```json\s+output_artifact=(\S+)\n(.*?)```/m) do
           raw_name = Regexp.last_match(1)
           content = Regexp.last_match(2).strip
           # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)

@@ -14,15 +14,15 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#missing_out
 
       You must provide each one of them in your next response using embedded JSON blocks like this:
 
-      ```json artifact=ARTIFACT_REPORT
+      ```json output_artifact=ARTIFACT_REPORT
       {ARTIFACT_REPORT artifact content}
       ```
 
-      ```json artifact=ARTIFACT_SUMMARY
+      ```json output_artifact=ARTIFACT_SUMMARY
       {ARTIFACT_SUMMARY artifact content}
       ```
 
-      ```json artifact=ARTIFACT_LOGS
+      ```json output_artifact=ARTIFACT_LOGS
       {ARTIFACT_LOGS artifact content}
       ```
 
@@ -41,7 +41,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#missing_out
 
       You must provide each one of them in your next response using embedded JSON blocks like this:
 
-      ```json artifact=ARTIFACT_RESULT
+      ```json output_artifact=ARTIFACT_RESULT
       {ARTIFACT_RESULT artifact content}
       ```
 
