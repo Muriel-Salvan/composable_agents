@@ -20,6 +20,8 @@ module ComposableAgents
       # @param api_key [String] API key to be used
       # @param configure_provider [#call(provider_settings), nil] Optional block used to configure the provider settings
       #   * Param provider_settings [Cline::Providers::ProviderSettings] Settings that can be tuned for this agent
+      # @param configure_global [#call(global_settings), nil] Optional block used to configure the global settings
+      #   * Param global_settings [Cline::GlobalSettings] Settings that can be tuned for this agent
       # @param skills [Array<String>] List of skills to allow for this agent
       # @param cli_options [Hash{Symbol => Object}] Task options to give to Cline CLI (see Cline::Cli.COMMANDS)
       def initialize(
@@ -29,6 +31,7 @@ module ComposableAgents
         model: 'anthropic/claude-sonnet-4.6',
         api_key: ENV.fetch('CLINE_API_KEY', nil),
         configure_provider: nil,
+        configure_global: nil,
         skills: [],
         cli_options: {},
         **kwargs
@@ -38,6 +41,7 @@ module ComposableAgents
         @model = model
         @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil
         @configure_provider = configure_provider
+        @configure_global = configure_global
         @skills = skills
         @cli_options = cli_options
         @context = []
@@ -123,6 +127,11 @@ module ComposableAgents
           settings: provider_settings
         )
         providers.save
+        global_settings = cline_config.global_settings(create: true)
+        # Don't update the Cline CLI
+        global_settings.auto_update_enabled = false
+        @configure_global&.call(global_settings)
+        global_settings.save
         @cline_cli = cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
         @system_prompt = system_prompt
         # Save the output artifacts to be completed with the subsequent prompts

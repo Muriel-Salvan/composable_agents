@@ -166,6 +166,55 @@ describe ComposableAgents::Cline::Agent do
       end
     end
 
+    describe 'configure_global' do
+      # Run an agent and stub its output to dump the content of its global settings.
+      #
+      # @param kwargs [Hash] Parameters to give to the agent's constructor
+      # @return [Hash] The corresponding global settings that this agent was given
+      def capture_global_settings(**kwargs)
+        agent = described_agent(**kwargs)
+        mock_cline_for(
+          agent,
+          {
+            stdout: {
+              eval: <<~EO_RUBY
+                JSON.parse(File.read("\#{config_dir}/data/settings/global-settings.json")).to_json
+              EO_RUBY
+            }
+          }
+        )
+        agent.run
+        JSON.parse(agent.conversation.last[:message], symbolize_names: true)
+      end
+
+      it 'does not change the global settings if not given' do
+        expect(capture_global_settings).to eq(
+          {
+            autoUpdateEnabled: false,
+            disabledTools: []
+          }
+        )
+      end
+
+      it 'gets the global settings as a parameter and can modify it' do
+        expect(
+          capture_global_settings(
+            configure_global: proc do |settings|
+              settings.auto_update_enabled = true
+              settings.telemetry_opt_out = true
+              settings.disabled_tools = %w[tool1 tool2]
+            end
+          )
+        ).to eq(
+          {
+            autoUpdateEnabled: true,
+            telemetryOptOut: true,
+            disabledTools: %w[tool1 tool2]
+          }
+        )
+      end
+    end
+
     describe 'cli_options' do
       # Capture the CLI options that were given to Cline CLI.
       # Don't capture the --config option.
