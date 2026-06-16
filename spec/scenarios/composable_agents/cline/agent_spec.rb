@@ -143,7 +143,7 @@ describe ComposableAgents::Cline::Agent do
       end
     end
 
-    describe 'configure' do
+    describe 'configure_provider' do
       it 'does not change the provider settings if not given' do
         expect(capture_provider_settings[:providers][:cline][:settings]).to eq(
           {
@@ -157,7 +157,7 @@ describe ComposableAgents::Cline::Agent do
         expect(
           capture_provider_settings(
             provider: 'openai',
-            configure: proc do |settings|
+            configure_provider: proc do |settings|
               expect(settings.provider).to eq 'openai'
               settings.model = 'my-new-model'
             end

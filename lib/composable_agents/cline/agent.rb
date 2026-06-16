@@ -18,7 +18,7 @@ module ComposableAgents
       # @param provider [String] Provider to be used
       # @param model [String] Model to be used
       # @param api_key [String] API key to be used
-      # @param configure [#call(provider_settings), nil] Optional block used to configure the provider settings
+      # @param configure_provider [#call(provider_settings), nil] Optional block used to configure the provider settings
       #   * Param provider_settings [Cline::Providers::ProviderSettings] Settings that can be tuned for this agent
       # @param skills [Array<String>] List of skills to allow for this agent
       # @param cli_options [Hash{Symbol => Object}] Task options to give to Cline CLI (see Cline::Cli.COMMANDS)
@@ -28,7 +28,7 @@ module ComposableAgents
         provider: 'cline',
         model: 'anthropic/claude-sonnet-4.6',
         api_key: ENV.fetch('CLINE_API_KEY', nil),
-        configure: nil,
+        configure_provider: nil,
         skills: [],
         cli_options: {},
         **kwargs
@@ -37,7 +37,7 @@ module ComposableAgents
         @provider = provider
         @model = model
         @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil
-        @configure = configure
+        @configure_provider = configure_provider
         @skills = skills
         @cli_options = cli_options
         @context = []
@@ -115,7 +115,7 @@ module ComposableAgents
           api_key: @api_key,
           model: @model
         )
-        @configure&.call(provider_settings)
+        @configure_provider&.call(provider_settings)
         providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
         providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
           token_source: 'manual',
