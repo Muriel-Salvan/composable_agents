@@ -227,10 +227,10 @@ module ComposableAgents
           begin
             @output_artifacts_to_fill[artifact_name] = JSON.parse(content)
             log_debug "[Artifact] - Received output artifact #{artifact_name}"
-          rescue JSON::ParserError
+          rescue JSON::ParserError => e
             # TODO: Make this as a warning message
             log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
-              'but JSON could not be parsed from the assistant\'s answer.'
+              "but JSON could not be parsed from the assistant's answer: #{e}"
           end
         end
       end
