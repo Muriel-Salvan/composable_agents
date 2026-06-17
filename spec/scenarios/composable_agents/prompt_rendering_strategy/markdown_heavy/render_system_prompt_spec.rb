@@ -9,20 +9,41 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
   # @return [String] The rendered system prompt
   def system_prompt(
     rendered_instructions: ['Instruction 1', 'Instruction 2'],
-    role: 'Test Agent Role',
     input_artifacts_contracts: nil,
     input_artifacts: {},
     **kwargs
   )
-    agent_for_markdown_heavy(input_artifacts_contracts:, role:, **kwargs).render_system_prompt(rendered_instructions, input_artifacts:)
+    agent_for_markdown_heavy(input_artifacts_contracts:, **kwargs).render_system_prompt(rendered_instructions, input_artifacts:)
   end
 
-  it 'includes role, instructions sections without input artifacts intro if there aren\'t any artifacts' do
+  it 'includes instructions section without input artifacts intro if there aren\'t any artifacts' do
     expect(system_prompt).to eq <<~EO_SYSTEM_PROMPT.strip
+      # Instructions
+
+      Instruction 1
+
+      Instruction 2
+    EO_SYSTEM_PROMPT
+  end
+
+  it 'includes role section if present' do
+    expect(system_prompt(role: 'Test Agent Role')).to eq <<~EO_SYSTEM_PROMPT.strip
       # Role
 
       Test Agent Role
 
+      # Instructions
+
+      Instruction 1
+
+      Instruction 2
+    EO_SYSTEM_PROMPT
+  end
+
+  it 'omits role section when role is empty' do
+    expect(
+      system_prompt(role: '')
+    ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions
 
       Instruction 1
@@ -63,10 +84,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     expect(
       system_prompt(objective: 'Complete the assigned task')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Objective
 
       Complete the assigned task
@@ -83,10 +100,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     expect(
       system_prompt(objective: '')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -99,10 +112,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     expect(
       system_prompt(constraints: 'Do not exceed token limits')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -119,10 +128,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     expect(
       system_prompt(constraints: '')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -134,16 +139,11 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
   it 'does not embed the input artifacts content in the system prompt' do
     expect(
       system_prompt(
-        role: 'Test Agent Role',
         input_artifacts_contracts: { requirements: 'The features specifications' },
         input_artifacts: { requirements: 'Feature specifications content' },
         rendered_instructions: ['Instruction 1', 'Instruction 2']
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -172,10 +172,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           }
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Instructions
 
         Instruction 1
@@ -206,10 +202,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           }
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Instructions
 
         Instruction 1
@@ -240,10 +232,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           }
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Instructions
 
         Instruction 1
@@ -272,10 +260,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           constraints: 'Limit to 3 pages'
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Objective
 
         Produce analysis report
@@ -313,10 +297,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           }
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Instructions
 
         Instruction 1
@@ -346,12 +326,13 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
       EO_SYSTEM_PROMPT
     end
 
-    it 'combines output artifacts with objective and constraints' do
+    it 'combines output artifacts with role, objective and constraints' do
       expect(
         system_prompt(
           output_artifacts_contracts: {
             report: 'The final report'
           },
+          role: 'Test Agent Role',
           objective: 'Generate monthly report',
           constraints: 'Use formal language'
         )
@@ -405,10 +386,6 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           }
         )
       ).to eq <<~EO_SYSTEM_PROMPT.strip
-        # Role
-
-        Test Agent Role
-
         # Instructions
 
         Instruction 1

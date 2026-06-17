@@ -47,14 +47,13 @@ module ComposableAgents
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @return [Object] The rendered system prompt
       def render_system_prompt(rendered_instructions, input_artifacts: {})
-        sections = [
-          <<~EO_SECTION
-            # Role
+        sections = []
+        sections << <<~EO_SECTION if @role && !@role.empty?
+          # Role
 
-            #{Utils::Markdown.align_markdown_headers(@role, level: 2).strip}
-          EO_SECTION
-        ]
-        sections << <<~EO_SECTION unless @objective.empty?
+          #{Utils::Markdown.align_markdown_headers(@role, level: 2).strip}
+        EO_SECTION
+        sections << <<~EO_SECTION if @objective && !@objective.empty?
           # Objective
 
           #{Utils::Markdown.align_markdown_headers(@objective, level: 2).strip}
@@ -64,7 +63,7 @@ module ComposableAgents
 
           #{rendered_instructions.map { |instructions| Utils::Markdown.align_markdown_headers(instructions, level: 2).strip }.join("\n\n")}
         EO_SECTION
-        sections << <<~EO_SECTION unless @constraints.empty?
+        sections << <<~EO_SECTION if @constraints && !@constraints.empty?
           # Constraints
 
           #{Utils::Markdown.align_markdown_headers(@constraints, level: 2).strip}

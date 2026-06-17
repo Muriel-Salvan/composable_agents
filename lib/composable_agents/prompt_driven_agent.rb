@@ -42,9 +42,9 @@ module ComposableAgents
     # Initialize a new PromptDrivenAgent with the information needed for prompts and the selected prompt rendering strategy.
     # If no name is provided, it will default to 'Executor'.
     #
-    # @param role [String, NilClass] Agent's role, or nil for default
-    # @param objective [String] Agent's objective
-    # @param instructions [Object] Original instructions given to the agent
+    # @param role [String, nil] Agent's role, or nil for the agent's default
+    # @param objective [String, nil] Agent's objective, or nil for the agent's default
+    # @param instructions [Object, nil] Original instructions given to the agent, or nil for the agent's default
     #   Here are the possible kinds of instructions:
     #   * [Array<Object>] List of instruction descriptions that should be appended
     #   * [Object] Individual instruction description.
@@ -55,28 +55,31 @@ module ComposableAgents
     #       * text [String] The instructions are given as text directly.
     #       * ordered_list [Array<String>] The instructions are a precise list of steps to perform.
     #       Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
-    # @param constraints [String] Constraints to be respected
+    # @param constraints [String, nil] Constraints to be respected, or nil for the agent's default
     # @param strategy [Module] The prompt rendering strategy
     def initialize(
       *args,
       role: nil,
-      objective: '',
-      instructions: '',
-      constraints: '',
+      objective: nil,
+      instructions: nil,
+      constraints: nil,
       strategy: PromptRenderingStrategy::Markdown,
       **kwargs
     )
       super(*args, **kwargs)
       singleton_class.include strategy
-      @name ||= 'Executor'
-      @role = role || "You are a #{@name} agent"
+      @role = role
       @objective = objective
       # Normalize instructions to [Array<Hash<Symbol, Object>>]. Each instruction can contain the following keys:
       # * text [String] The instructions are given as text directly.
       # * ordered_list [Array<String>] The instructions are a precise list of steps to perform.
       # Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
       @instructions = (
-        instructions.is_a?(Array) ? instructions : [instructions]
+        if instructions
+          instructions.is_a?(Array) ? instructions : [instructions]
+        else
+          []
+        end
       ).map { |instruction_desc| instruction_desc.is_a?(Hash) ? instruction_desc : { text: instruction_desc } }
       @constraints = constraints
       @conversation = []
@@ -155,7 +158,7 @@ module ComposableAgents
       track_message(message: user_prompt, author:)
       response = prompt(rendered_user_prompt)
       log_debug "Raw Agent #{name} response: #{response}"
-      track_message(message: response, author: "Agent #{name}")
+      track_message(message: response, author: "Agent#{" #{name}" if name}")
     end
 
     # Prepare the context for a given rendered system prompt

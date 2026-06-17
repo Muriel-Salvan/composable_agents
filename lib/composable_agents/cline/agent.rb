@@ -37,6 +37,8 @@ module ComposableAgents
         **kwargs
       )
         super(*args, strategy:, **kwargs)
+        # Name is used in many places. Provide a default one.
+        @name ||= 'Executor'
         @provider = provider
         @model = model
         @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil

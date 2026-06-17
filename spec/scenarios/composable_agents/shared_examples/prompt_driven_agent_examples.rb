@@ -5,10 +5,10 @@ shared_examples 'a prompt driven agent' do |opts|
   # - new_agent [#call(example, **kwargs) -> Agent] Factory proc that initializes a new agent, decorated for testing purposes.
   #   The returned instance should provide the method `spy -> Hash{Symbol, Object}` so that the test scenarios can inspect the agent.
   #   The returned spy should have the following properties:
-  #     - role [String] The agent's role
-  #     - objective [String] The agent's objective
-  #     - instructions [Object] The agent's normalized instructions
-  #     - constraints [String] The agent's constraints
+  #     - role [String, nil] The agent's role
+  #     - objective [String, nil] The agent's objective
+  #     - instructions [Object, nil] The agent's normalized instructions
+  #     - constraints [String, nil] The agent's constraints
   #     - system_prompt [Object] The last rendered system prompt
   #     - user_prompts [Array<Object>] The ordered list of user prompts
   #   - Param example [RSpec::Core::ExampleGroup] The example calling this factory
@@ -21,9 +21,13 @@ shared_examples 'a prompt driven agent' do |opts|
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
   # - contracts [Boolean] Is the agent using artifacts contracts? Defaults to `false`.
+  # - default_conversation_name [String] The default conversation name
+
+  # Set default values
   opts.replace(
     {
-      contracts: false
+      contracts: false,
+      default_conversation_name: 'Agent'
     }.merge(opts)
   )
 
@@ -158,8 +162,7 @@ shared_examples 'a prompt driven agent' do |opts|
           'Assistant Output #1',
           'Assistant Output #2',
           'Assistant Output #3'
-        ],
-        name: 'Test Assistant'
+        ]
       )
     end
 
@@ -167,6 +170,21 @@ shared_examples 'a prompt driven agent' do |opts|
       agent.run(user_message: 'Test user prompt')
       expect_conversation(
         agent.conversation,
+        [
+          { author: 'User', message: 'Test user prompt' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #1' }
+        ]
+      )
+    end
+
+    it 'records the prompt using a specific agent name' do
+      named_agent = new_agent(
+        mocked_assistant_outputs: ['Assistant Output #1'],
+        name: 'Test Assistant'
+      )
+      named_agent.run(user_message: 'Test user prompt')
+      expect_conversation(
+        named_agent.conversation,
         [
           { author: 'User', message: 'Test user prompt' },
           { author: 'Agent Test Assistant', message: 'Assistant Output #1' }
@@ -182,11 +200,11 @@ shared_examples 'a prompt driven agent' do |opts|
         agent.conversation,
         [
           { author: 'User', message: 'Test user prompt' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #1' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
           { author: 'User', message: 'Test another user prompt' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #2' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #2' },
           { author: 'User', message: 'What?' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #3' }
+          { author: opts[:default_conversation_name], message: 'Assistant Output #3' }
         ]
       )
     end
@@ -208,9 +226,9 @@ shared_examples 'a prompt driven agent' do |opts|
         other_agent.conversation,
         [
           { author: 'User', message: 'First message' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #1' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
           { author: 'User', message: 'Second message' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #2' }
+          { author: opts[:default_conversation_name], message: 'Assistant Output #2' }
         ]
       )
       # State persistence should work across runs: it continues with correct state
@@ -219,9 +237,9 @@ shared_examples 'a prompt driven agent' do |opts|
         other_agent.conversation,
         [
           { author: 'User', message: 'First message' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #1' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
           { author: 'User', message: 'Second message' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #2' },
+          { author: opts[:default_conversation_name], message: 'Assistant Output #2' },
           { author: 'User', message: 'Third message' },
           { author: 'Agent Test Other Assistant', message: 'Other Assistant Output #1' }
         ]

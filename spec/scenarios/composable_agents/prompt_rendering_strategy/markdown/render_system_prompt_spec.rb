@@ -7,18 +7,29 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
   # @return [String] The rendered system prompt
   def system_prompt(
     rendered_instructions: ['Instruction 1', 'Instruction 2'],
-    role: 'Test Agent Role',
     **kwargs
   )
-    agent_for_markdown(role:, **kwargs).render_system_prompt(rendered_instructions)
+    agent_for_markdown(**kwargs).render_system_prompt(rendered_instructions)
   end
 
-  it 'includes role section always' do
-    expect(system_prompt).to eq <<~EO_SYSTEM_PROMPT.strip
+  it 'includes role section if present' do
+    expect(system_prompt(role: 'Test Agent Role')).to eq <<~EO_SYSTEM_PROMPT.strip
       # Role
 
       Test Agent Role
 
+      # Instructions
+
+      Instruction 1
+
+      Instruction 2
+    EO_SYSTEM_PROMPT
+  end
+
+  it 'omits role section when role is empty' do
+    expect(
+      system_prompt(role: '')
+    ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions
 
       Instruction 1
@@ -104,10 +115,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
         ]
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       ## Header 1
@@ -128,10 +135,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
     expect(
       system_prompt(objective: 'Complete the assigned task')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Objective
 
       Complete the assigned task
@@ -148,10 +151,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
     expect(
       system_prompt(objective: '')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -172,10 +171,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
         EO_OBJECTIVE
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Objective
 
       ## Objective Header 1
@@ -204,10 +199,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
         EO_OBJECTIVE
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Objective
 
       ## Objective Header 1
@@ -228,10 +219,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
     expect(
       system_prompt(constraints: 'Do not exceed token limits')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -248,10 +235,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
     expect(
       system_prompt(constraints: '')
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -272,10 +255,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
         EO_CONSTRAINTS
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -304,10 +283,6 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
         EO_CONSTRAINTS
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1
@@ -326,12 +301,8 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
 
   it 'does not use the input artifacts' do
     expect(
-      agent_for_markdown(role: 'Test Agent Role').render_system_prompt(['Instruction 1', 'Instruction 2'], input_artifacts: { document: 'Description' })
+      agent_for_markdown.render_system_prompt(['Instruction 1', 'Instruction 2'], input_artifacts: { document: 'Description' })
     ).to eq <<~EO_SYSTEM_PROMPT.strip
-      # Role
-
-      Test Agent Role
-
       # Instructions
 
       Instruction 1

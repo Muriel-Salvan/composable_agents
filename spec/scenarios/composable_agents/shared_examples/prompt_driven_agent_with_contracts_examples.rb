@@ -18,6 +18,14 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
   #       - output_artifacts [Hash{Symbol => Object}] The output artifacts that should be mocked by the run.
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
+  # - default_conversation_name [String] The default conversation name
+
+  # Set default values
+  opts.replace(
+    {
+      default_conversation_name: 'Agent'
+    }.merge(opts)
+  )
 
   # @return [Hash{Symbol, Object}] The shared examples options, now accessible to examples' helpers
   attr_reader :opts
@@ -98,9 +106,30 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         agent.conversation,
         [
           { author: 'User', message: '' },
-          { author: 'Agent Executor', message: /Assistant Output #1/ },
+          { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-          { author: 'Agent Executor', message: /Assistant Output #2/ }
+          { author: opts[:default_conversation_name], message: /Assistant Output #2/ }
+        ]
+      )
+    end
+
+    it 'records retry prompts with the agent name when given' do
+      agent = new_agent(
+        name: 'Travel Planner',
+        output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' },
+        mocked_assistant_outputs: [
+          { text: 'Assistant Output #1', output_artifacts: {} },
+          { text: 'Assistant Output #2', output_artifacts: { result: 'complete', logs: 'success' } }
+        ]
+      )
+      agent.run
+      expect_conversation(
+        agent.conversation,
+        [
+          { author: 'User', message: '' },
+          { author: 'Agent Travel Planner', message: /Assistant Output #1/ },
+          { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+          { author: 'Agent Travel Planner', message: /Assistant Output #2/ }
         ]
       )
     end
@@ -121,13 +150,13 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         agent.conversation,
         [
           { author: 'User', message: '' },
-          { author: 'Agent Executor', message: /Assistant Output #1/ },
+          { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-          { author: 'Agent Executor', message: /Assistant Output #2/ },
+          { author: opts[:default_conversation_name], message: /Assistant Output #2/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
-          { author: 'Agent Executor', message: /Assistant Output #3/ },
+          { author: opts[:default_conversation_name], message: /Assistant Output #3/ },
           { author: 'User', message: 'Again' },
-          { author: 'Agent Executor', message: /Assistant Output #4/ }
+          { author: opts[:default_conversation_name], message: /Assistant Output #4/ }
         ]
       )
     end

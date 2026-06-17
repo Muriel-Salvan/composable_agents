@@ -19,7 +19,8 @@ describe ComposableAgents::Cline::Agent do
         agent
       end
     end,
-    contracts: true
+    contracts: true,
+    default_conversation_name: 'Agent Executor'
   )
 
   it_behaves_like(
@@ -33,7 +34,8 @@ describe ComposableAgents::Cline::Agent do
         )
         agent
       end
-    end
+    end,
+    default_conversation_name: 'Agent Executor'
   )
 
   # Helper method to instantiate an Agent with test rendering strategy.
@@ -89,6 +91,16 @@ describe ComposableAgents::Cline::Agent do
       )
       agent.run
       JSON.parse(agent.conversation.last[:message], symbolize_names: true)
+    end
+
+    describe 'name' do
+      it 'defaults to "Executor"' do
+        expect(described_agent.name).to eq 'Executor'
+      end
+
+      it 'accepts a custom name' do
+        expect(described_agent(name: 'Test Assistant').name).to eq 'Test Assistant'
+      end
     end
 
     describe 'provider' do
@@ -230,14 +242,14 @@ describe ComposableAgents::Cline::Agent do
 
       it 'defaults to no option' do
         expect(capture_cli_options).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           'USER_PROMPT[]'
         ]
       end
 
       it 'passes plan: true to the CLI task command' do
         expect(capture_cli_options(plan: true)).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--plan',
           'USER_PROMPT[]'
         ]
@@ -245,7 +257,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes model option to the CLI task command' do
         expect(capture_cli_options(model: 'custom-cli-model')).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--model', 'custom-cli-model',
           'USER_PROMPT[]'
         ]
@@ -253,7 +265,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes auto_approve: true to the CLI task command' do
         expect(capture_cli_options(auto_approve: true)).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--auto-approve',
           'USER_PROMPT[]'
         ]
@@ -261,7 +273,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes thinking option to the CLI task command' do
         expect(capture_cli_options(thinking: 'high')).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--thinking', 'high',
           'USER_PROMPT[]'
         ]
@@ -269,7 +281,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes timeout option to the CLI task command' do
         expect(capture_cli_options(timeout: 300)).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--timeout', '300',
           'USER_PROMPT[]'
         ]
@@ -277,7 +289,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes multiple options simultaneously' do
         expect(capture_cli_options(plan: true, model: 'multi-model', auto_approve: true)).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--plan',
           '--model', 'multi-model',
           '--auto-approve',
@@ -287,7 +299,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'passes data_dir option to the CLI task command' do
         expect(capture_cli_options(data_dir: '/custom/data/path')).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           '--data-dir', '/custom/data/path',
           'USER_PROMPT[]'
         ]
@@ -295,7 +307,7 @@ describe ComposableAgents::Cline::Agent do
 
       it 'does not include false options' do
         expect(capture_cli_options(plan: false)).to eq [
-          '--system', 'SYSTEM_PROMPT[RENDERED_TEXT: ]',
+          '--system', 'SYSTEM_PROMPT[]',
           'USER_PROMPT[]'
         ]
       end
