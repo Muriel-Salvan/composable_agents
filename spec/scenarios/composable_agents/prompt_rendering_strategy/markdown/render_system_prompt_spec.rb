@@ -6,7 +6,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
   # @param kwargs [Hash] The constructor parameters of the agent
   # @return [String] The rendered system prompt
   def system_prompt(
-    rendered_instructions: ['Instruction 1', 'Instruction 2'],
+    rendered_instructions: "Instruction 1\n\nInstruction 2",
     **kwargs
   )
     agent_for_markdown(**kwargs).render_system_prompt(rendered_instructions)
@@ -94,25 +94,16 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
     EO_SYSTEM_PROMPT
   end
 
-  it 'levels properly headers of text instructions' do
+  it 'levels big headers in instructions properly' do
     expect(
       system_prompt(
-        rendered_instructions: [
-          <<~EO_INSTRUCTION,
-            # Header 1
+        rendered_instructions: <<~EO_INSTRUCTIONS
+          # Header 1
 
-            ## 1. Header 1.1
+          ## 1. Header 1.1
 
-            ## 2. Header 1.2
-          EO_INSTRUCTION
-          <<~EO_INSTRUCTION
-            ### Header 2
-
-            #### Header 2.1
-
-            ##### Header 2.1.1
-          EO_INSTRUCTION
-        ]
+          ## 2. Header 1.2
+        EO_INSTRUCTIONS
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions
@@ -122,12 +113,28 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
       ### 1. Header 1.1
 
       ### 2. Header 1.2
+    EO_SYSTEM_PROMPT
+  end
 
-      ## Header 2
+  it 'levels small headers in instructions properly' do
+    expect(
+      system_prompt(
+        rendered_instructions: <<~EO_INSTRUCTIONS
+          ### Header 1
 
-      ### Header 2.1
+          #### Header 1.1
 
-      #### Header 2.1.1
+          ##### Header 1.1.1
+        EO_INSTRUCTIONS
+      )
+    ).to eq <<~EO_SYSTEM_PROMPT.strip
+      # Instructions
+
+      ## Header 1
+
+      ### Header 1.1
+
+      #### Header 1.1.1
     EO_SYSTEM_PROMPT
   end
 
@@ -301,7 +308,7 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
 
   it 'does not use the input artifacts' do
     expect(
-      agent_for_markdown.render_system_prompt(['Instruction 1', 'Instruction 2'], input_artifacts: { document: 'Description' })
+      agent_for_markdown.render_system_prompt("Instruction 1\n\nInstruction 2", input_artifacts: { document: 'Description' })
     ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions
 

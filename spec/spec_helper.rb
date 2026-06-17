@@ -1,4 +1,5 @@
 require 'composable_agents'
+require 'fileutils'
 require 'zeitwerk'
 
 module ComposableAgentsTest

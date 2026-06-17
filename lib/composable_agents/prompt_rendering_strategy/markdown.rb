@@ -5,7 +5,7 @@ module ComposableAgents
       # Render an instruction of type text
       #
       # @param instruction [String] The instruction to render
-      # @return [Object] The rendered instruction
+      # @return [String] The rendered instruction
       def render_instruction_text(instruction)
         instruction
       end
@@ -13,16 +13,24 @@ module ComposableAgents
       # Render an instruction of type ordered_list
       #
       # @param instruction [Array<String>] The instruction to render
-      # @return [Object] The rendered instruction
+      # @return [String] The rendered instruction
       def render_instruction_ordered_list(instruction)
         instruction.map.with_index { |step, step_idx| "# #{step_idx + 1}. #{step}" }.join("\n\n")
       end
 
+      # Render a list of rendered instructions
+      #
+      # @param instructions [Array<String>] The instructions list to render
+      # @return [String] The rendered instructions list
+      def render_instructions_list(instructions)
+        instructions.map { |instruction| Utils::Markdown.align_markdown_headers(instruction, level: 1).strip }.join("\n\n")
+      end
+
       # Render the system prompt
       #
-      # @param rendered_instructions [Array<Object>] The rendered instructions
+      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @return [Object] The rendered system prompt
+      # @return [String] The rendered system prompt
       def render_system_prompt(rendered_instructions, input_artifacts: {})
         sections = []
         sections << <<~EO_SECTION if @role && !@role.empty?
@@ -35,10 +43,10 @@ module ComposableAgents
 
           #{Utils::Markdown.align_markdown_headers(@objective, level: 2).strip}
         EO_SECTION
-        sections << <<~EO_SECTION unless rendered_instructions.empty?
+        sections << <<~EO_SECTION if rendered_instructions && !rendered_instructions.empty?
           # Instructions
 
-          #{rendered_instructions.map { |instructions| Utils::Markdown.align_markdown_headers(instructions, level: 2).strip }.join("\n\n")}
+          #{Utils::Markdown.align_markdown_headers(rendered_instructions, level: 2).strip}
         EO_SECTION
         sections << <<~EO_SECTION if @constraints && !@constraints.empty?
           # Constraints
@@ -52,7 +60,7 @@ module ComposableAgents
       #
       # @param user_message [String] The user message
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @return [Object] The rendered user prompt
+      # @return [String] The rendered user prompt
       def render_user_prompt(user_message, input_artifacts: {})
         user_message
       end

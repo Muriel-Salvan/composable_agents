@@ -12,7 +12,7 @@ module ComposableAgents
       # Render an instruction of type ordered_list
       #
       # @param instruction [Array<String>] The instruction to render
-      # @return [Object] The rendered instruction
+      # @return [String] The rendered instruction
       def render_instruction_ordered_list(instruction)
         return '' if instruction.empty?
 
@@ -43,31 +43,11 @@ module ComposableAgents
 
       # Render the system prompt
       #
-      # @param rendered_instructions [Array<Object>] The rendered instructions
+      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @return [Object] The rendered system prompt
+      # @return [String] The rendered system prompt
       def render_system_prompt(rendered_instructions, input_artifacts: {})
-        sections = []
-        sections << <<~EO_SECTION if @role && !@role.empty?
-          # Role
-
-          #{Utils::Markdown.align_markdown_headers(@role, level: 2).strip}
-        EO_SECTION
-        sections << <<~EO_SECTION if @objective && !@objective.empty?
-          # Objective
-
-          #{Utils::Markdown.align_markdown_headers(@objective, level: 2).strip}
-        EO_SECTION
-        sections << <<~EO_SECTION unless rendered_instructions.empty?
-          # Instructions
-
-          #{rendered_instructions.map { |instructions| Utils::Markdown.align_markdown_headers(instructions, level: 2).strip }.join("\n\n")}
-        EO_SECTION
-        sections << <<~EO_SECTION if @constraints && !@constraints.empty?
-          # Constraints
-
-          #{Utils::Markdown.align_markdown_headers(@constraints, level: 2).strip}
-        EO_SECTION
+        sections = [super]
         # Don't document the user prompt artifact itself
         input_contracts = normalized_input_artifacts_contracts.except(:user_message)
         unless input_contracts.empty?
@@ -130,7 +110,7 @@ module ComposableAgents
       #
       # @param user_message [String] The user message
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @return [Object] The rendered user prompt
+      # @return [String] The rendered user prompt
       def render_user_prompt(user_message, input_artifacts: {})
         sections = []
         unless @context.empty?

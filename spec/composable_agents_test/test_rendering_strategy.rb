@@ -9,8 +9,12 @@ module ComposableAgentsTest
       "RENDERED_LIST: #{instruction.join(', ')}"
     end
 
+    def render_instructions_list(instructions)
+      instructions.join(' | ')
+    end
+
     def render_system_prompt(rendered_instructions, input_artifacts: {})
-      "SYSTEM_PROMPT[#{rendered_instructions.join(' | ')}#{
+      "SYSTEM_PROMPT[#{rendered_instructions}#{
         " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }]"
     end

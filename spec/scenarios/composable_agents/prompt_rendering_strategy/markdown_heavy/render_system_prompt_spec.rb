@@ -8,7 +8,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
   # @param kwargs [Hash] The constructor parameters of the agent
   # @return [String] The rendered system prompt
   def system_prompt(
-    rendered_instructions: ['Instruction 1', 'Instruction 2'],
+    rendered_instructions: "Instruction 1\n\nInstruction 2",
     input_artifacts_contracts: nil,
     input_artifacts: {},
     **kwargs
@@ -141,7 +141,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
       system_prompt(
         input_artifacts_contracts: { requirements: 'The features specifications' },
         input_artifacts: { requirements: 'Feature specifications content' },
-        rendered_instructions: ['Instruction 1', 'Instruction 2']
+        rendered_instructions: "Instruction 1\n\nInstruction 2"
       )
     ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions

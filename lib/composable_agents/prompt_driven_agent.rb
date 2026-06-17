@@ -44,17 +44,8 @@ module ComposableAgents
     #
     # @param role [String, nil] Agent's role, or nil for the agent's default
     # @param objective [String, nil] Agent's objective, or nil for the agent's default
-    # @param system_instructions [Object, nil] Original instruction for the agent, or nil if no system instructions are needed
-    #   Here are the possible kinds of system instructions:
-    #   - [Array<Object>] List of instruction descriptions that should be appended
-    #   - [Object] Individual instruction description.
-    #   An individual instruction can be one of the following:
-    #     - [String] Direct instructions to be used (equivalent to { text: instructions })
-    #     - [Hash<Symbol,Object>] A structure describing the instructions
-    #       Here is the list of keys that can define different instructions:
-    #       - text [String] The instructions are given as text directly.
-    #       - ordered_list [Array<String>] The instructions are a precise list of steps to perform.
-    #       Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
+    # @param system_instructions [Object, nil] Original instructions for the agent, or nil if no system instructions are needed.
+    #   The kind of instructions that can be given are defined by the Instructions's constructor (see Instructions#initialize).
     # @param constraints [String, nil] Constraints to be respected, or nil for the agent's default
     # @param strategy [Module] The prompt rendering strategy
     def initialize(
@@ -70,16 +61,7 @@ module ComposableAgents
       singleton_class.include strategy
       @role = role
       @objective = objective
-      # Normalize system instructions to [Array<Hash<Symbol, Object>>]. Each instruction can contain the following keys:
-      # * text [String] The instructions are given as text directly.
-      # * ordered_list [Array<String>] The instructions are a precise list of steps to perform.
-      # Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
-      @system_instructions =
-        if system_instructions
-          (system_instructions.is_a?(Array) ? system_instructions : [system_instructions]).map do |instruction_desc|
-            instruction_desc.is_a?(Hash) ? instruction_desc : { text: instruction_desc }
-          end
-        end
+      @system_instructions = system_instructions ? Instructions.new(system_instructions) : nil
       @constraints = constraints
       @conversation = []
     end
@@ -92,17 +74,13 @@ module ComposableAgents
     def run(user_message: '', **input_artifacts)
       output_artifacts = {}
       system_prompt = render_system_prompt(
-        (
-          if @system_instructions
-            @system_instructions.map do |instruction_desc|
-              instruction_desc.map do |instruction_type, instruction|
-                send(:"render_instruction_#{instruction_type}", instruction)
-              end
-            end.flatten(1)
-          else
-            []
-          end
-        ),
+        if @system_instructions
+          render_instructions_list(
+            @system_instructions.map do |instruction_type, instruction|
+              send(:"render_instruction_#{instruction_type}", instruction)
+            end
+          )
+        end,
         input_artifacts:
       )
       log_debug "System prompt: #{system_prompt}"
