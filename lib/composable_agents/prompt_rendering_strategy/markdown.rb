@@ -35,7 +35,7 @@ module ComposableAgents
 
           #{Utils::Markdown.align_markdown_headers(@objective, level: 2).strip}
         EO_SECTION
-        sections << <<~EO_SECTION
+        sections << <<~EO_SECTION unless rendered_instructions.empty?
           # Instructions
 
           #{rendered_instructions.map { |instructions| Utils::Markdown.align_markdown_headers(instructions, level: 2).strip }.join("\n\n")}

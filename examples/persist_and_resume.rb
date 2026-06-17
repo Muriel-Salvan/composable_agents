@@ -45,7 +45,7 @@ class PreferencesAgent < ComposableAgents::AiAgents::Agent
     super(
       role: 'You are a travel consultant asking for user preferences',
       objective: 'Ask the user about his/her preferences for holidays',
-      instructions: <<~EO_INSTRUCTIONS,
+      system_instructions: <<~EO_INSTRUCTIONS,
         Ask the user about his/her holidays' preferences, using 1 or 2 questions maximum.
         Create an artifact named `preferences` with the user's holidays preferences.
       EO_INSTRUCTIONS
@@ -70,7 +70,7 @@ class ItineraryAgent < ComposableAgents::AiAgents::Agent
     super(
       role: 'You are a travel planner',
       objective: 'Find cities that would be the best destinations for the user\'s holidays',
-      instructions: <<~EO_INSTRUCTIONS,
+      system_instructions: <<~EO_INSTRUCTIONS,
         Get the user preferences from the artifact named `preferences`.
         Find the best cities that match those preferences.
         Create an artifact named `cities` as a JSON list of those city names.

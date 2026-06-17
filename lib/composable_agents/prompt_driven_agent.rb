@@ -44,16 +44,16 @@ module ComposableAgents
     #
     # @param role [String, nil] Agent's role, or nil for the agent's default
     # @param objective [String, nil] Agent's objective, or nil for the agent's default
-    # @param instructions [Object, nil] Original instructions given to the agent, or nil for the agent's default
-    #   Here are the possible kinds of instructions:
-    #   * [Array<Object>] List of instruction descriptions that should be appended
-    #   * [Object] Individual instruction description.
+    # @param system_instructions [Object, nil] Original instruction for the agent, or nil if no system instructions are needed
+    #   Here are the possible kinds of system instructions:
+    #   - [Array<Object>] List of instruction descriptions that should be appended
+    #   - [Object] Individual instruction description.
     #   An individual instruction can be one of the following:
-    #     * [Hash<Symbol,Object>] A structure describing the instructions
-    #     * [String] Direct instructions to be used (equivalent to { text: instructions })
-    #     Here is the list of keys that can define different instructions:
-    #       * text [String] The instructions are given as text directly.
-    #       * ordered_list [Array<String>] The instructions are a precise list of steps to perform.
+    #     - [String] Direct instructions to be used (equivalent to { text: instructions })
+    #     - [Hash<Symbol,Object>] A structure describing the instructions
+    #       Here is the list of keys that can define different instructions:
+    #       - text [String] The instructions are given as text directly.
+    #       - ordered_list [Array<String>] The instructions are a precise list of steps to perform.
     #       Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
     # @param constraints [String, nil] Constraints to be respected, or nil for the agent's default
     # @param strategy [Module] The prompt rendering strategy
@@ -61,7 +61,7 @@ module ComposableAgents
       *args,
       role: nil,
       objective: nil,
-      instructions: nil,
+      system_instructions: nil,
       constraints: nil,
       strategy: PromptRenderingStrategy::Markdown,
       **kwargs
@@ -70,17 +70,16 @@ module ComposableAgents
       singleton_class.include strategy
       @role = role
       @objective = objective
-      # Normalize instructions to [Array<Hash<Symbol, Object>>]. Each instruction can contain the following keys:
+      # Normalize system instructions to [Array<Hash<Symbol, Object>>]. Each instruction can contain the following keys:
       # * text [String] The instructions are given as text directly.
       # * ordered_list [Array<String>] The instructions are a precise list of steps to perform.
       # Several keys can be used in the same Hash, and they will be treated in the order of the Hash.
-      @instructions = (
-        if instructions
-          instructions.is_a?(Array) ? instructions : [instructions]
-        else
-          []
+      @system_instructions =
+        if system_instructions
+          (system_instructions.is_a?(Array) ? system_instructions : [system_instructions]).map do |instruction_desc|
+            instruction_desc.is_a?(Hash) ? instruction_desc : { text: instruction_desc }
+          end
         end
-      ).map { |instruction_desc| instruction_desc.is_a?(Hash) ? instruction_desc : { text: instruction_desc } }
       @constraints = constraints
       @conversation = []
     end
@@ -94,12 +93,16 @@ module ComposableAgents
       output_artifacts = {}
       system_prompt = render_system_prompt(
         (
-          @instructions.map do |instruction_desc|
-            instruction_desc.map do |instruction_type, instruction|
-              send(:"render_instruction_#{instruction_type}", instruction)
-            end
+          if @system_instructions
+            @system_instructions.map do |instruction_desc|
+              instruction_desc.map do |instruction_type, instruction|
+                send(:"render_instruction_#{instruction_type}", instruction)
+              end
+            end.flatten(1)
+          else
+            []
           end
-        ).flatten(1),
+        ),
         input_artifacts:
       )
       log_debug "System prompt: #{system_prompt}"

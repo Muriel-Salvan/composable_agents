@@ -7,7 +7,7 @@ shared_examples 'a prompt driven agent' do |opts|
   #   The returned spy should have the following properties:
   #     - role [String, nil] The agent's role
   #     - objective [String, nil] The agent's objective
-  #     - instructions [Object, nil] The agent's normalized instructions
+  #     - system_instructions [Object, nil] The agent's normalized system instructions
   #     - constraints [String, nil] The agent's constraints
   #     - system_prompt [Object] The last rendered system prompt
   #     - user_prompts [Array<Object>] The ordered list of user prompts
@@ -52,12 +52,12 @@ shared_examples 'a prompt driven agent' do |opts|
       agent_spy = new_agent(
         role: 'Test Executor',
         objective: 'Execute tests',
-        instructions: 'Read and run test files',
+        system_instructions: 'Read and run test files',
         constraints: 'Don\'t write files'
       ).spy
       expect(agent_spy[:role]).to eq 'Test Executor'
       expect(agent_spy[:objective]).to eq 'Execute tests'
-      expect(agent_spy[:instructions]).to eq [{ text: 'Read and run test files' }]
+      expect(agent_spy[:system_instructions]).to eq [{ text: 'Read and run test files' }]
       expect(agent_spy[:constraints]).to eq 'Don\'t write files'
     end
   end
@@ -65,27 +65,31 @@ shared_examples 'a prompt driven agent' do |opts|
   describe 'the system prompt' do
     describe 'the rendering of instructions' do
       {
+        'nil system_instructions': {
+          system_instructions: nil,
+          system_prompt: ''
+        },
         'single String': {
-          instructions: 'Single instruction',
+          system_instructions: 'Single instruction',
           system_prompt: 'RENDERED_TEXT: Single instruction'
         },
         'single Hash with :text key': {
-          instructions: { text: 'Hash text instruction' },
+          system_instructions: { text: 'Hash text instruction' },
           system_prompt: 'RENDERED_TEXT: Hash text instruction'
         },
         'single Hash with :ordered_list key': {
-          instructions: { ordered_list: ['Step 1', 'Step 2', 'Step 3'] },
+          system_instructions: { ordered_list: ['Step 1', 'Step 2', 'Step 3'] },
           system_prompt: 'RENDERED_LIST: Step 1, Step 2, Step 3'
         },
         'Hash with multiple types': {
-          instructions: {
+          system_instructions: {
             text: 'Do this task:',
             ordered_list: ['First step', 'Second step']
           },
           system_prompt: 'RENDERED_TEXT: Do this task: | RENDERED_LIST: First step, Second step'
         },
         'Array of mixed types': {
-          instructions: [
+          system_instructions: [
             'First instruction',
             { text: 'Second instruction' },
             { ordered_list: ['Step A', 'Step B'] }
@@ -95,13 +99,13 @@ shared_examples 'a prompt driven agent' do |opts|
       }.each do |description, test_data|
         context "when handling #{description}" do
           it 'sets the system prompt without artifacts' do
-            agent = new_agent(instructions: test_data[:instructions])
+            agent = new_agent(system_instructions: test_data[:system_instructions])
             agent.run
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
 
           it 'does not use the user message in the system prompt' do
-            agent = new_agent(instructions: test_data[:instructions])
+            agent = new_agent(system_instructions: test_data[:system_instructions])
             agent.run(user_message: 'Do this')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
@@ -109,7 +113,7 @@ shared_examples 'a prompt driven agent' do |opts|
           it 'uses the input artifacts in the system prompt' do
             agent = new_agent(
               **{
-                instructions: test_data[:instructions],
+                system_instructions: test_data[:system_instructions],
                 input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
               }.compact
             )

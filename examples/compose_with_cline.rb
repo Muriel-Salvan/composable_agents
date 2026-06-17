@@ -22,7 +22,7 @@ preferences_agent = ComposableAgents::RubyAgent.new(
 itinerary_agent = ComposableAgents::Cline::Agent.new(
   role: 'You are a travel planner',
   objective: 'Find cities that would be the best destinations for the user\'s holidays',
-  instructions: {
+  system_instructions: {
     ordered_list: [
       "Get the user preferences from the artifact named `#{ComposableAgents::PromptRenderingStrategy::MarkdownHeavy.assistant_artifact_name(:preferences)}`.",
       'Find the best cities that match those preferences.',

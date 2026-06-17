@@ -28,7 +28,7 @@ preferences_agent = ComposableAgents::RubyAgent.new(
 itinerary_agent = ComposableAgents::AiAgents::Agent.new(
   role: 'You are a travel planner',
   objective: 'Find cities that would be the best destinations for the user\'s holidays',
-  instructions: <<~EO_INSTRUCTIONS,
+  system_instructions: <<~EO_INSTRUCTIONS,
     Get the user preferences from the artifact named `preferences`.
     Find the best cities that match those preferences.
     Create an artifact named `cities` as a JSON list of those city names.
