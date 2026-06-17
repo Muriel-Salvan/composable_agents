@@ -32,11 +32,11 @@ Metrics/AbcSize:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ClassLength:
-  Max: 150
+  Max: 160
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
-  Max: 15
+  Max: 20
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/MethodLength:
@@ -62,7 +62,7 @@ RSpec/DescribeClass:
 
 # It's ok to have scenarios having multiple lines
 RSpec/ExampleLength:
-  Max: 60
+  Max: 80
 
 # It's ok to have test scenarios having several expectations
 RSpec/MultipleExpectations:

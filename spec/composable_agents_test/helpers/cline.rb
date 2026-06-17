@@ -37,12 +37,23 @@ module ComposableAgentsTest
           temp_dir: '.composable_agents_test/cline_stub'
         )
         cli_stub.mock_commands(
-          mocked_run_results.map do |mocked_run_result|
+          mocked_run_results.map.with_index do |mocked_run_result, idx|
             [
               {
                 log: {},
                 session: {
-                  messages: [{ ts: 100, content: [{ text: mocked_run_result[:stdout] || 'Assistant Output' }] }]
+                  messages: [
+                    {
+                      ts: 100 + idx,
+                      role: 'assistant',
+                      content: [
+                        {
+                          type: 'text',
+                          text: mocked_run_result[:stdout] || 'Assistant Output'
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
             ] +
@@ -76,7 +87,7 @@ module ComposableAgentsTest
             stdout << "\n\n"
             stdout << (desc[:output_artifacts] || {}).map do |artifact_name, artifact_content|
               <<~EO_STDOUT
-                ```json artifact=ARTIFACT_#{artifact_name.to_s.upcase}
+                ```json output_artifact=ARTIFACT_#{artifact_name.to_s.upcase}
                 #{artifact_content.to_json}
                 ```
               EO_STDOUT

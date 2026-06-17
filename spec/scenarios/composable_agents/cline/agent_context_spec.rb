@@ -40,7 +40,7 @@ describe ComposableAgents::Cline::Agent do
       agent.run(user_message: 'Second message')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[First message and context <<<[]>>>]',
-        'USER_PROMPT[Second message and context <<<[{"role":"user","content":[{"text":"Assistant Output #1"}]}]>>>]'
+        'USER_PROMPT[Second message and context <<<[{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}]>>>]'
       ]
     end
 
@@ -75,16 +75,16 @@ describe ComposableAgents::Cline::Agent do
       expect(agent2.spy[:user_prompts]).to eq [
         'USER_PROMPT[First message and context <<<[]>>>]',
         'USER_PROMPT[Second message and context <<<[' \
-          '{"role":"user","content":[{"text":"Assistant Output #1"}]}' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
           ']>>>]',
         'USER_PROMPT[Third message and context <<<[' \
-          '{"role":"user","content":[{"text":"Assistant Output #1"}]},' \
-          '{"role":"user","content":[{"text":"Assistant Output #2"}]}' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]}' \
           ']>>>]',
         'USER_PROMPT[Fourth message and context <<<[' \
-          '{"role":"user","content":[{"text":"Assistant Output #1"}]},' \
-          '{"role":"user","content":[{"text":"Assistant Output #2"}]},' \
-          '{"role":"user","content":[{"text":"Assistant Output #3"}]}' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]},' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #3"}]}' \
           ']>>>]'
       ]
     end

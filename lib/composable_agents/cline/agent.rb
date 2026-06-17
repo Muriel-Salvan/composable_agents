@@ -151,31 +151,17 @@ module ComposableAgents
           user_prompt,
           system: @system_prompt,
           on_question: respond_to?(:ask, true) ? proc { |question| ask(question) } : nil,
+          on_message: proc do |message, _last, _previous_version|
+            # Look for any output artifact from the answers
+            if message.role == 'assistant'
+              message.content&.each do |content|
+                parse_output_artifacts(content.text) if content.type == 'text' && content.text
+              end
+            end
+          end,
           **@cli_options
         )
         raise "Error: #{result[:error].err.message}".strip if result[:error]
-
-        # Handle output artifacts
-        #
-        # Scan the assistant's answer for JSON documents with artifact markers in the format:
-        # ```json artifact=ARTIFACT_<NAME>
-        # {artifact_content}
-        # ```
-        assistant_answer = result[:message]&.content&.last&.text
-        assistant_answer&.scan(/```json\s+output_artifact=(\S+)\n(.*?)```/m) do
-          raw_name = Regexp.last_match(1)
-          content = Regexp.last_match(2).strip
-          # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
-          if raw_name.start_with?('ARTIFACT_')
-            artifact_name = raw_name.sub(/^ARTIFACT_/, '').downcase.to_sym
-            begin
-              @output_artifacts_to_fill[artifact_name] = JSON.parse(content)
-            rescue JSON::ParserError
-              log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
-                'but JSON could not be parsed from the assistant\'s answer.'
-            end
-          end
-        end
 
         # Keep the context in case we need to resume it
         if @cline_cli.session&.messages
@@ -202,7 +188,7 @@ module ComposableAgents
           )
         end
 
-        assistant_answer || ''
+        result[:message]&.content&.last&.text || ''
       end
 
       # Find a skill among the current Cline environment (global and project) and recursively finds all its dependencies.
@@ -222,6 +208,30 @@ module ComposableAgents
         # Now look for its dependencies
         (found_skill.yaml_front_matter.dig(*%i[metadata dependencies]) || []).each do |skill_dep|
           find_skill(skill_dep, found_skills)
+        end
+      end
+
+      # Parse some text to find output artifacts in it.
+      # Scan for JSON documents with artifact markers in the format:
+      # ```json output_artifact=ARTIFACT_<NAME>
+      # {artifact_content}
+      # ```
+      #
+      # @param text [String] The text to be parsed
+      def parse_output_artifacts(text)
+        text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```/m) do
+          raw_name = Regexp.last_match(1)
+          content = Regexp.last_match(2).strip
+          # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
+          artifact_name = (raw_name.start_with?('ARTIFACT_') ? raw_name.sub(/^ARTIFACT_/, '') : raw_name).downcase.to_sym
+          begin
+            @output_artifacts_to_fill[artifact_name] = JSON.parse(content)
+            log_debug "[Artifact] - Received output artifact #{artifact_name}"
+          rescue JSON::ParserError
+            # TODO: Make this as a warning message
+            log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
+              'but JSON could not be parsed from the assistant\'s answer.'
+          end
         end
       end
     end
