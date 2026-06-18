@@ -215,7 +215,7 @@ module ComposableAgents
       #
       # @param text [String] The text to be parsed
       def parse_output_artifacts(text)
-        text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```/m) do
+        text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
           raw_name = Regexp.last_match(1)
           content = Regexp.last_match(2).strip
           # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)

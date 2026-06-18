@@ -218,5 +218,49 @@ describe ComposableAgents::Cline::Agent do
         'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
       ]
     end
+
+    it 'parses correctly artifacts that contain ``` ... ``` strings' do
+      agent = described_agent(output_artifacts_contracts: { result: 'Final result' })
+      mock_cline_for(
+        agent,
+        {
+          stub: {
+            session: {
+              messages: [
+                {
+                  ts: 200,
+                  role: 'assistant',
+                  content: [
+                    {
+                      type: 'text',
+                      text: <<~EO_OUTPUT
+                        Assistant Output
+                        ```json output_artifact=ARTIFACT_RESULT
+                        {
+                          "status": "completed",
+                          "data": "```\\nMarkdown content\\n```\\n"
+                        }
+                        ```
+                      EO_OUTPUT
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      )
+      expect(agent.run[:result]).to eq(
+        {
+          'status' => 'completed',
+          'data' => <<~EO_DATA
+            ```
+            Markdown content
+            ```
+          EO_DATA
+        }
+      )
+      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
+    end
   end
 end
