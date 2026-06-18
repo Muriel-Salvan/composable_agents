@@ -87,94 +87,135 @@ describe ComposableAgents::Cline::Agent do
 
     it 'gracefully fails when output artifact JSON parsing fails' do
       agent = described_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
+      full_messages = [
+        {
+          ts: 200,
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #3
+                ```json output_artifact=ARTIFACT_LOGS
+                Wrong JSON
+                ```
+              EO_OUTPUT
+            },
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #6
+                ```json output_artifact=ARTIFACT_RESULT
+                "ok"
+                ```
+              EO_OUTPUT
+            }
+          ]
+        },
+        {
+          ts: 300,
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #3
+                ```json output_artifact=ARTIFACT_LOGS
+                "logs"
+                ```
+              EO_OUTPUT
+            }
+          ]
+        }
+      ]
       mock_cline_for(
         agent,
         [
-          {
-            stub: {
-              session: {
-                messages: [
-                  {
-                    ts: 200,
-                    role: 'assistant',
-                    content: [
-                      {
-                        type: 'text',
-                        text: <<~EO_OUTPUT
-                          Assistant Output #3
-                          ```json output_artifact=ARTIFACT_LOGS
-                          Wrong JSON
-                          ```
-                        EO_OUTPUT
-                      },
-                      {
-                        type: 'text',
-                        text: <<~EO_OUTPUT
-                          Assistant Output #6
-                          ```json output_artifact=ARTIFACT_RESULT
-                          "ok"
-                          ```
-                        EO_OUTPUT
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-          {
-            stub: {
-              session: {
-                messages: [
-                  {
-                    ts: 200,
-                    role: 'assistant',
-                    content: [
-                      {
-                        type: 'text',
-                        text: <<~EO_OUTPUT
-                          Assistant Output #3
-                          ```json output_artifact=ARTIFACT_LOGS
-                          Wrong JSON
-                          ```
-                        EO_OUTPUT
-                      },
-                      {
-                        type: 'text',
-                        text: <<~EO_OUTPUT
-                          Assistant Output #6
-                          ```json output_artifact=ARTIFACT_RESULT
-                          "ok"
-                          ```
-                        EO_OUTPUT
-                      }
-                    ]
-                  },
-                  {
-                    ts: 300,
-                    role: 'assistant',
-                    content: [
-                      {
-                        type: 'text',
-                        text: <<~EO_OUTPUT
-                          Assistant Output #3
-                          ```json output_artifact=ARTIFACT_LOGS
-                          "logs"
-                          ```
-                        EO_OUTPUT
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          }
+          { stub: { session: { messages: full_messages[0..0] } } },
+          { stub: { session: { messages: full_messages[0..1] } } }
         ]
       )
       expect(agent.run).to include(result: 'ok', logs: 'logs')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
         'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
+      ]
+    end
+
+    it 'removes previous versions of output artifacts when the agent tries to generate a new one with error' do
+      agent = described_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
+      full_messages = [
+        {
+          # 1. :logs missing, :result successful
+          ts: 200,
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #6
+                ```json output_artifact=ARTIFACT_RESULT
+                "ok"
+                ```
+              EO_OUTPUT
+            }
+          ]
+        },
+        {
+          # 2. :logs successful, :result in error
+          ts: 300,
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #3
+                ```json output_artifact=ARTIFACT_LOGS
+                "logs"
+                ```
+              EO_OUTPUT
+            },
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #6
+                ```json output_artifact=ARTIFACT_RESULT
+                Wrong JSON
+                ```
+              EO_OUTPUT
+            }
+          ]
+        },
+        {
+          # 3. :result successful
+          ts: 400,
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: <<~EO_OUTPUT
+                Assistant Output #6
+                ```json output_artifact=ARTIFACT_RESULT
+                "ok"
+                ```
+              EO_OUTPUT
+            }
+          ]
+        }
+      ]
+      mock_cline_for(
+        agent,
+        [
+          { stub: { session: { messages: full_messages[0..0] } } },
+          { stub: { session: { messages: full_messages[0..1] } } },
+          { stub: { session: { messages: full_messages[0..2] } } }
+        ]
+      )
+      expect(agent.run).to include(result: 'ok', logs: 'logs')
+      expect(agent.spy[:user_prompts]).to eq [
+        'USER_PROMPT[]',
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]',
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
       ]
     end
   end

@@ -140,8 +140,7 @@ module ComposableAgents
     # @param artifact_name [Symbol] Output artifact name
     # @param error [String] Error associated to this output artifact
     def report_error_for_output_artifact(artifact_name, error)
-      # TODO: Remove it
-      # @output_artifacts.delete(artifact_name)
+      @output_artifacts.delete(artifact_name)
       @output_artifacts_errors[artifact_name] = error
       # TODO: Make this as a warning message
       log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
