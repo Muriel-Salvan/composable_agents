@@ -75,15 +75,18 @@ module ComposableAgents
 
       # Get user instructions for missing output artifacts
       #
-      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts information, per artifact name
+      #   Information can contain the following attributes:
+      #   - description [String] The artifact's description.
+      #   - error [String, nil] An error message related to this missing artifact.
       # @return [Object] The user instructions (see Instructions#initialize)
       def missing_output_user_instructions(missing_output_artifacts)
         <<~EO_PROMPT
           Some artifacts are missing:
           #{
             (
-              missing_output_artifacts.map do |name, description|
-                "- You must create an artifact named `#{name}`: #{description}"
+              missing_output_artifacts.map do |artifact_name, missing_info|
+                "- You must create an artifact named `#{artifact_name}`: #{missing_info[:description]}"
               end
             ).join("\n")
           }

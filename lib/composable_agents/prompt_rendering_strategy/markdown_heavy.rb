@@ -162,16 +162,20 @@ module ComposableAgents
 
       # Get user instructions for missing output artifacts
       #
-      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts information, per artifact name
+      #   Information can contain the following attributes:
+      #   - description [String] The artifact's description.
+      #   - error [String, nil] An error message related to this missing artifact.
       # @return [Object] The user instructions (see Instructions#initialize)
       def missing_output_user_instructions(missing_output_artifacts)
         log_debug "[Artifact] - Asking assistant for missing output artifacts `#{missing_output_artifacts.keys.join(', ')}` to be returned in its next answer."
         <<~EO_PROMPT
           The following output artifacts are missing from your previous responses:
           #{
-            missing_output_artifacts.map do |artifact_name, desc|
-              "- `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}`: #{desc[:description]}"
-            end.join("\n")
+            missing_output_artifacts.map do |artifact_name, missing_info|
+              ["- `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}`: #{missing_info[:description]}"] +
+                (missing_info[:error] ? ["  An error occurred while reading this artifact from your previous responses: #{missing_info[:error]}"] : [])
+            end.flatten(1).join("\n")
           }
 
           You must provide each one of them in your next response using embedded JSON blocks like this:

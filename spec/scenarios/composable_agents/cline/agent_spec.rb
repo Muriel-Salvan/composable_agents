@@ -477,7 +477,7 @@ describe ComposableAgents::Cline::Agent do
       expect(agent.run).to include(result: 'ok', logs: 'logs')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
       ]
     end
   end

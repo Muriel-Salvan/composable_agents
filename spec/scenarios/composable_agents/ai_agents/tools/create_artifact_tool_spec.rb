@@ -4,10 +4,11 @@ describe ComposableAgents::AiAgents::Tools::CreateArtifactTool do
   let(:agent) do
     new_agent = Class.new(ComposableAgents::AiAgents::Agent) do
       # @return [Hash{Symbol => Object}] Access the written output artifacts for expectations
-      attr_accessor :output_artifacts
+      attr_accessor(*%i[output_artifacts output_artifacts_errors])
     end.new
     # We initialize the artifacts manually, as the run method won't be executed in those tests.
     new_agent.output_artifacts = {}
+    new_agent.output_artifacts_errors = {}
     new_agent
   end
   let(:tool_context) { instance_double(Agents::ToolContext) }

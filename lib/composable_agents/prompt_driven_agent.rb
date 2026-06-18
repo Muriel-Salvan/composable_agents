@@ -75,6 +75,7 @@ module ComposableAgents
     def run(user_instructions: nil, **input_artifacts)
       @input_artifacts = input_artifacts
       @output_artifacts = {}
+      @output_artifacts_errors = {}
       @system_prompt = render_system_prompt(@system_instructions ? render_instructions(@system_instructions) : nil)
       log_debug "System prompt: #{@system_prompt}"
       converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
@@ -83,7 +84,14 @@ module ComposableAgents
         # Therefore check if some are missing and prompt again if that's the case.
         # TODO: Implement a max number of retries and throw an exception if it exceeds.
         loop do
-          missing_artifacts = normalized_output_artifacts_contracts.reject { |artifact_name, _artifact_description| @output_artifacts.key?(artifact_name) }
+          missing_artifacts = normalized_output_artifacts_contracts
+            .reject { |artifact_name, _artifact_description| @output_artifacts.key?(artifact_name) }
+            .to_h do |artifact_name, artifact_description|
+              [
+                artifact_name,
+                artifact_description.merge(@output_artifacts_errors[artifact_name] ? { error: @output_artifacts_errors[artifact_name] } : {})
+              ]
+            end
           break if missing_artifacts.empty?
 
           converse(missing_output_user_instructions(missing_artifacts))
@@ -116,11 +124,28 @@ module ComposableAgents
     # Save an output artifact.
     # This method can be used at anytime while prompting, when the agent is able to produce an output artifact.
     #
-    # @param name [Symbol] Output artifact name
+    # @param artifact_name [Symbol] Output artifact name
     # @param content [Object] Output artifact content
-    def save_output_artifact(name, content)
-      @output_artifacts[name] = content
-      log_debug "[Artifact] - Received output artifact #{name}"
+    def save_output_artifact(artifact_name, content)
+      @output_artifacts[artifact_name] = content
+      @output_artifacts_errors.delete(artifact_name)
+      log_debug "[Artifact] - Received output artifact #{artifact_name}"
+    end
+
+    # Report an error on an output artifact.
+    # This method can be used at anytime while prompting, when the agent is unable to produce an output artifact
+    #   because of an error that should be communicated back to the agent.
+    # Make sure previous versions of this output artifact are removed to not store wrong versions by mistake.
+    #
+    # @param artifact_name [Symbol] Output artifact name
+    # @param error [String] Error associated to this output artifact
+    def report_error_for_output_artifact(artifact_name, error)
+      # TODO: Remove it
+      # @output_artifacts.delete(artifact_name)
+      @output_artifacts_errors[artifact_name] = error
+      # TODO: Make this as a warning message
+      log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
+        "but the following error occurred: #{error}"
     end
 
     private

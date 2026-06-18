@@ -57,10 +57,17 @@ module ComposableAgentsTest
 
     # Get user instructions for missing output artifacts
     #
-    # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+    # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts information, per artifact name
+    #   Information can contain the following attributes:
+    #   - description [String] The artifact's description.
+    #   - error [String, nil] An error message related to this missing artifact.
     # @return [Object] The user instructions (see Instructions#initialize)
     def missing_output_user_instructions(missing_output_artifacts)
-      "MISSING_PROMPT: #{missing_output_artifacts.map { |name, contract| "#{name} (#{contract[:description]})" }.join(', ')}"
+      "MISSING_PROMPT: #{
+        missing_output_artifacts.map do |artifact_name, missing_info|
+          "#{artifact_name} (#{missing_info[:description]})#{" (Error: #{missing_info[:error]})" if missing_info[:error]}"
+        end.join(', ')
+      }"
     end
   end
 end

@@ -220,14 +220,12 @@ module ComposableAgents
           content = Regexp.last_match(2).strip
           # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
           artifact_name = (raw_name.start_with?('ARTIFACT_') ? raw_name.sub(/^ARTIFACT_/, '') : raw_name).downcase.to_sym
-          artifact_content =
-            begin
-              JSON.parse(content)
-            rescue JSON::ParserError => e
-              # TODO: Make this as a warning message
-              log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
-                "but JSON could not be parsed from the assistant's answer: #{e}"
-            end
+          artifact_content = nil
+          begin
+            artifact_content = JSON.parse(content)
+          rescue JSON::ParserError => e
+            report_error_for_output_artifact(artifact_name, e.to_s)
+          end
           save_output_artifact(artifact_name, artifact_content) if artifact_content
         end
       end
