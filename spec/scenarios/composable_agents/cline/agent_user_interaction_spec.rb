@@ -74,11 +74,11 @@ describe ComposableAgents::Cline::Agent do
           ]
         }
       )
-      agent.run(user_message: 'User prompt')
+      agent.run(user_instructions: 'User prompt')
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: 'User prompt' },
+          { author: 'User', message: 'RENDERED_TEXT: User prompt' },
           {
             author: 'Agent Executor',
             message: { question: 'What is your name?', options: %w[Alice Bob] },

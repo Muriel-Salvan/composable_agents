@@ -223,11 +223,11 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
       EO_SYSTEM_PROMPT
     end
 
-    it 'filters out the user_message artifact from input artifacts documentation' do
+    it 'filters out the user_instructions artifact from input artifacts documentation' do
       expect(
         system_prompt(
           input_artifacts_contracts: {
-            user_message: 'User prompt',
+            user_instructions: 'User instructions',
             plan: 'The plan document'
           }
         )

@@ -153,8 +153,8 @@ describe ComposableAgents::AiAgents::Agent do
     it 'persists the context through a JSON-serializable state' do
       agent1 = described_agent(name: 'Test Agent 1')
       mock_agent_runner_for(agent1)
-      agent1.run(user_message: 'First message')
-      agent1.run(user_message: 'Second message')
+      agent1.run(user_instructions: 'First message')
+      agent1.run(user_instructions: 'Second message')
       state = agent1.export_state
       # Check that context is JSON-serializable
       expect { JSON.parse(state.to_json) }.not_to raise_error
@@ -164,7 +164,7 @@ describe ComposableAgents::AiAgents::Agent do
       agent2.import_state(state)
       expect(agent2.export_state).to eq state
       # Verify context is preserved and identical
-      agent2.run(user_message: 'Third message')
+      agent2.run(user_instructions: 'Third message')
       expect(agent2.spy_contexts).to eq [
         { run_idx: 2 }
       ]

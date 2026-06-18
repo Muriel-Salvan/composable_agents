@@ -105,7 +105,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: '' },
+          { author: 'User', message: nil },
           { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #2/ }
@@ -126,7 +126,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: '' },
+          { author: 'User', message: nil },
           { author: 'Agent Travel Planner', message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: 'Agent Travel Planner', message: /Assistant Output #2/ }
@@ -145,17 +145,17 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         ]
       )
       agent.run
-      agent.run(user_message: 'Again')
+      agent.run(user_instructions: 'Again')
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: '' },
+          { author: 'User', message: nil },
           { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #2/ },
           { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #3/ },
-          { author: 'User', message: 'Again' },
+          { author: 'User', message: 'RENDERED_TEXT: Again' },
           { author: opts[:default_conversation_name], message: /Assistant Output #4/ }
         ]
       )

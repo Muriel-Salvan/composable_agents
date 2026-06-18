@@ -53,7 +53,7 @@ describe ComposableAgents::Mixins::AiAgentUserInteraction do
         "[#{question}]: 42"
       end
     end.new(name: 'test-agent')
-    test_agent.run(user_message: 'Start interactive session')
+    test_agent.run(user_instructions: 'Start interactive session')
     expect_conversation(
       test_agent.conversation,
       [

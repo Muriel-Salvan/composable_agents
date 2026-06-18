@@ -1,7 +1,7 @@
 require 'json'
 
 describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user_prompt' do
-  it 'returns only the user message section when context and input artifacts are empty' do
+  it 'returns only the user instructions section when context and input artifacts are empty' do
     expect(agent_for_markdown_heavy.render_user_prompt('Hello, I need assistance')).to eq <<~EO_PROMPT.strip
       # User instructions
 
@@ -9,7 +9,11 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
     EO_PROMPT
   end
 
-  it 'handles empty user message with no context or artifacts' do
+  it 'handles nil rendered instructions with no context or artifacts' do
+    expect(agent_for_markdown_heavy.render_user_prompt(nil)).to eq('')
+  end
+
+  it 'handles empty rendered instructions with no context or artifacts' do
     expect(agent_for_markdown_heavy.render_user_prompt('')).to eq('')
   end
 
@@ -104,7 +108,26 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
     EO_PROMPT
   end
 
-  it 'handles input artifacts with empty user message' do
+  it 'handles input artifacts with nil rendered instructions' do
+    expect(
+      agent_for_markdown_heavy.render_user_prompt(
+        nil,
+        input_artifacts: {
+          plan: 'Just the plan'
+        }
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # Input artifacts
+
+      ## `ARTIFACT_PLAN`
+
+      ```json input_artifact=ARTIFACT_PLAN
+      "Just the plan"
+      ```
+    EO_PROMPT
+  end
+
+  it 'handles input artifacts with empty rendered instructions' do
     expect(
       agent_for_markdown_heavy.render_user_prompt(
         '',
@@ -123,8 +146,8 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
     EO_PROMPT
   end
 
-  it 'handles context without user message' do
-    expect(agent_for_markdown_heavy(context: { 'id' => 42 }).render_user_prompt('')).to eq <<~EO_PROMPT.strip
+  it 'handles context without rendered instructions' do
+    expect(agent_for_markdown_heavy(context: { 'id' => 42 }).render_user_prompt(nil)).to eq <<~EO_PROMPT.strip
       # Previous sessions context
 
       Here is the conversation from a previous session for context:

@@ -19,8 +19,8 @@ module ComposableAgentsTest
       }]"
     end
 
-    def render_user_prompt(user_message, input_artifacts: {})
-      "USER_PROMPT[#{user_message}#{
+    def render_user_prompt(rendered_instructions, input_artifacts: {})
+      "USER_PROMPT[#{rendered_instructions}#{
         " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }]"
     end

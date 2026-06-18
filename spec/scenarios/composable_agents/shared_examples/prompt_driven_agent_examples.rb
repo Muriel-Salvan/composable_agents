@@ -104,9 +104,9 @@ shared_examples 'a prompt driven agent' do |opts|
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
 
-          it 'does not use the user message in the system prompt' do
+          it 'does not use the user instructions in the system prompt' do
             agent = new_agent(system_instructions: test_data[:system_instructions])
-            agent.run(user_message: 'Do this')
+            agent.run(user_instructions: 'Do this')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]}]"
           end
 
@@ -117,7 +117,7 @@ shared_examples 'a prompt driven agent' do |opts|
                 input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
               }.compact
             )
-            agent.run(user_message: 'Do this', test_artifact: 'Content')
+            agent.run(user_instructions: 'Do this', test_artifact: 'Content')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact (Content)]"
           end
         end
@@ -126,35 +126,64 @@ shared_examples 'a prompt driven agent' do |opts|
   end
 
   describe 'the user prompt' do
-    let(:agent) { new_agent(mocked_assistant_outputs: 'Assistant Output') }
+    describe 'the rendering of user instructions' do
+      {
+        'nil user_instructions': {
+          user_instructions: nil,
+          user_prompt: ''
+        },
+        'single String': {
+          user_instructions: 'Single instruction',
+          user_prompt: 'RENDERED_TEXT: Single instruction'
+        },
+        'single Hash with :text key': {
+          user_instructions: { text: 'Hash text instruction' },
+          user_prompt: 'RENDERED_TEXT: Hash text instruction'
+        },
+        'single Hash with :ordered_list key': {
+          user_instructions: { ordered_list: ['Step 1', 'Step 2', 'Step 3'] },
+          user_prompt: 'RENDERED_LIST: Step 1, Step 2, Step 3'
+        },
+        'Hash with multiple types': {
+          user_instructions: {
+            text: 'Do this task:',
+            ordered_list: ['First step', 'Second step']
+          },
+          user_prompt: 'RENDERED_TEXT: Do this task: | RENDERED_LIST: First step, Second step'
+        },
+        'Array of mixed types': {
+          user_instructions: [
+            'First instruction',
+            { text: 'Second instruction' },
+            { ordered_list: ['Step A', 'Step B'] }
+          ],
+          user_prompt: 'RENDERED_TEXT: First instruction | RENDERED_TEXT: Second instruction | RENDERED_LIST: Step A, Step B'
+        }
+      }.each do |description, test_data|
+        context "when handling #{description}" do
+          it 'sends the instructions in the user prompt' do
+            agent = new_agent(mocked_assistant_outputs: 'Assistant Output')
+            agent.run(user_instructions: test_data[:user_instructions])
+            expect(agent.spy[:user_prompts]).to eq ["USER_PROMPT[#{test_data[:user_prompt]}]"]
+          end
 
-    it 'sends the user message in the user prompt' do
-      agent.run(user_message: 'You must do this')
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[You must do this]']
-    end
+          it 'does not use the user instructions in the system prompt' do
+            agent = new_agent(mocked_assistant_outputs: 'Assistant Output', system_instructions: 'System instructions')
+            agent.run(user_instructions: test_data[:user_instructions])
+            expect(agent.spy[:system_prompt]).to eq 'SYSTEM_PROMPT[RENDERED_TEXT: System instructions]'
+          end
 
-    it 'handles missing user messages and no input artifact' do
-      agent.run
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
-    end
-
-    context 'with input artifacts' do
-      let(:agent) do
-        new_agent(
-          **{
-            input_artifacts_contracts: opts[:contracts] ? { requirements: 'Features specs' } : nil
-          }.compact
-        )
-      end
-
-      it 'sends the artifacts in the user prompt' do
-        agent.run(user_message: 'You must do this', requirements: 'Feature specs')
-        expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[You must do this with requirements (Feature specs)]']
-      end
-
-      it 'handles missing user messages' do
-        agent.run(requirements: 'Feature specs')
-        expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[ with requirements (Feature specs)]']
+          it 'uses the input artifacts in the user prompt' do
+            agent = new_agent(
+              mocked_assistant_outputs: 'Assistant Output',
+              **{
+                input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
+              }.compact
+            )
+            agent.run(user_instructions: test_data[:user_instructions], test_artifact: 'Content')
+            expect(agent.spy[:user_prompts]).to eq ["USER_PROMPT[#{test_data[:user_prompt]} with test_artifact (Content)]"]
+          end
+        end
       end
     end
   end
@@ -171,11 +200,11 @@ shared_examples 'a prompt driven agent' do |opts|
     end
 
     it 'records the prompt' do
-      agent.run(user_message: 'Test user prompt')
+      agent.run(user_instructions: 'Test user prompt')
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: 'Test user prompt' },
+          { author: 'User', message: 'RENDERED_TEXT: Test user prompt' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #1' }
         ]
       )
@@ -186,36 +215,36 @@ shared_examples 'a prompt driven agent' do |opts|
         mocked_assistant_outputs: ['Assistant Output #1'],
         name: 'Test Assistant'
       )
-      named_agent.run(user_message: 'Test user prompt')
+      named_agent.run(user_instructions: 'Test user prompt')
       expect_conversation(
         named_agent.conversation,
         [
-          { author: 'User', message: 'Test user prompt' },
+          { author: 'User', message: 'RENDERED_TEXT: Test user prompt' },
           { author: 'Agent Test Assistant', message: 'Assistant Output #1' }
         ]
       )
     end
 
     it 'records the prompts of several runs' do
-      agent.run(user_message: 'Test user prompt')
-      agent.run(user_message: 'Test another user prompt')
-      agent.run(user_message: 'What?')
+      agent.run(user_instructions: 'Test user prompt')
+      agent.run(user_instructions: 'Test another user prompt')
+      agent.run(user_instructions: 'What?')
       expect_conversation(
         agent.conversation,
         [
-          { author: 'User', message: 'Test user prompt' },
+          { author: 'User', message: 'RENDERED_TEXT: Test user prompt' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
-          { author: 'User', message: 'Test another user prompt' },
+          { author: 'User', message: 'RENDERED_TEXT: Test another user prompt' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #2' },
-          { author: 'User', message: 'What?' },
+          { author: 'User', message: 'RENDERED_TEXT: What?' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #3' }
         ]
       )
     end
 
     it 'persists the conversation through a JSON-serializable state' do
-      agent.run(user_message: 'First message')
-      agent.run(user_message: 'Second message')
+      agent.run(user_instructions: 'First message')
+      agent.run(user_instructions: 'Second message')
       state = agent.export_state
       # Should be JSON-serializable
       expect { JSON.parse(state.to_json) }.not_to raise_error
@@ -229,22 +258,22 @@ shared_examples 'a prompt driven agent' do |opts|
       expect_conversation(
         other_agent.conversation,
         [
-          { author: 'User', message: 'First message' },
+          { author: 'User', message: 'RENDERED_TEXT: First message' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
-          { author: 'User', message: 'Second message' },
+          { author: 'User', message: 'RENDERED_TEXT: Second message' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #2' }
         ]
       )
       # State persistence should work across runs: it continues with correct state
-      other_agent.run(user_message: 'Third message')
+      other_agent.run(user_instructions: 'Third message')
       expect_conversation(
         other_agent.conversation,
         [
-          { author: 'User', message: 'First message' },
+          { author: 'User', message: 'RENDERED_TEXT: First message' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #1' },
-          { author: 'User', message: 'Second message' },
+          { author: 'User', message: 'RENDERED_TEXT: Second message' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #2' },
-          { author: 'User', message: 'Third message' },
+          { author: 'User', message: 'RENDERED_TEXT: Third message' },
           { author: 'Agent Test Other Assistant', message: 'Other Assistant Output #1' }
         ]
       )

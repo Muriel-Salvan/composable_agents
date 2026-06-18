@@ -58,11 +58,11 @@ module ComposableAgents
 
       # Render the user prompt
       #
-      # @param user_message [String] The user message
+      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @return [String] The rendered user prompt
-      def render_user_prompt(user_message, input_artifacts: {})
-        user_message
+      def render_user_prompt(rendered_instructions, input_artifacts: {})
+        rendered_instructions || ''
       end
 
       # Get a user prompt for missing output artifacts

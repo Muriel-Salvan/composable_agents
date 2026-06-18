@@ -48,8 +48,8 @@ module ComposableAgents
       # @return [String] The rendered system prompt
       def render_system_prompt(rendered_instructions, input_artifacts: {})
         sections = [super]
-        # Don't document the user prompt artifact itself
-        input_contracts = normalized_input_artifacts_contracts.except(:user_message)
+        # Don't document the user instructions themselves
+        input_contracts = normalized_input_artifacts_contracts.except(:user_instructions)
         unless input_contracts.empty?
           sections << <<~EO_SECTION
             # Input artifacts' concept and usage
@@ -108,10 +108,10 @@ module ComposableAgents
 
       # Render the user prompt
       #
-      # @param user_message [String] The user message
+      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @return [String] The rendered user prompt
-      def render_user_prompt(user_message, input_artifacts: {})
+      def render_user_prompt(rendered_instructions, input_artifacts: {})
         sections = []
         unless @context.empty?
           sections << <<~EO_SECTION
@@ -144,10 +144,10 @@ module ComposableAgents
             }
           EO_SECTION
         end
-        sections << <<~EO_SECTION unless user_message.empty?
+        sections << <<~EO_SECTION if rendered_instructions && !rendered_instructions.empty?
           # User instructions
 
-          #{user_message}
+          #{rendered_instructions}
         EO_SECTION
         sections.map(&:strip).join("\n\n")
       end

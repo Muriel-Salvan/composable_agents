@@ -25,8 +25,8 @@ module ComposableAgents
     # @return [Hash<Symbol, String>] Set of input artifacts description, per artifact name
     def input_artifacts_contracts
       {
-        user_message: {
-          description: 'User prompt',
+        user_instructions: {
+          description: 'User instructions',
           optional: true
         }
       }
@@ -68,19 +68,14 @@ module ComposableAgents
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
-    # @param user_message [String] The user prompt
+    # @param user_instructions [Object, nil] Instructions for the user prompt, that will be rendered.
+    #   The kind of instructions that can be given are defined by the Instructions's constructor (see Instructions#initialize).
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @return [Hash<Symbol,Object>] The output artifacts
-    def run(user_message: '', **input_artifacts)
+    def run(user_instructions: nil, **input_artifacts)
       output_artifacts = {}
       system_prompt = render_system_prompt(
-        if @system_instructions
-          render_instructions_list(
-            @system_instructions.map do |instruction_type, instruction|
-              send(:"render_instruction_#{instruction_type}", instruction)
-            end
-          )
-        end,
+        @system_instructions ? render_instructions(@system_instructions) : nil,
         input_artifacts:
       )
       log_debug "System prompt: #{system_prompt}"
@@ -89,7 +84,11 @@ module ComposableAgents
         input_artifacts:,
         output_artifacts:
       ) do
-        converse(user_message, input_artifacts:, author: 'User')
+        converse(
+          user_instructions ? render_instructions(Instructions.new(user_instructions)) : nil,
+          input_artifacts:,
+          author: 'User'
+        )
         if respond_to?(:normalized_output_artifacts_contracts, true)
           # We know which output artifacts we are expecting.
           # Therefore check if some are missing and prompt again if that's the case.
@@ -128,15 +127,28 @@ module ComposableAgents
 
     private
 
+    # Render instructions using the prompt rendering strategy.
+    # Returns nil if instructions is nil.
+    #
+    # @param instructions [Instructions] The instructions to render
+    # @return [String] The rendered instructions
+    def render_instructions(instructions)
+      render_instructions_list(
+        instructions.map do |instruction_type, instruction|
+          send(:"render_instruction_#{instruction_type}", instruction)
+        end
+      )
+    end
+
     # Prompt a user prompt and record it with its response in the conversation.
     #
-    # @param user_prompt [String] The user prompt
-    # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+    # @param rendered_instructions [String, nil] The rendered instructions for the user prompt, or nil if none
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
     # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
-    def converse(user_prompt, input_artifacts: {}, author: 'Orchestrator')
-      rendered_user_prompt = render_user_prompt(user_prompt, input_artifacts:)
+    def converse(rendered_instructions, input_artifacts: {}, author: 'Orchestrator')
+      rendered_user_prompt = render_user_prompt(rendered_instructions, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
-      track_message(message: user_prompt, author:)
+      track_message(message: rendered_instructions, author:)
       response = prompt(rendered_user_prompt)
       log_debug "Raw Agent #{name} response: #{response}"
       track_message(message: response, author: "Agent#{" #{name}" if name}")
@@ -144,7 +156,7 @@ module ComposableAgents
 
     # Prepare the context for a given rendered system prompt
     #
-    # @param system_prompt [Object] The rendered system prompt
+    # @param system_prompt [String] The rendered system prompt
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
     # @yield Code to be executed with the context prepared
@@ -156,7 +168,7 @@ module ComposableAgents
     # Prerequisites:
     # * This method is always called within a with_system_prompt block.
     #
-    # @param user_prompt [Object] The rendered user prompt
+    # @param user_prompt [String] The rendered user prompt
     # @return [String] The output of the prompt
     def prompt(user_prompt)
       raise NotImplementedError, 'This method should be implemented by a PromptDrivenAgent subclass'
@@ -164,8 +176,8 @@ module ComposableAgents
 
     # Track a message that is part of the conversation with this agent
     #
-    # @param message [String, #to_hash] The message content, as a String or an object that can be hashed
-    # @param author [String] Author of the message
+    # @param message [String, #to_hash, nil] The message content, as a String or an object that can be hashed, or nil if none.
+    # @param author [String] Author of the message.
     # @param question [Boolean] Is this message a question expecting a reply?
     def track_message(message:, author: 'Orchestrator', question: false)
       @conversation << {

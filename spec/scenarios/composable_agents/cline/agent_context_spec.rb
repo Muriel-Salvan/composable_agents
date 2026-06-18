@@ -23,8 +23,8 @@ describe ComposableAgents::Cline::Agent do
     it 'has an empty context at the beginning of the first run' do
       agent = described_agent
       mock_cline_for(agent)
-      agent.run(user_message: 'First message')
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[First message and context <<<[]>>>]']
+      agent.run(user_instructions: 'First message')
+      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]']
     end
 
     it 'accumulates context over several runs' do
@@ -36,11 +36,11 @@ describe ComposableAgents::Cline::Agent do
           { stdout: 'Assistant Output #2' }
         ]
       )
-      agent.run(user_message: 'First message')
-      agent.run(user_message: 'Second message')
+      agent.run(user_instructions: 'First message')
+      agent.run(user_instructions: 'Second message')
       expect(agent.spy[:user_prompts]).to eq [
-        'USER_PROMPT[First message and context <<<[]>>>]',
-        'USER_PROMPT[Second message and context <<<[{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}]>>>]'
+        'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
+        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}]>>>]'
       ]
     end
 
@@ -53,8 +53,8 @@ describe ComposableAgents::Cline::Agent do
           { stdout: 'Assistant Output #2' }
         ]
       )
-      agent1.run(user_message: 'First message')
-      agent1.run(user_message: 'Second message')
+      agent1.run(user_instructions: 'First message')
+      agent1.run(user_instructions: 'Second message')
       state = agent1.export_state
       # Check that context is JSON-serializable
       expect { JSON.parse(state.to_json) }.not_to raise_error
@@ -70,18 +70,18 @@ describe ComposableAgents::Cline::Agent do
       agent2.import_state(state)
       expect(agent2.export_state).to eq state
       # Second agent's run should have the context from the first agent's runs
-      agent2.run(user_message: 'Third message')
-      agent2.run(user_message: 'Fourth message')
+      agent2.run(user_instructions: 'Third message')
+      agent2.run(user_instructions: 'Fourth message')
       expect(agent2.spy[:user_prompts]).to eq [
-        'USER_PROMPT[First message and context <<<[]>>>]',
-        'USER_PROMPT[Second message and context <<<[' \
+        'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
+        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
           ']>>>]',
-        'USER_PROMPT[Third message and context <<<[' \
+        'USER_PROMPT[RENDERED_TEXT: Third message and context <<<[' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]}' \
           ']>>>]',
-        'USER_PROMPT[Fourth message and context <<<[' \
+        'USER_PROMPT[RENDERED_TEXT: Fourth message and context <<<[' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #3"}]}' \

@@ -46,7 +46,7 @@ module ComposableAgents
 
       # Prepare the context for a given rendered system prompt
       #
-      # @param system_prompt [Object] The rendered system prompt
+      # @param system_prompt [String] The rendered system prompt
       # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
       # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
       # @yield Code to be executed with the context prepared
@@ -72,7 +72,7 @@ module ComposableAgents
       # Prerequisites:
       # * This method is always called within a with_system_prompt block.
       #
-      # @param user_prompt [Object] The rendered user prompt
+      # @param user_prompt [String] The rendered user prompt
       # @return [String] The output of the prompt
       def prompt(user_prompt)
         result = @agent_runner.run(user_prompt, context: @context)
