@@ -1,14 +1,14 @@
 describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_user_prompt' do
   it 'returns the rendered instructions unchanged' do
-    expect(agent_for_markdown.render_user_prompt('Hello, I need assistance')).to eq('Hello, I need assistance')
+    expect(agent_for_markdown.render_user_prompt('Hello, I need assistance', input_artifacts: {})).to eq('Hello, I need assistance')
   end
 
   it 'handles nil rendered instructions correctly' do
-    expect(agent_for_markdown.render_user_prompt(nil)).to eq('')
+    expect(agent_for_markdown.render_user_prompt(nil, input_artifacts: {})).to eq('')
   end
 
   it 'handles empty rendered instructions correctly' do
-    expect(agent_for_markdown.render_user_prompt('')).to eq('')
+    expect(agent_for_markdown.render_user_prompt('', input_artifacts: {})).to eq('')
   end
 
   it 'does not use input artifacts' do

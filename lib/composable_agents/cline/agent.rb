@@ -68,88 +68,82 @@ module ComposableAgents
 
       private
 
-      # Prepare the context for a given rendered system prompt
+      # Get the Cline CLI instance to use for this agent.
+      # Memoize it.
       #
-      # @param system_prompt [String] The rendered system prompt
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
-      # @yield Code to be executed with the context prepared
-      def with_system_prompt(system_prompt, input_artifacts:, output_artifacts:)
-        # Resolve all the skills and their dependencies (taken from their YAML front matter).
-        selected_skills = []
-        @skills.each do |skill|
-          find_skill(skill, selected_skills)
-        end
-        # Setup the temporary Cline global config dir
-        agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
-        ::Cline.configure do |config|
-          config.debug = Mixins::Logger.debug?
-          config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
-        end
-        cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
-        # Copy all selected global skills in this config's skills
-        if ::Cline::Config.global.skills
-          (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
-            new_skill = cline_config.skills.new(skill_name)
-            new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
-            new_skill.enable
-            log_debug "[Cline] - Enable global skill #{skill_name}"
-            new_skill.save
+      # @return [::Cline::Cli] The Cline CLI instance to be used
+      def cline_cli
+        @cline_cli ||= begin
+          # Resolve all the skills and their dependencies (taken from their YAML front matter).
+          selected_skills = []
+          @skills.each do |skill|
+            find_skill(skill, selected_skills)
           end
-        end
-        # Enable/disable project skills to make sure only selected ones are enabled
-        ::Cline::Config.project&.skills&.each do |skill_name, skill|
-          selected_skill = selected_skills.include?(skill_name)
-          next if skill.enabled? == selected_skill
+          # Setup the temporary Cline global config dir
+          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
+          ::Cline.configure do |config|
+            config.debug = Mixins::Logger.debug?
+            config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
+          end
+          cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
+          # Copy all selected global skills in this config's skills
+          if ::Cline::Config.global.skills
+            (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
+              new_skill = cline_config.skills.new(skill_name)
+              new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
+              new_skill.enable
+              log_debug "[Cline] - Enable global skill #{skill_name}"
+              new_skill.save
+            end
+          end
+          # Enable/disable project skills to make sure only selected ones are enabled
+          ::Cline::Config.project&.skills&.each do |skill_name, skill|
+            selected_skill = selected_skills.include?(skill_name)
+            next if skill.enabled? == selected_skill
 
-          if selected_skill
-            log_debug "[Cline] - Enable project skill #{skill_name}"
-            skill.enable
-          else
-            log_debug "[Cline] - Disable project skill #{skill_name}"
-            skill.disable
+            if selected_skill
+              log_debug "[Cline] - Enable project skill #{skill_name}"
+              skill.enable
+            else
+              log_debug "[Cline] - Disable project skill #{skill_name}"
+              skill.disable
+            end
+            skill.save
           end
-          skill.save
+          # Set the configuration
+          providers = cline_config.providers(create: true)
+          providers.version = 1
+          providers.last_used_provider = @provider
+          # TODO: Find a better way without exposing class names
+          provider_settings = ::Cline::Providers::ProviderSettings.new(
+            provider: @provider,
+            api_key: @api_key,
+            model: @model
+          )
+          @configure_provider&.call(provider_settings)
+          providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
+          providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
+            token_source: 'manual',
+            updated_at: Time.now.utc.strftime('%FT%T.%LZ'),
+            settings: provider_settings
+          )
+          providers.save
+          global_settings = cline_config.global_settings(create: true)
+          # Don't update the Cline CLI
+          global_settings.auto_update_enabled = false
+          @configure_global&.call(global_settings)
+          global_settings.save
+          cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
         end
-        # Set the configuration
-        providers = cline_config.providers(create: true)
-        providers.version = 1
-        providers.last_used_provider = @provider
-        # TODO: Find a better way without exposing class names
-        provider_settings = ::Cline::Providers::ProviderSettings.new(
-          provider: @provider,
-          api_key: @api_key,
-          model: @model
-        )
-        @configure_provider&.call(provider_settings)
-        providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
-        providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
-          token_source: 'manual',
-          updated_at: Time.now.utc.strftime('%FT%T.%LZ'),
-          settings: provider_settings
-        )
-        providers.save
-        global_settings = cline_config.global_settings(create: true)
-        # Don't update the Cline CLI
-        global_settings.auto_update_enabled = false
-        @configure_global&.call(global_settings)
-        global_settings.save
-        @cline_cli = cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
-        @system_prompt = system_prompt
-        # Save the output artifacts to be completed with the subsequent prompts
-        @output_artifacts_to_fill = output_artifacts
-        yield
       end
 
       # Process a user prompt.
-      # Prerequisites:
-      # * This method is always called within a with_system_prompt block.
       #
       # @param user_prompt [String] The rendered user prompt
       # @return [String] The output of the prompt
       def prompt(user_prompt)
         # Call the Cline CLI
-        result = @cline_cli.task(
+        result = cline_cli.task(
           user_prompt,
           system: @system_prompt,
           on_question: respond_to?(:ask, true) ? proc { |question| ask(question) } : nil,
@@ -166,9 +160,9 @@ module ComposableAgents
         raise "Error: #{result[:error].err.message}".strip if result[:error]
 
         # Keep the context in case we need to resume it
-        if @cline_cli.session&.messages
+        if cline_cli.session&.messages
           @context.concat(
-            @cline_cli.session.messages.map do |message|
+            cline_cli.session.messages.map do |message|
               {
                 role: message.role,
                 content: message.content.map do |content|
@@ -226,14 +220,15 @@ module ComposableAgents
           content = Regexp.last_match(2).strip
           # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
           artifact_name = (raw_name.start_with?('ARTIFACT_') ? raw_name.sub(/^ARTIFACT_/, '') : raw_name).downcase.to_sym
-          begin
-            @output_artifacts_to_fill[artifact_name] = JSON.parse(content)
-            log_debug "[Artifact] - Received output artifact #{artifact_name}"
-          rescue JSON::ParserError => e
-            # TODO: Make this as a warning message
-            log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
-              "but JSON could not be parsed from the assistant's answer: #{e}"
-          end
+          artifact_content =
+            begin
+              JSON.parse(content)
+            rescue JSON::ParserError => e
+              # TODO: Make this as a warning message
+              log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
+                "but JSON could not be parsed from the assistant's answer: #{e}"
+            end
+          save_output_artifact(artifact_name, artifact_content)
         end
       end
     end

@@ -44,38 +44,33 @@ module ComposableAgents
 
       private
 
-      # Prepare the context for a given rendered system prompt
+      # Get the agent runner.
+      # Memoize it.
       #
-      # @param system_prompt [String] The rendered system prompt
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
-      # @yield Code to be executed with the context prepared
-      def with_system_prompt(system_prompt, input_artifacts:, output_artifacts:)
-        @agent_runner = Agents::AgentRunner.new(
+      # @return [Agents::AgentRunner] The agent runner to be used
+      def agent_runner
+        @agent_runner ||= Agents::AgentRunner.new(
           [
             Agents::Agent.new(
               model: @model,
               name: @name,
               params: @params,
-              instructions: system_prompt,
+              instructions: @system_prompt,
               tools: [
-                Tools::CreateArtifactTool.new(output_artifacts),
-                Tools::GetArtifactTool.new(input_artifacts)
+                Tools::CreateArtifactTool.new(self),
+                Tools::GetArtifactTool.new(@input_artifacts)
               ] + agent_tools
             )
           ] + @handoff_agents
         )
-        yield
       end
 
       # Process a user prompt.
-      # Prerequisites:
-      # * This method is always called within a with_system_prompt block.
       #
       # @param user_prompt [String] The rendered user prompt
       # @return [String] The output of the prompt
       def prompt(user_prompt)
-        result = @agent_runner.run(user_prompt, context: @context)
+        result = agent_runner.run(user_prompt, context: @context)
         unless result.error.nil?
           raise <<~EO_ERROR.strip
             Error: #{result.error.detailed_message}

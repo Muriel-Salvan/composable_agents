@@ -1,31 +1,65 @@
 module ComposableAgentsTest
   # Test specific PromptRenderingStrategy that records calls and returns predictable values
   module TestRenderingStrategy
+    # Render an instruction of type text
+    #
+    # @param instruction [String] The instruction to render
+    # @return [String] The rendered instruction
     def render_instruction_text(instruction)
       "RENDERED_TEXT: #{instruction}"
     end
 
+    # Render an instruction of type ordered_list
+    #
+    # @param instruction [Array<String>] The instruction to render
+    # @return [String] The rendered instruction
     def render_instruction_ordered_list(instruction)
       "RENDERED_LIST: #{instruction.join(', ')}"
     end
 
+    # Render a list of rendered instructions
+    #
+    # @param instructions [Array<String>] The instructions list to render
+    # @return [String] The rendered instructions list
     def render_instructions_list(instructions)
       instructions.join(' | ')
     end
 
-    def render_system_prompt(rendered_instructions, input_artifacts: {})
+    # Render the system prompt
+    # The following instance variables are accessible to render the prompt:
+    # - `@input_artifacts`
+    # - `@role`
+    # - `@objective`
+    # - `@constraints`
+    #
+    # @param rendered_instructions [String, nil] The rendered system instructions, or nil if none
+    # @return [String] The rendered system prompt
+    def render_system_prompt(rendered_instructions)
       "SYSTEM_PROMPT[#{rendered_instructions}#{
-        " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
+        " with #{@input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless @input_artifacts.empty?
       }]"
     end
 
-    def render_user_prompt(rendered_instructions, input_artifacts: {})
+    # Render the user prompt
+    # The following instance variables are accessible to render the prompt:
+    # - `@role`
+    # - `@objective`
+    # - `@constraints`
+    #
+    # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
+    # @return [String] The rendered user prompt
+    def render_user_prompt(rendered_instructions, input_artifacts:)
       "USER_PROMPT[#{rendered_instructions}#{
         " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }]"
     end
 
-    def missing_output_user_prompt(missing_output_artifacts)
+    # Get user instructions for missing output artifacts
+    #
+    # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+    # @return [Object] The user instructions (see Instructions#initialize)
+    def missing_output_user_instructions(missing_output_artifacts)
       "MISSING_PROMPT: #{missing_output_artifacts.map { |name, contract| "#{name} (#{contract[:description]})" }.join(', ')}"
     end
   end

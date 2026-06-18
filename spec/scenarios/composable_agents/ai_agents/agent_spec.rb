@@ -24,12 +24,12 @@ describe ComposableAgents::AiAgents::Agent do
         mocked_output_artifacts = mocked_run_result&.delete(:output_artifacts)
         if mocked_output_artifacts
           # Use a mocked call to the corresponding tool
-          agents
+          tool_agent = agents
             .first
             .tools
             .find { |tool| tool.is_a?(ComposableAgents::AiAgents::Tools::CreateArtifactTool) }
-            .instance_variable_get(:@artifacts)
-            .merge!(mocked_output_artifacts)
+            .instance_variable_get(:@agent)
+          mocked_output_artifacts.each { |name, content| tool_agent.save_output_artifact(name, content) }
         end
         run_idx = (context[:run_idx] || 0) + 1
         double(

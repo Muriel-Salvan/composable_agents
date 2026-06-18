@@ -1,8 +1,17 @@
 describe ComposableAgents::AiAgents::Tools::CreateArtifactTool do
-  subject(:tool) { described_class.new(artifacts) }
+  subject(:tool) { described_class.new(agent) }
 
+  let(:agent) do
+    new_agent = Class.new(ComposableAgents::AiAgents::Agent) do
+      # @return [Hash{Symbol => Object}] Access the written output artifacts for expectations
+      attr_accessor :output_artifacts
+    end.new
+    # We initialize the artifacts manually, as the run method won't be executed in those tests.
+    new_agent.output_artifacts = {}
+    new_agent
+  end
   let(:tool_context) { instance_double(Agents::ToolContext) }
-  let(:artifacts) { {} }
+  let(:artifacts) { agent.output_artifacts }
 
   describe '#perform' do
     context 'when creating a new artifact' do

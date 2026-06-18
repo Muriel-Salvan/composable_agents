@@ -15,10 +15,10 @@ module ComposableAgents
 
         # Constructor
         #
-        # @param artifacts [Hash<Symbol,String>] The artifacts store
-        def initialize(artifacts)
+        # @param agent [PromptDrivenAgent] The agent that will receive output artifacts
+        def initialize(agent)
           super()
-          @artifacts = artifacts
+          @agent = agent
         end
 
         # Perform the tool's action.
@@ -29,8 +29,7 @@ module ComposableAgents
         # @param content [String] The required artifact's content
         # @return [String] The tool's response
         def perform(_tool_context, name:, content:)
-          @artifacts[name.to_sym] = content
-          log_debug "Artifact `#{name}` written successfully."
+          @agent.save_output_artifact(name.to_sym, content)
           "Artifact `#{name}` created successfully."
         end
       end

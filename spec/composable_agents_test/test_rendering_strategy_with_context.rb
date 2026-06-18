@@ -3,7 +3,16 @@ module ComposableAgentsTest
   module TestRenderingStrategyWithContext
     include TestRenderingStrategy
 
-    def render_user_prompt(rendered_instructions, input_artifacts: {})
+    # Render the user prompt
+    # The following instance variables are accessible to render the prompt:
+    # - `@role`
+    # - `@objective`
+    # - `@constraints`
+    #
+    # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
+    # @return [String] The rendered user prompt
+    def render_user_prompt(rendered_instructions, input_artifacts:)
       "USER_PROMPT[#{rendered_instructions}#{
         " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }#{

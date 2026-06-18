@@ -70,7 +70,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
       expect(agent.run).to include(result: 'partial', logs: 'complete')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
-        'USER_PROMPT[MISSING_PROMPT: logs (Execution logs)]'
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
       ]
     end
 
@@ -86,8 +86,8 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
       expect(agent.run).to include(result: 'second', logs: 'final')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
-        'USER_PROMPT[MISSING_PROMPT: result (Final result), logs (Execution logs)]',
-        'USER_PROMPT[MISSING_PROMPT: logs (Execution logs)]'
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)]',
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
       ]
     end
   end
@@ -107,7 +107,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         [
           { author: 'User', message: nil },
           { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
-          { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+          { author: 'Orchestrator', message: 'RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #2/ }
         ]
       )
@@ -128,7 +128,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         [
           { author: 'User', message: nil },
           { author: 'Agent Travel Planner', message: /Assistant Output #1/ },
-          { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+          { author: 'Orchestrator', message: 'RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: 'Agent Travel Planner', message: /Assistant Output #2/ }
         ]
       )
@@ -151,9 +151,9 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         [
           { author: 'User', message: nil },
           { author: opts[:default_conversation_name], message: /Assistant Output #1/ },
-          { author: 'Orchestrator', message: 'MISSING_PROMPT: result (Final result), logs (Execution logs)' },
+          { author: 'Orchestrator', message: 'RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #2/ },
-          { author: 'Orchestrator', message: 'MISSING_PROMPT: logs (Execution logs)' },
+          { author: 'Orchestrator', message: 'RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)' },
           { author: opts[:default_conversation_name], message: /Assistant Output #3/ },
           { author: 'User', message: 'RENDERED_TEXT: Again' },
           { author: opts[:default_conversation_name], message: /Assistant Output #4/ }

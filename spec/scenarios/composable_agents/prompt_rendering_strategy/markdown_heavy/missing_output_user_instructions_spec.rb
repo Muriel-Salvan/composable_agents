@@ -1,7 +1,7 @@
-describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#missing_output_user_prompt' do
+describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#missing_output_user_instructions' do
   it 'prompts for missing artifacts' do
     expect(
-      agent_for_markdown_heavy.missing_output_user_prompt(
+      agent_for_markdown_heavy.missing_output_user_instructions(
         report: { description: 'Final report document' },
         summary: { description: 'Executive summary' },
         logs: { description: 'Execution logs' }
@@ -32,7 +32,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#missing_out
 
   it 'handles single missing artifact correctly' do
     expect(
-      agent_for_markdown_heavy.missing_output_user_prompt(
+      agent_for_markdown_heavy.missing_output_user_instructions(
         result: { description: 'Calculation result' }
       )
     ).to eq <<~EO_PROMPT

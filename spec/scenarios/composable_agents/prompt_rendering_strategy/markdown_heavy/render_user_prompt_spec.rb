@@ -2,7 +2,7 @@ require 'json'
 
 describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user_prompt' do
   it 'returns only the user instructions section when context and input artifacts are empty' do
-    expect(agent_for_markdown_heavy.render_user_prompt('Hello, I need assistance')).to eq <<~EO_PROMPT.strip
+    expect(agent_for_markdown_heavy.render_user_prompt('Hello, I need assistance', input_artifacts: {})).to eq <<~EO_PROMPT.strip
       # User instructions
 
       Hello, I need assistance
@@ -10,17 +10,17 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
   end
 
   it 'handles nil rendered instructions with no context or artifacts' do
-    expect(agent_for_markdown_heavy.render_user_prompt(nil)).to eq('')
+    expect(agent_for_markdown_heavy.render_user_prompt(nil, input_artifacts: {})).to eq('')
   end
 
   it 'handles empty rendered instructions with no context or artifacts' do
-    expect(agent_for_markdown_heavy.render_user_prompt('')).to eq('')
+    expect(agent_for_markdown_heavy.render_user_prompt('', input_artifacts: {})).to eq('')
   end
 
   it 'includes previous sessions context when @context is set' do
     expect(
       agent_for_markdown_heavy(context: { 'previous_task' => 'analyzed data', 'findings' => %w[item1 item2] })
-        .render_user_prompt('Continue with the task')
+        .render_user_prompt('Continue with the task', input_artifacts: {})
     ).to eq <<~EO_PROMPT.strip
       # Previous sessions context
 
@@ -147,7 +147,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
   end
 
   it 'handles context without rendered instructions' do
-    expect(agent_for_markdown_heavy(context: { 'id' => 42 }).render_user_prompt(nil)).to eq <<~EO_PROMPT.strip
+    expect(agent_for_markdown_heavy(context: { 'id' => 42 }).render_user_prompt(nil, input_artifacts: {})).to eq <<~EO_PROMPT.strip
       # Previous sessions context
 
       Here is the conversation from a previous session for context:

@@ -42,11 +42,15 @@ module ComposableAgents
       end
 
       # Render the system prompt
+      # The following instance variables are accessible to render the prompt:
+      # - `@input_artifacts`
+      # - `@role`
+      # - `@objective`
+      # - `@constraints`
       #
-      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+      # @param rendered_instructions [String, nil] The rendered system instructions, or nil if none
       # @return [String] The rendered system prompt
-      def render_system_prompt(rendered_instructions, input_artifacts: {})
+      def render_system_prompt(rendered_instructions)
         sections = [super]
         # Don't document the user instructions themselves
         input_contracts = normalized_input_artifacts_contracts.except(:user_instructions)
@@ -107,11 +111,15 @@ module ComposableAgents
       end
 
       # Render the user prompt
+      # The following instance variables are accessible to render the prompt:
+      # - `@role`
+      # - `@objective`
+      # - `@constraints`
       #
       # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
       # @return [String] The rendered user prompt
-      def render_user_prompt(rendered_instructions, input_artifacts: {})
+      def render_user_prompt(rendered_instructions, input_artifacts:)
         sections = []
         unless @context.empty?
           sections << <<~EO_SECTION
@@ -152,11 +160,11 @@ module ComposableAgents
         sections.map(&:strip).join("\n\n")
       end
 
-      # Get a user prompt for missing output artifacts
+      # Get user instructions for missing output artifacts
       #
-      # @param missing_output_artifacts [Hash<Symbol,Object>] The missing output artifacts description, per artifact name
-      # @return [Object] The user prompt
-      def missing_output_user_prompt(missing_output_artifacts)
+      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+      # @return [Object] The user instructions (see Instructions#initialize)
+      def missing_output_user_instructions(missing_output_artifacts)
         log_debug "[Artifact] - Asking assistant for missing output artifacts `#{missing_output_artifacts.keys.join(', ')}` to be returned in its next answer."
         <<~EO_PROMPT
           The following output artifacts are missing from your previous responses:

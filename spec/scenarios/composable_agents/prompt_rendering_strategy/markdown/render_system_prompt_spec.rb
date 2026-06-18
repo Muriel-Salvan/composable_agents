@@ -307,8 +307,11 @@ describe ComposableAgents::PromptRenderingStrategy::Markdown, '#render_system_pr
   end
 
   it 'does not use the input artifacts' do
+    agent = agent_for_markdown
+    # Set input artifacts manuallt as we won't call the run method
+    agent.input_artifacts = { document: 'Description' }
     expect(
-      agent_for_markdown.render_system_prompt("Instruction 1\n\nInstruction 2", input_artifacts: { document: 'Description' })
+      agent.render_system_prompt("Instruction 1\n\nInstruction 2")
     ).to eq <<~EO_SYSTEM_PROMPT.strip
       # Instructions
 

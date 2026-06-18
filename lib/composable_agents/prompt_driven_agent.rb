@@ -73,35 +73,23 @@ module ComposableAgents
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
     # @return [Hash<Symbol,Object>] The output artifacts
     def run(user_instructions: nil, **input_artifacts)
-      output_artifacts = {}
-      system_prompt = render_system_prompt(
-        @system_instructions ? render_instructions(@system_instructions) : nil,
-        input_artifacts:
-      )
-      log_debug "System prompt: #{system_prompt}"
-      with_system_prompt(
-        system_prompt,
-        input_artifacts:,
-        output_artifacts:
-      ) do
-        converse(
-          user_instructions ? render_instructions(Instructions.new(user_instructions)) : nil,
-          input_artifacts:,
-          author: 'User'
-        )
-        if respond_to?(:normalized_output_artifacts_contracts, true)
-          # We know which output artifacts we are expecting.
-          # Therefore check if some are missing and prompt again if that's the case.
-          # TODO: Implement a max number of retries and throw an exception if it exceeds.
-          loop do
-            missing_artifacts = normalized_output_artifacts_contracts.reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
-            break if missing_artifacts.empty?
+      @input_artifacts = input_artifacts
+      @output_artifacts = {}
+      @system_prompt = render_system_prompt(@system_instructions ? render_instructions(@system_instructions) : nil)
+      log_debug "System prompt: #{@system_prompt}"
+      converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
+      if respond_to?(:normalized_output_artifacts_contracts, true)
+        # We know which output artifacts we are expecting.
+        # Therefore check if some are missing and prompt again if that's the case.
+        # TODO: Implement a max number of retries and throw an exception if it exceeds.
+        loop do
+          missing_artifacts = normalized_output_artifacts_contracts.reject { |artifact_name, _artifact_description| @output_artifacts.key?(artifact_name) }
+          break if missing_artifacts.empty?
 
-            converse(missing_output_user_prompt(missing_artifacts))
-          end
+          converse(missing_output_user_instructions(missing_artifacts))
         end
       end
-      output_artifacts
+      @output_artifacts
     end
 
     # Export the agent state for persistence
@@ -125,6 +113,16 @@ module ComposableAgents
       end
     end
 
+    # Save an output artifact.
+    # This method can be used at anytime while prompting, when the agent is able to produce an output artifact.
+    #
+    # @param name [Symbol] Output artifact name
+    # @param content [Object] Output artifact content
+    def save_output_artifact(name, content)
+      @output_artifacts[name] = content
+      log_debug "[Artifact] - Received output artifact #{name}"
+    end
+
     private
 
     # Render instructions using the prompt rendering strategy.
@@ -142,10 +140,11 @@ module ComposableAgents
 
     # Prompt a user prompt and record it with its response in the conversation.
     #
-    # @param rendered_instructions [String, nil] The rendered instructions for the user prompt, or nil if none
+    # @param instructions [Object, nil] The instructions for the user prompt (see Instructions#initialize), or nil if none
     # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
     # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
-    def converse(rendered_instructions, input_artifacts: {}, author: 'Orchestrator')
+    def converse(instructions, input_artifacts: {}, author: 'Orchestrator')
+      rendered_instructions = instructions ? render_instructions(Instructions.new(instructions)) : nil
       rendered_user_prompt = render_user_prompt(rendered_instructions, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: rendered_instructions, author:)
@@ -154,19 +153,7 @@ module ComposableAgents
       track_message(message: response, author: "Agent#{" #{name}" if name}")
     end
 
-    # Prepare the context for a given rendered system prompt
-    #
-    # @param system_prompt [String] The rendered system prompt
-    # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-    # @param output_artifacts [Hash<Symbol,Object>] The output artifacts to be filled by subsequent prompts, per artifact name
-    # @yield Code to be executed with the context prepared
-    def with_system_prompt(system_prompt, input_artifacts:, output_artifacts:)
-      raise NotImplementedError, 'This method should be implemented by a PromptDrivenAgent subclass'
-    end
-
     # Process a user prompt.
-    # Prerequisites:
-    # * This method is always called within a with_system_prompt block.
     #
     # @param user_prompt [String] The rendered user prompt
     # @return [String] The output of the prompt

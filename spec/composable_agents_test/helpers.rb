@@ -12,6 +12,9 @@ module ComposableAgentsTest
     def agent_for_markdown(*args, **kwargs)
       Class.new(ComposableAgents::PromptDrivenAgent) do
         include ComposableAgents::PromptRenderingStrategy::Markdown
+
+        # @return [Hash{Symbol => Object}] The input artifacts that are set using run calls
+        attr_accessor :input_artifacts
       end.new(*args, **kwargs)
     end
 
@@ -36,6 +39,9 @@ module ComposableAgentsTest
           super(*args, **kwargs)
           @context = context
         end
+
+        # @return [Hash{Symbol => Object}] The input artifacts that are set using run calls
+        attr_accessor :input_artifacts
       end.new(*args, context:, **kwargs)
     end
   end

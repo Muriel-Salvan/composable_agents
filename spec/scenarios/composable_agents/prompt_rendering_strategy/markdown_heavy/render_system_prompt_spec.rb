@@ -13,7 +13,10 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
     input_artifacts: {},
     **kwargs
   )
-    agent_for_markdown_heavy(input_artifacts_contracts:, **kwargs).render_system_prompt(rendered_instructions, input_artifacts:)
+    agent = agent_for_markdown_heavy(input_artifacts_contracts:, **kwargs)
+    # Set the input artifacts manually as we won't call the run method
+    agent.input_artifacts = input_artifacts
+    agent.render_system_prompt(rendered_instructions)
   end
 
   it 'includes instructions section without input artifacts intro if there aren\'t any artifacts' do

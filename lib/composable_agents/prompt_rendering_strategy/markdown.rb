@@ -26,12 +26,16 @@ module ComposableAgents
         instructions.map { |instruction| Utils::Markdown.align_markdown_headers(instruction, level: 1).strip }.join("\n\n")
       end
 
-      # Render the system prompt
+      # Render the system prompt.
+      # The following instance variables are accessible to render the prompt:
+      # - `@input_artifacts`
+      # - `@role`
+      # - `@objective`
+      # - `@constraints`
       #
-      # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+      # @param rendered_instructions [String, nil] The rendered system instructions, or nil if none
       # @return [String] The rendered system prompt
-      def render_system_prompt(rendered_instructions, input_artifacts: {})
+      def render_system_prompt(rendered_instructions)
         sections = []
         sections << <<~EO_SECTION if @role && !@role.empty?
           # Role
@@ -57,19 +61,23 @@ module ComposableAgents
       end
 
       # Render the user prompt
+      # The following instance variables are accessible to render the prompt:
+      # - `@role`
+      # - `@objective`
+      # - `@constraints`
       #
       # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
+      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
       # @return [String] The rendered user prompt
-      def render_user_prompt(rendered_instructions, input_artifacts: {})
+      def render_user_prompt(rendered_instructions, input_artifacts:)
         rendered_instructions || ''
       end
 
-      # Get a user prompt for missing output artifacts
+      # Get user instructions for missing output artifacts
       #
-      # @param missing_output_artifacts [Hash<Symbol,Object>] The missing output artifacts description, per artifact name
-      # @return [Object] The user prompt
-      def missing_output_user_prompt(missing_output_artifacts)
+      # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts description, per artifact name
+      # @return [Object] The user instructions (see Instructions#initialize)
+      def missing_output_user_instructions(missing_output_artifacts)
         <<~EO_PROMPT
           Some artifacts are missing:
           #{
