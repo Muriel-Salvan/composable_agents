@@ -97,6 +97,119 @@ describe ComposableAgents::Mixins::ArtifactContract do
           expect(agent.received_artifacts).to eq({ required: 10, optional: 20 })
         end
       end
+
+      context 'with input artifacts type definitions' do
+        let(:agent) do
+          Class.new(ComposableAgents::Agent) do
+            prepend ComposableAgents::Mixins::ArtifactContract
+
+            attr_reader :received_artifacts
+
+            def input_artifacts_contracts
+              {
+                text_field: { description: 'A text field', type: :text },
+                markdown_field: { description: 'A markdown field', type: :markdown },
+                json_field: { description: 'A JSON field', type: :json }
+              }
+            end
+
+            def output_artifacts_contracts
+              {}
+            end
+
+            def run(**input_artifacts)
+              @received_artifacts = input_artifacts
+            end
+          end.new
+        end
+
+        it 'accepts valid text artifact' do
+          agent.run(
+            text_field: 'Hello world',
+            markdown_field: '# Heading',
+            json_field: { 'key' => 'value' }
+          )
+          expect(agent.received_artifacts).not_to be_nil
+        end
+
+        it 'raises ArtifactTypeError for invalid text artifact type (Integer)' do
+          expect do
+            agent.run(
+              text_field: 123,
+              markdown_field: '# Heading',
+              json_field: { 'key' => 'value' }
+            )
+          end.to raise_error(
+            ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+            /Artifact text_field should be a text String but is actually a Integer/
+          )
+        end
+
+        it 'raises ArtifactTypeError for invalid markdown artifact type' do
+          expect do
+            agent.run(
+              text_field: 'Hello',
+              markdown_field: :not_a_string,
+              json_field: { 'key' => 'value' }
+            )
+          end.to raise_error(
+            ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+            /Artifact markdown_field should be a markdown String but is actually a Symbol/
+          )
+        end
+
+        it 'raises ArtifactTypeError for invalid json artifact type' do
+          expect do
+            agent.run(
+              text_field: 'Hello',
+              markdown_field: '# Heading',
+              json_field: :not_json
+            )
+          end.to raise_error(
+            ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+            /Artifact json_field should be a JSON object but serializing it into JSON changed its data/
+          )
+        end
+
+        it 'raises ArtifactTypeError when JSON serialization fails' do
+          expect do
+            agent.run(
+              text_field: 'Hello',
+              markdown_field: '# Heading',
+              json_field: BasicObject.new
+            )
+          end.to raise_error(
+            ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+            /Artifact json_field should be a JSON object but parsing it raised error: undefined method 'to_json' for an instance of BasicObject/
+          )
+        end
+
+        it 'raises ArtifactTypeError for an unknown artifact type' do
+          agent_unknown = Class.new(ComposableAgents::Agent) do
+            prepend ComposableAgents::Mixins::ArtifactContract
+
+            attr_reader :received_artifacts
+
+            def input_artifacts_contracts
+              {
+                weird_field: { description: 'A weird field', type: :unknown }
+              }
+            end
+
+            def output_artifacts_contracts
+              {}
+            end
+
+            def run(**input_artifacts)
+              @received_artifacts = input_artifacts
+            end
+          end.new
+          expect { agent_unknown.run(weird_field: 'Hello') }.to raise_error(
+            ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+            /Unknown artifact type: unknown/
+          )
+        end
+      end
     end
 
     context 'with output artifacts definitions' do
@@ -338,6 +451,114 @@ describe ComposableAgents::Mixins::ArtifactContract do
           expect(agent.run).to eq({ required: 'abc', optional: 'def' })
         end
       end
+    end
+  end
+
+  context 'with type checking on output artifacts' do
+    let(:agent) do
+      Class.new(ComposableAgents::Agent) do
+        prepend ComposableAgents::Mixins::ArtifactContract
+
+        attr_accessor :mocked_output_artifacts
+
+        def input_artifacts_contracts
+          {}
+        end
+
+        def output_artifacts_contracts
+          {
+            text_result: { description: 'A text result', type: :text },
+            markdown_result: { description: 'A markdown result', type: :markdown },
+            json_result: { description: 'A JSON result', type: :json }
+          }
+        end
+
+        def run(**_input_artifacts)
+          mocked_output_artifacts
+        end
+      end.new
+    end
+
+    it 'accepts valid output artifacts with matching types' do
+      agent.mocked_output_artifacts = {
+        text_result: 'Hello',
+        markdown_result: '# Title',
+        json_result: { 'data' => 1 }
+      }
+      expect(agent.run).to eq(text_result: 'Hello', markdown_result: '# Title', json_result: { 'data' => 1 })
+    end
+
+    it 'raises ArtifactTypeError for invalid text output artifact type (Integer)' do
+      agent.mocked_output_artifacts = {
+        text_result: 42,
+        markdown_result: '# Title',
+        json_result: { 'data' => 1 }
+      }
+      expect { agent.run }.to raise_error(
+        ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+        /Artifact text_result should be a text String but is actually a Integer/
+      )
+    end
+
+    it 'raises ArtifactTypeError for invalid markdown output artifact type' do
+      agent.mocked_output_artifacts = {
+        text_result: 'Hello',
+        markdown_result: true,
+        json_result: { 'data' => 1 }
+      }
+      expect { agent.run }.to raise_error(
+        ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+        /Artifact markdown_result should be a markdown String but is actually a TrueClass/
+      )
+    end
+
+    it 'raises ArtifactTypeError for invalid json output artifact type' do
+      agent.mocked_output_artifacts = {
+        text_result: 'Hello',
+        markdown_result: '# Title',
+        json_result: :not_json
+      }
+      expect { agent.run }.to raise_error(
+        ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+        /Artifact json_result should be a JSON object but serializing it into JSON changed its data/
+      )
+    end
+
+    it 'raises ArtifactTypeError when JSON serialization fails' do
+      agent.mocked_output_artifacts = {
+        text_result: 'Hello',
+        markdown_result: '# Title',
+        json_result: BasicObject.new
+      }
+      expect { agent.run }.to raise_error(
+        ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+        /Artifact json_result should be a JSON object but parsing it raised error: undefined method 'to_json' for an instance of BasicObject/
+      )
+    end
+
+    it 'raises ArtifactTypeError for unknown artifact type' do
+      agent_unknown = Class.new(ComposableAgents::Agent) do
+        prepend ComposableAgents::Mixins::ArtifactContract
+
+        attr_accessor :mocked_output_artifacts
+
+        def input_artifacts_contracts
+          {}
+        end
+
+        def output_artifacts_contracts
+          { weird_field: { description: 'Weird type', type: :unknown } }
+        end
+
+        def run(**_input_artifacts)
+          mocked_output_artifacts
+        end
+      end.new
+      agent_unknown.mocked_output_artifacts = { weird_field: 'something' }
+      expect { agent_unknown.run }.to raise_error(
+        ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
+        /Unknown artifact type: unknown/
+      )
     end
   end
 end

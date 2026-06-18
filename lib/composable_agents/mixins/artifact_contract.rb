@@ -1,12 +1,20 @@
+require 'json'
+
 module ComposableAgents
   module Mixins
     # Mixin providing input/output artifact validation functionality for Agents.
     # The contracts should be provided by methods named #input_artifacts_contracts and #output_artifacts_contracts
     # A contract can be one of the following objects:
-    # * [String] The artifact's description
-    # * [Hash<Symbol, Object>] The artifact's detailed contract. It can contain the following attributes:
-    #   * description [String] The artifact's description. This is also the default value when the contract is expressed as a String.
-    #   * optional [Boolean] Is the artifact optional? Defaults to false.
+    # - [String] The artifact's description
+    # - [Hash{Symbol => Object}] The artifact's detailed contract. It can contain the following attributes:
+    #   - description [String] The artifact's description. This is also the default value when the contract is expressed as a String.
+    #   - optional [Boolean] Is the artifact optional? Defaults to false.
+    #   - type [Symbol] The type of this artifact. Defaults to :text.
+    #     Possible values are:
+    #     - `text` for raw text.
+    #     - `markdown` for Markdown.
+    #     - `json` for JSON.
+    #     Type can be used by some agents to tailor their output format and prompts.
     module ArtifactContract
       # Raised when required input artifacts are missing
       class MissingInputArtifactError < RuntimeError
@@ -14,6 +22,10 @@ module ComposableAgents
 
       # Raised when expected output artifacts are missing
       class MissingOutputArtifactError < RuntimeError
+      end
+
+      # Raised when validations on artifact types are failing
+      class ArtifactTypeError < RuntimeError
       end
 
       # Constructor
@@ -98,18 +110,19 @@ module ComposableAgents
 
       # Validate that all required input artifacts are present
       #
-      # @param artifacts [Hash<Symbol, Object>] Input artifacts to validate
+      # @param artifacts [Hash{Symbol => Object}] Input artifacts to validate
       # @raise [MissingInputArtifactError] If any required artifacts are missing
       def validate_input_artifacts(artifacts)
         artifacts_contracts = normalized_input_artifacts_contracts.reject { |_name, contract| contract[:optional] }
         missing_inputs = artifacts_contracts.keys - artifacts.keys
-        return if missing_inputs.empty?
-
-        raise MissingInputArtifactError, "Missing required input artifacts:\n#{
-          missing_inputs.map do |key|
-            "* #{key}: #{artifacts_contracts[key][:description]}"
-          end.join("\n")
-        }"
+        unless missing_inputs.empty?
+          raise MissingInputArtifactError, "Missing required input artifacts:\n#{
+            missing_inputs.map do |artifact_name|
+              "* #{artifact_name}: #{artifacts_contracts[artifact_name][:description]}"
+            end.join("\n")
+          }"
+        end
+        validate_artifacts_types(artifacts, normalized_input_artifacts_contracts)
       end
 
       # Validate that all expected output artifacts are present
@@ -119,13 +132,45 @@ module ComposableAgents
       def validate_output_artifacts(artifacts)
         artifacts_contracts = normalized_output_artifacts_contracts.reject { |_name, contract| contract[:optional] }
         missing_outputs = artifacts_contracts.keys - artifacts.keys
-        return if missing_outputs.empty?
+        unless missing_outputs.empty?
+          raise MissingOutputArtifactError, "Agent failed to produce expected output artifacts:\n#{
+            missing_outputs.map do |key|
+              "* #{key}: #{artifacts_contracts[key][:description]}"
+            end.join("\n")
+          }"
+        end
+        validate_artifacts_types(artifacts, normalized_output_artifacts_contracts)
+      end
 
-        raise MissingOutputArtifactError, "Agent failed to produce expected output artifacts:\n#{
-          missing_outputs.map do |key|
-            "* #{key}: #{artifacts_contracts[key][:description]}"
-          end.join("\n")
-        }"
+      # Validate the types of the artifacts.
+      #
+      # @param artifacts [Hash{Symbol => Object}] The artifacts to validate
+      # @param artifacts_contracts [Hash{Symbol => Hash{Symbol => Object}}] The artifacts contracts
+      def validate_artifacts_types(artifacts, artifacts_contracts)
+        # Validate the types if provided
+        artifacts.each do |artifact_name, content|
+          required_type = artifacts_contracts.dig(artifact_name, :type)
+          next unless required_type
+
+          case required_type
+          when :text, :markdown
+            unless content.is_a?(String)
+              raise ArtifactTypeError, "Artifact #{artifact_name} should be a #{required_type} String but is actually a #{content.class.name}"
+            end
+          when :json
+            begin
+              unless JSON.parse(content.to_json) == content
+                raise ArtifactTypeError, "Artifact #{artifact_name} should be a JSON object but serializing it into JSON changed its data"
+              end
+            rescue StandardError => e
+              raise if e.is_a?(ArtifactTypeError)
+
+              raise ArtifactTypeError, "Artifact #{artifact_name} should be a JSON object but parsing it raised error: #{e}"
+            end
+          else
+            raise ArtifactTypeError, "Unknown artifact type: #{required_type}"
+          end
+        end
       end
     end
   end
