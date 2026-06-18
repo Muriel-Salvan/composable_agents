@@ -155,7 +155,7 @@ module ComposableAgents
         sections << <<~EO_SECTION if rendered_instructions && !rendered_instructions.empty?
           # User instructions
 
-          #{rendered_instructions}
+          #{Utils::Markdown.align_markdown_headers(rendered_instructions, level: 2)}
         EO_SECTION
         sections.map(&:strip).join("\n\n")
       end

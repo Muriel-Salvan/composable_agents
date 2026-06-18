@@ -182,4 +182,50 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
       Simple message
     EO_PROMPT
   end
+
+  it 'levels big headers in rendered instructions properly' do
+    expect(
+      agent_for_markdown_heavy.render_user_prompt(
+        <<~EO_INSTRUCTIONS,
+          # Header 1
+
+          ## 1. Header 1.1
+
+          ## 2. Header 1.2
+        EO_INSTRUCTIONS
+        input_artifacts: {}
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # User instructions
+
+      ## Header 1
+
+      ### 1. Header 1.1
+
+      ### 2. Header 1.2
+    EO_PROMPT
+  end
+
+  it 'levels small headers in rendered instructions properly' do
+    expect(
+      agent_for_markdown_heavy.render_user_prompt(
+        <<~EO_INSTRUCTIONS,
+          ### Header 1
+
+          #### Header 1.1
+
+          ##### Header 1.1.1
+        EO_INSTRUCTIONS
+        input_artifacts: {}
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # User instructions
+
+      ## Header 1
+
+      ### Header 1.1
+
+      #### Header 1.1.1
+    EO_PROMPT
+  end
 end
