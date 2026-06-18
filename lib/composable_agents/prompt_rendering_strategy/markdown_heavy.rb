@@ -91,19 +91,53 @@ module ComposableAgents
               ```
             - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
             - Always return output artifacts that the user is asking you to provide.
-            - You can return several output artifacts in your final response if needed.
+            - You can return several output artifacts in your responses if needed.
+
+            Following sections enumerate all expected output artifacts.
+
             #{
               normalized_output_artifacts_contracts.map do |artifact_name, artifact_contract|
-                [
-                  "- The content of output artifact `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}` should describe this: #{artifact_contract[:description]}",
-                  <<~EO_ITEM.strip
-                    - The output artifact `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}` should be given in a block like this:
-                      ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
-                      {artifact_content}
-                      ```
-                  EO_ITEM
-                ]
-              end.flatten(1).join("\n")
+                assistant_name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+                (
+                  [
+                    "## Output artifact `#{assistant_name}`",
+                    '',
+                    "- The content of output artifact `#{assistant_name}` should describe this: #{artifact_contract[:description]}"
+                  ] + (
+                    if artifact_contract[:type]
+                      [
+                        "- The output artifact `#{assistant_name}` content format should be #{artifact_contract[:type]}",
+                        <<~EO_ITEM.strip
+                          - The output artifact `#{assistant_name}` should be given in a block like this:
+                            ```json output_artifact=#{assistant_name}
+                            #{
+                              case artifact_contract[:type]
+                              when :text
+                                '{"text":"{raw_text_artifact_content}"}'
+                              when :markdown
+                                '{"markdown":"{markdown_artifact_content}"}'
+                              when :json
+                                '{json_artifact_content}'
+                              else
+                                raise "Unknown artifact type: #{artifact_contract[:type]}"
+                              end
+                            }
+                            ```
+                        EO_ITEM
+                      ]
+                    else
+                      [
+                        <<~EO_ITEM.strip
+                          - The output artifact `#{assistant_name}` should be given in a block like this:
+                            ```json output_artifact=#{assistant_name}
+                            {artifact_content}
+                            ```
+                        EO_ITEM
+                      ]
+                    end
+                  )
+                ).join("\n")
+              end.join("\n\n")
             }
           EO_SECTION
         end

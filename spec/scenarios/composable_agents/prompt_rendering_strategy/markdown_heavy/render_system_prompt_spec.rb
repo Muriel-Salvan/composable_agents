@@ -315,16 +315,138 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
         - Always return output artifacts that the user is asking you to provide.
-        - You can return several output artifacts in your final response if needed.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_REPORT`
+
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
           ```json output_artifact=ARTIFACT_REPORT
           {artifact_content}
           ```
+
+        ## Output artifact `ARTIFACT_SUMMARY`
+
         - The content of output artifact `ARTIFACT_SUMMARY` should describe this: Executive summary
         - The output artifact `ARTIFACT_SUMMARY` should be given in a block like this:
           ```json output_artifact=ARTIFACT_SUMMARY
           {artifact_content}
+          ```
+      EO_SYSTEM_PROMPT
+    end
+
+    it 'renders type :text output artifacts with text JSON template' do
+      expect(
+        system_prompt(
+          output_artifacts_contracts: {
+            result: { description: 'The text result', type: :text }
+          }
+        )
+      ).to eq <<~EO_SYSTEM_PROMPT.strip
+        # Instructions
+
+        Instruction 1
+
+        Instruction 2
+
+        # Output artifacts' concept and usage
+
+        - The user will ask you to provide some artifacts as output.
+        - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
+          ```json output_artifact=ARTIFACT_NAME
+          {artifact_content}
+          ```
+        - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
+        - Always return output artifacts that the user is asking you to provide.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_RESULT`
+
+        - The content of output artifact `ARTIFACT_RESULT` should describe this: The text result
+        - The output artifact `ARTIFACT_RESULT` content format should be text
+        - The output artifact `ARTIFACT_RESULT` should be given in a block like this:
+          ```json output_artifact=ARTIFACT_RESULT
+          {"text":"{raw_text_artifact_content}"}
+          ```
+      EO_SYSTEM_PROMPT
+    end
+
+    it 'renders type :markdown output artifacts with markdown JSON template' do
+      expect(
+        system_prompt(
+          output_artifacts_contracts: {
+            doc: { description: 'The markdown document', type: :markdown }
+          }
+        )
+      ).to eq <<~EO_SYSTEM_PROMPT.strip
+        # Instructions
+
+        Instruction 1
+
+        Instruction 2
+
+        # Output artifacts' concept and usage
+
+        - The user will ask you to provide some artifacts as output.
+        - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
+          ```json output_artifact=ARTIFACT_NAME
+          {artifact_content}
+          ```
+        - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
+        - Always return output artifacts that the user is asking you to provide.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_DOC`
+
+        - The content of output artifact `ARTIFACT_DOC` should describe this: The markdown document
+        - The output artifact `ARTIFACT_DOC` content format should be markdown
+        - The output artifact `ARTIFACT_DOC` should be given in a block like this:
+          ```json output_artifact=ARTIFACT_DOC
+          {"markdown":"{markdown_artifact_content}"}
+          ```
+      EO_SYSTEM_PROMPT
+    end
+
+    it 'renders type :json output artifacts with raw JSON template' do
+      expect(
+        system_prompt(
+          output_artifacts_contracts: {
+            data: { description: 'The JSON data', type: :json }
+          }
+        )
+      ).to eq <<~EO_SYSTEM_PROMPT.strip
+        # Instructions
+
+        Instruction 1
+
+        Instruction 2
+
+        # Output artifacts' concept and usage
+
+        - The user will ask you to provide some artifacts as output.
+        - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
+          ```json output_artifact=ARTIFACT_NAME
+          {artifact_content}
+          ```
+        - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
+        - Always return output artifacts that the user is asking you to provide.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_DATA`
+
+        - The content of output artifact `ARTIFACT_DATA` should describe this: The JSON data
+        - The output artifact `ARTIFACT_DATA` content format should be json
+        - The output artifact `ARTIFACT_DATA` should be given in a block like this:
+          ```json output_artifact=ARTIFACT_DATA
+          {json_artifact_content}
           ```
       EO_SYSTEM_PROMPT
     end
@@ -367,7 +489,12 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
         - Always return output artifacts that the user is asking you to provide.
-        - You can return several output artifacts in your final response if needed.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_REPORT`
+
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
           ```json output_artifact=ARTIFACT_REPORT
@@ -414,7 +541,12 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
           ```
         - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
         - Always return output artifacts that the user is asking you to provide.
-        - You can return several output artifacts in your final response if needed.
+        - You can return several output artifacts in your responses if needed.
+
+        Following sections enumerate all expected output artifacts.
+
+        ## Output artifact `ARTIFACT_REPORT`
+
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
           ```json output_artifact=ARTIFACT_REPORT
