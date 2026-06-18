@@ -45,6 +45,12 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
 
   describe 'retry until all output artifacts have been provided' do
     it 'does not retry when there are no expected output artifacts' do
+      # TODO: Investigate why sometimes we get non-deterministic failures on this test case:
+      # #<Thread:0x0000028d4219a470 F:/Studies/AI/cline-rb/lib/cline/cli.rb:154 run> terminated with exception (report_on_exception is true):
+      # F:/Studies/AI/cline-rb/lib/cline/cli.rb:157:in 'block (3 levels) in Cline::Cli#task': undefined method 'logs' for nil (NoMethodError)
+      #
+      # sleep 0.1 while cli_running && !config.logs
+      #                                       ^^^^^
       agent = new_agent(output_artifacts_contracts: {})
       agent.run
       expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
