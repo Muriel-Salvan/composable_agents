@@ -104,38 +104,13 @@ module ComposableAgents
                     '',
                     "- The content of output artifact `#{assistant_name}` should describe this: #{artifact_contract[:description]}"
                   ] + (
-                    if artifact_contract[:type]
-                      [
-                        "- The output artifact `#{assistant_name}` content format should be #{artifact_contract[:type]}",
-                        <<~EO_ITEM.strip
-                          - The output artifact `#{assistant_name}` should be given in a block like this:
-                            ```json output_artifact=#{assistant_name}
-                            #{
-                              case artifact_contract[:type]
-                              when :text
-                                '{"text":"{raw_text_artifact_content}"}'
-                              when :markdown
-                                '{"markdown":"{markdown_artifact_content}"}'
-                              when :json
-                                '{json_artifact_content}'
-                              else
-                                raise "Unknown artifact type: #{artifact_contract[:type]}"
-                              end
-                            }
-                            ```
-                        EO_ITEM
-                      ]
-                    else
-                      [
-                        <<~EO_ITEM.strip
-                          - The output artifact `#{assistant_name}` should be given in a block like this:
-                            ```json output_artifact=#{assistant_name}
-                            {artifact_content}
-                            ```
-                        EO_ITEM
-                      ]
-                    end
-                  )
+                    artifact_contract[:type] ? ["- The output artifact `#{assistant_name}` content format should be #{artifact_contract[:type]}"] : []
+                  ) + [
+                    <<~EO_ITEM.strip
+                      - The output artifact `#{assistant_name}` should be given in a block like this:
+                      #{example_json_block(artifact_name)}
+                    EO_ITEM
+                  ]
                 ).join("\n")
               end.join("\n\n")
             }
@@ -215,13 +190,7 @@ module ComposableAgents
           You must provide each one of them in your next response using embedded JSON blocks like this:
 
           #{
-            missing_output_artifacts.map do |artifact_name, _desc|
-              <<~EO_MARKDOWN.strip
-                ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(artifact_name)}
-                {#{MarkdownHeavy.assistant_artifact_name(artifact_name)} artifact content}
-                ```
-              EO_MARKDOWN
-            end.join("\n\n")
+            missing_output_artifacts.keys.map { |artifact_name| example_json_block(artifact_name) }.join("\n\n")
           }
 
           - You must return all those artifacts in your next response (MANDATORY).
@@ -234,6 +203,35 @@ module ComposableAgents
       # @return [String] The artifact name used for the assistant
       def self.assistant_artifact_name(artifact_name)
         "ARTIFACT_#{artifact_name.to_s.upcase}"
+      end
+
+      private
+
+      # Provide a Markdown example of a JSON block for a given output artifact
+      #
+      # @param artifact_name [Symbol] The output artifact name
+      # @return [String] Corresponding Markdown example
+      def example_json_block(artifact_name)
+        assistant_name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+        required_type = normalized_output_artifacts_contracts.dig(artifact_name, :type)
+        <<~EO_MARKDOWN.strip
+          ```json output_artifact=#{assistant_name}
+          #{
+            case required_type
+            when nil
+              "#{assistant_name}_content"
+            when :text
+              "{\"text\":\"#{assistant_name}_raw_text_content\"}"
+            when :markdown
+              "{\"markdown\":\"#{assistant_name}_markdown_content\"}"
+            when :json
+              "{#{assistant_name}_json_content}"
+            else
+              raise "Unknown artifact type: #{required_type}"
+            end
+          }
+          ```
+        EO_MARKDOWN
       end
     end
   end

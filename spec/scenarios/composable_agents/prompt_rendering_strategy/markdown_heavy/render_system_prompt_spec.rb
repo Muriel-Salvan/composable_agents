@@ -323,17 +323,17 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_REPORT
-          {artifact_content}
-          ```
+        ```json output_artifact=ARTIFACT_REPORT
+        ARTIFACT_REPORT_content
+        ```
 
         ## Output artifact `ARTIFACT_SUMMARY`
 
         - The content of output artifact `ARTIFACT_SUMMARY` should describe this: Executive summary
         - The output artifact `ARTIFACT_SUMMARY` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_SUMMARY
-          {artifact_content}
-          ```
+        ```json output_artifact=ARTIFACT_SUMMARY
+        ARTIFACT_SUMMARY_content
+        ```
       EO_SYSTEM_PROMPT
     end
 
@@ -369,9 +369,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - The content of output artifact `ARTIFACT_RESULT` should describe this: The text result
         - The output artifact `ARTIFACT_RESULT` content format should be text
         - The output artifact `ARTIFACT_RESULT` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_RESULT
-          {"text":"{raw_text_artifact_content}"}
-          ```
+        ```json output_artifact=ARTIFACT_RESULT
+        {"text":"ARTIFACT_RESULT_raw_text_content"}
+        ```
       EO_SYSTEM_PROMPT
     end
 
@@ -407,9 +407,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - The content of output artifact `ARTIFACT_DOC` should describe this: The markdown document
         - The output artifact `ARTIFACT_DOC` content format should be markdown
         - The output artifact `ARTIFACT_DOC` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_DOC
-          {"markdown":"{markdown_artifact_content}"}
-          ```
+        ```json output_artifact=ARTIFACT_DOC
+        {"markdown":"ARTIFACT_DOC_markdown_content"}
+        ```
       EO_SYSTEM_PROMPT
     end
 
@@ -445,9 +445,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
         - The content of output artifact `ARTIFACT_DATA` should describe this: The JSON data
         - The output artifact `ARTIFACT_DATA` content format should be json
         - The output artifact `ARTIFACT_DATA` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_DATA
-          {json_artifact_content}
-          ```
+        ```json output_artifact=ARTIFACT_DATA
+        {ARTIFACT_DATA_json_content}
+        ```
       EO_SYSTEM_PROMPT
     end
 
@@ -497,9 +497,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_REPORT
-          {artifact_content}
-          ```
+        ```json output_artifact=ARTIFACT_REPORT
+        ARTIFACT_REPORT_content
+        ```
       EO_SYSTEM_PROMPT
     end
   end
@@ -549,9 +549,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
 
         - The content of output artifact `ARTIFACT_REPORT` should describe this: The final report
         - The output artifact `ARTIFACT_REPORT` should be given in a block like this:
-          ```json output_artifact=ARTIFACT_REPORT
-          {artifact_content}
-          ```
+        ```json output_artifact=ARTIFACT_REPORT
+        ARTIFACT_REPORT_content
+        ```
       EO_SYSTEM_PROMPT
     end
   end
