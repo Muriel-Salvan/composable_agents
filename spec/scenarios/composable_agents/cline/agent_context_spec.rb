@@ -15,10 +15,6 @@ describe ComposableAgents::Cline::Agent do
     )
   end
 
-  around do |example|
-    with_cline_api_key_cleared { example.call }
-  end
-
   describe 'context' do
     it 'has an empty context at the beginning of the first run' do
       agent = described_agent

@@ -42,10 +42,6 @@ describe ComposableAgents::Cline::Agent do
     )
   end
 
-  around do |example|
-    with_cline_api_key_cleared { example.call }
-  end
-
   describe 'user interaction' do
     it 'answers the assistant\'s question if needed' do
       agent = described_agent(preset_answers: 'Test answer')

@@ -35,7 +35,9 @@ RSpec.configure do |config|
     original_debug = ENV.fetch('COMPOSABLE_AGENTS_DEBUG', nil)
     ENV['COMPOSABLE_AGENTS_DEBUG'] = '1' if ComposableAgentsTest::Helpers::Debug.debug?
     begin
-      example.run
+      with_cline_api_key_cleared do
+        example.run
+      end
     ensure
       ENV['COMPOSABLE_AGENTS_DEBUG'] = original_debug
     end
