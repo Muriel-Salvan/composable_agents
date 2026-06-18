@@ -62,7 +62,7 @@ RSpec/DescribeClass:
 
 # It's ok to have scenarios having multiple lines
 RSpec/ExampleLength:
-  Max: 80
+  Max: 100
 
 # It's ok to have test scenarios having several expectations
 RSpec/MultipleExpectations:

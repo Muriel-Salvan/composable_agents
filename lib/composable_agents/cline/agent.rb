@@ -228,7 +228,7 @@ module ComposableAgents
               log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
                 "but JSON could not be parsed from the assistant's answer: #{e}"
             end
-          save_output_artifact(artifact_name, artifact_content)
+          save_output_artifact(artifact_name, artifact_content) if artifact_content
         end
       end
     end
