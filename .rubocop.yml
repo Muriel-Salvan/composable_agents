@@ -32,7 +32,7 @@ Metrics/AbcSize:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/BlockLength:
-  Max: 40
+  Max: 60
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ClassLength:
@@ -48,7 +48,7 @@ Metrics/MethodLength:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ModuleLength:
-  Max: 160
+  Max: 210
 
 # kwargs should not count towards max parameters list.
 Metrics/ParameterLists:

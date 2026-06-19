@@ -206,29 +206,6 @@ module ComposableAgents
           find_skill(skill_dep, found_skills)
         end
       end
-
-      # Parse some text to find output artifacts in it.
-      # Scan for JSON documents with artifact markers in the format:
-      # ```json output_artifact=ARTIFACT_<NAME>
-      # {artifact_content}
-      # ```
-      #
-      # @param text [String] The text to be parsed
-      def parse_output_artifacts(text)
-        text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
-          raw_name = Regexp.last_match(1)
-          content = Regexp.last_match(2).strip
-          # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
-          artifact_name = (raw_name.start_with?('ARTIFACT_') ? raw_name.sub(/^ARTIFACT_/, '') : raw_name).downcase.to_sym
-          artifact_content = nil
-          begin
-            artifact_content = JSON.parse(content)
-          rescue JSON::ParserError => e
-            report_error_for_output_artifact(artifact_name, e.to_s)
-          end
-          save_output_artifact(artifact_name, artifact_content) if artifact_content
-        end
-      end
     end
   end
 end

@@ -1,3 +1,5 @@
+require 'json'
+
 module ComposableAgentsTest
   # Test specific PromptRenderingStrategy that records calls and returns predictable values
   module TestRenderingStrategy
@@ -68,6 +70,26 @@ module ComposableAgentsTest
           "#{artifact_name} (#{missing_info[:description]})#{" (Error: #{missing_info[:error]})" if missing_info[:error]}"
         end.join(', ')
       }"
+    end
+
+    # Parse some text to find output artifacts in it.
+    #
+    # @param text [String] The text to be parsed
+    def parse_output_artifacts(text)
+      # This method is used when the test strategy is used with some specific agents, like the Cline::Agent one.
+      # It detects Markdown JSON artifacts named ARTIFACT_.*.
+      text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
+        assistant_name = Regexp.last_match(1)
+        content = Regexp.last_match(2).strip
+        artifact_name = assistant_name.gsub('ARTIFACT_', '').downcase.to_sym
+        json_content =
+          begin
+            JSON.parse(content)
+          rescue JSON::ParserError => e
+            report_error_for_output_artifact(artifact_name, e)
+          end
+        save_output_artifact(artifact_name, json_content) if json_content
+      end
     end
   end
 end

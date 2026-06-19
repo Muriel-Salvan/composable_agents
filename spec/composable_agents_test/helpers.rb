@@ -42,6 +42,12 @@ module ComposableAgentsTest
 
         # @return [Hash{Symbol => Object}] The input artifacts that are set using run calls
         attr_accessor :input_artifacts
+
+        # @return [Hash{Symbol => Object}] The output artifacts being filled during run
+        attr_accessor :output_artifacts
+
+        # @return [Hash{Symbol => String}] The output artifacts errors encountered during run
+        attr_accessor :output_artifacts_errors
       end.new(*args, context:, **kwargs)
     end
   end

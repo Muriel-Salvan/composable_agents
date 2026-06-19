@@ -4,6 +4,7 @@ module ComposableAgents
     # This prompt strategy needs to be used conjointly with the ArtifactContract mixin,
     #   and on an agent that uses @context to store a JSON-serializable context.
     # This mixin also adds the following methods to be used:
+    # - `#parse_output_artifacts(text)` Parses a text that comes from the agent to retrieve output artifacts from it.
     # - `.assistant_artifact_name(artifact_name) -> String` Returns the artifact name as seen by the assistant.
     #     This can be used to refer to the artifact names properly in the user or system instructions.
     module MarkdownHeavy
@@ -205,6 +206,77 @@ module ComposableAgents
         "ARTIFACT_#{artifact_name.to_s.upcase}"
       end
 
+      # Parse some text to find output artifacts in it.
+      #
+      # @param text [String] The text to be parsed
+      def parse_output_artifacts(text)
+        # Scan for JSON documents with artifact markers in the format:
+        # ```json output_artifact=ARTIFACT_<NAME>
+        # {artifact_content}
+        # ```
+        text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
+          assistant_name = Regexp.last_match(1)
+          content = Regexp.last_match(2).strip
+          # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
+          artifact_name = (assistant_name.start_with?('ARTIFACT_') ? assistant_name.sub(/^ARTIFACT_/, '') : assistant_name).downcase.to_sym
+          artifact_json_content = nil
+          begin
+            artifact_json_content = JSON.parse(content)
+          rescue JSON::ParserError => e
+            report_error_for_output_artifact(artifact_name, e.to_s)
+            next
+          end
+          # Use the type info to better parse the JSON into the real artifact content
+          artifact_type = normalized_output_artifacts_contracts.dig(artifact_name, :type)
+          artifact_content =
+            case artifact_type
+            when nil, :json
+              artifact_json_content
+            when :text
+              if artifact_json_content.key?('text')
+                if artifact_json_content['text'].is_a?(String)
+                  artifact_json_content['text']
+                else
+                  report_error_for_output_artifact(
+                    artifact_name,
+                    'Wrong format for artifact content in key "text": ' \
+                      "expecting a raw String but got #{artifact_json_content['text'].class.name} instead."
+                  )
+                  nil
+                end
+              else
+                report_error_for_output_artifact(
+                  artifact_name,
+                  'Missing required key "text" containing the artifact text content in the JSON artifact response.'
+                )
+                nil
+              end
+            when :markdown
+              if artifact_json_content.key?('markdown')
+                if artifact_json_content['markdown'].is_a?(String)
+                  artifact_json_content['markdown']
+                else
+                  report_error_for_output_artifact(
+                    artifact_name,
+                    'Wrong format for artifact content in key "markdown": ' \
+                      "expecting a Markdown string but got #{artifact_json_content['markdown'].class.name} instead."
+                  )
+                  nil
+                end
+              else
+                report_error_for_output_artifact(
+                  artifact_name,
+                  'Missing required key "markdown" containing the artifact Markdown content in the JSON artifact response.'
+                )
+                nil
+              end
+            else
+              raise "Unknown artifact type: #{artifact_type}"
+            end
+          save_output_artifact(artifact_name, artifact_content) if artifact_content
+        end
+      end
+
       private
 
       # Provide a Markdown example of a JSON block for a given output artifact
@@ -213,11 +285,11 @@ module ComposableAgents
       # @return [String] Corresponding Markdown example
       def example_json_block(artifact_name)
         assistant_name = MarkdownHeavy.assistant_artifact_name(artifact_name)
-        required_type = normalized_output_artifacts_contracts.dig(artifact_name, :type)
+        artifact_type = normalized_output_artifacts_contracts.dig(artifact_name, :type)
         <<~EO_MARKDOWN.strip
           ```json output_artifact=#{assistant_name}
           #{
-            case required_type
+            case artifact_type
             when nil
               "#{assistant_name}_content"
             when :text
@@ -227,7 +299,7 @@ module ComposableAgents
             when :json
               "{#{assistant_name}_json_content}"
             else
-              raise "Unknown artifact type: #{required_type}"
+              raise "Unknown artifact type: #{artifact_type}"
             end
           }
           ```
