@@ -1,3 +1,5 @@
+require 'json'
+
 module ComposableAgents
   module PromptRenderingStrategy
     # Render prompt as Markdown documents with a lot of emphasis for complex agentic systems.
@@ -138,7 +140,7 @@ module ComposableAgents
             Here is the conversation from a previous session for context:
 
             ```json
-            #{@context.to_json}
+            #{JSON.dump(@context)}
             ```
 
             Continue with the task, building on the work from the session above.
@@ -155,7 +157,7 @@ module ComposableAgents
                   ## `#{name}`
 
                   ```json input_artifact=#{name}
-                  #{artifact_content.to_json}
+                  #{JSON.dump(artifact_content)}
                   ```
                 EO_ARTIFACT_SECTION
               end.join("\n\n")

@@ -1,5 +1,4 @@
 require 'cline'
-require 'json'
 
 module ComposableAgents
   # All agents from this module work with the awesome cline-rb Rubygem

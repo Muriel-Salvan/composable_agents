@@ -28,6 +28,11 @@ RSpec.configure do |config|
   # Include test helpers
   config.include ComposableAgentsTest::Helpers
 
+  config.expect_with :rspec do |c|
+    # Don;t make ellipsis on expectations outputs, as some outputs are containing a lot of lines.
+    c.max_formatted_output_length = nil
+  end
+
   # Around hook for all test cases
   # Don't use a before hook for that purpose, as before hooks are always run after around hooks.
   config.around do |example|

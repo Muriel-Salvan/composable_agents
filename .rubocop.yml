@@ -6,6 +6,9 @@ AllCops:
 # Be consistent on indentations
 Layout/LineEndStringConcatenationIndentation:
   EnforcedStyle: indented
+  Exclude:
+    # Those examples use special indentation in strings to better understand the context
+    - 'spec/scenarios/composable_agents/cline/agent_context_spec.rb'
 
 # It's ok to have longer lines
 Layout/LineLength:

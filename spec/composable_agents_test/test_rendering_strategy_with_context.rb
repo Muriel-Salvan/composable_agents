@@ -1,3 +1,5 @@
+require 'json'
+
 module ComposableAgentsTest
   # Test specific PromptRenderingStrategy that adds the context in user prompts
   module TestRenderingStrategyWithContext
@@ -16,7 +18,8 @@ module ComposableAgentsTest
       "USER_PROMPT[#{rendered_instructions}#{
         " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }#{
-        " and context <<<#{@context.to_json}>>>" if @context
+        # Don't use to_json as it translates < > into unicode characters.
+        " and context <<<#{JSON.dump(@context)}>>>" if @context
       }]"
     end
   end

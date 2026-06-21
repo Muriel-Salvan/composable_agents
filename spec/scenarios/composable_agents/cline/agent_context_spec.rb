@@ -36,7 +36,12 @@ describe ComposableAgents::Cline::Agent do
       agent.run(user_instructions: 'Second message')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
-        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}]>>>]'
+        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">'\
+            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+          '</user_input>"}]},' \
+          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
+        ']>>>]'
       ]
     end
 
@@ -71,17 +76,63 @@ describe ComposableAgents::Cline::Agent do
       expect(agent2.spy[:user_prompts]).to eq [
         'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
         'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
-          ']>>>]',
+        ']>>>]',
         'USER_PROMPT[RENDERED_TEXT: Third message and context <<<[' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
+              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
+                'USER_PROMPT[' \
+                  'RENDERED_TEXT: First message and context <<<[]>>>' \
+                ']' \
+              '</user_input>\\"}]},' \
+              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]}' \
+            ']>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]}' \
-          ']>>>]',
+        ']>>>]',
         'USER_PROMPT[RENDERED_TEXT: Fourth message and context <<<[' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
+              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
+                'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+              '</user_input>\\"}]},' \
+              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]}' \
+            ']>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]},' \
+          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
+            'USER_PROMPT[RENDERED_TEXT: Third message and context <<<[' \
+              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
+                'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+              '</user_input>\\"}]},' \
+              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]},' \
+              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
+                'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
+                  '{\\\\\\"role\\\\\\":\\\\\\"user\\\\\\",\\\\\\"content\\\\\\":[{\\\\\\"type\\\\\\":\\\\\\"text\\\\\\",\\\\\\"text\\\\\\":' \
+                    '\\\\\\"<user_input mode=\\\\\\\\\\\\\\"act\\\\\\\\\\\\\\">' \
+                      'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
+                    '</user_input>\\\\\\"}]},' \
+                  '{\\\\\\"role\\\\\\":\\\\\\"assistant\\\\\\",\\\\\\"content\\\\\\":[{\\\\\\"type\\\\\\":\\\\\\"text\\\\\\",\\\\\\"text\\\\\\":' \
+                    '\\\\\\"Assistant Output #1\\\\\\"}]}' \
+                ']>>>]' \
+              '</user_input>\\"}]},' \
+              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #2\\"}]}' \
+            ']>>>]' \
+          '</user_input>"}]},' \
           '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #3"}]}' \
-          ']>>>]'
+        ']>>>]'
       ]
     end
   end
