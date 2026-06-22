@@ -3,8 +3,7 @@ require 'json'
 module ComposableAgents
   module PromptRenderingStrategy
     # Render prompt as Markdown documents with a lot of emphasis for complex agentic systems.
-    # This prompt strategy needs to be used conjointly with the ArtifactContract mixin,
-    #   and on an agent that uses @context to store a JSON-serializable context.
+    # This prompt strategy needs to be used conjointly with the ArtifactContract mixin.
     # This mixin also adds the following methods to be used:
     # - `#parse_output_artifacts(text)` Parses a text that comes from the agent to retrieve output artifacts from it.
     # - `.assistant_artifact_name(artifact_name) -> String` Returns the artifact name as seen by the assistant.
@@ -133,19 +132,6 @@ module ComposableAgents
       # @return [String] The rendered user prompt
       def render_user_prompt(rendered_instructions, input_artifacts:)
         sections = []
-        unless @context.empty?
-          sections << <<~EO_SECTION
-            # Previous sessions context
-
-            Here is the conversation from a previous session for context:
-
-            ```json
-            #{JSON.dump(@context)}
-            ```
-
-            Continue with the task, building on the work from the session above.
-          EO_SECTION
-        end
         unless input_artifacts.empty?
           sections << <<~EO_SECTION.strip
             # Input artifacts

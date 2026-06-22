@@ -22,23 +22,12 @@ module ComposableAgentsTest
     # with ArtifactContract mixin prepended.
     #
     # @param args [Array] Args to be given to the agent's constructor
-    # @param context [Object] Context to be given to the agent
     # @param kwargs [Hash] Keyword args to be given to the agent's constructor
     # @return [ComposableAgents::PromptDrivenAgent] Agent to be tested
-    def agent_for_markdown_heavy(*args, context: {}, **kwargs)
+    def agent_for_markdown_heavy(*args, **kwargs)
       Class.new(ComposableAgents::PromptDrivenAgent) do
         prepend ComposableAgents::Mixins::ArtifactContract
         include ComposableAgents::PromptRenderingStrategy::MarkdownHeavy
-
-        # Constructor
-        #
-        # @param args [Array] Args to be given to the agent's constructor
-        # @param context [Object] Context to be given to the agent
-        # @param kwargs [Hash] Keyword args to be given to the agent's constructor
-        def initialize(*args, context:, **kwargs)
-          super(*args, **kwargs)
-          @context = context
-        end
 
         # @return [Hash{Symbol => Object}] The input artifacts that are set using run calls
         attr_accessor :input_artifacts
@@ -48,7 +37,7 @@ module ComposableAgentsTest
 
         # @return [Hash{Symbol => String}] The output artifacts errors encountered during run
         attr_accessor :output_artifacts_errors
-      end.new(*args, context:, **kwargs)
+      end.new(*args, **kwargs)
     end
   end
 end

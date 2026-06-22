@@ -113,6 +113,18 @@ module ComposableAgentsTest
           }
         end
       end
+
+      # Helper method to instantiate a Cline Agent with test rendering strategy.
+      #
+      # @param params [Hash] Parameters to pass to the agent constructor.
+      # @return [ComposableAgents::Cline::Agent] The agent
+      def cline_agent(**params)
+        ComposableAgents::Cline::Agent.new(
+          composable_agents_dir: '.composable_agents_test',
+          strategy: ComposableAgentsTest::TestRenderingStrategy,
+          **params
+        )
+      end
     end
   end
 end

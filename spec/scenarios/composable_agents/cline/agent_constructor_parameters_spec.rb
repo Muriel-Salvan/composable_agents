@@ -1,23 +1,11 @@
 describe ComposableAgents::Cline::Agent do
-  # Helper method to instantiate an Agent with test rendering strategy.
-  #
-  # @param params [Hash] Parameters to pass to the agent constructor.
-  # @return [ComposableAgents::Agent] The agent
-  def described_agent(**params)
-    described_class.new(
-      composable_agents_dir: '.composable_agents_test',
-      strategy: ComposableAgentsTest::TestRenderingStrategy,
-      **params
-    )
-  end
-
   describe 'constructor parameters' do
     # Run an agent and stub its output to dump the content of its providers settings.
     #
     # @param kwargs [Hash] Parameters to give to the agent's constructor
     # @return [Hash] The corresponding providers' settings that this agent was given
     def capture_provider_settings(**kwargs)
-      agent = described_agent(**kwargs)
+      agent = cline_agent(**kwargs)
       mock_cline_for(
         agent,
         {
@@ -34,11 +22,11 @@ describe ComposableAgents::Cline::Agent do
 
     describe 'name' do
       it 'defaults to "Executor"' do
-        expect(described_agent.name).to eq 'Executor'
+        expect(cline_agent.name).to eq 'Executor'
       end
 
       it 'accepts a custom name' do
-        expect(described_agent(name: 'Test Assistant').name).to eq 'Test Assistant'
+        expect(cline_agent(name: 'Test Assistant').name).to eq 'Test Assistant'
       end
     end
 
@@ -123,7 +111,7 @@ describe ComposableAgents::Cline::Agent do
       # @param kwargs [Hash] Parameters to give to the agent's constructor
       # @return [Hash] The corresponding global settings that this agent was given
       def capture_global_settings(**kwargs)
-        agent = described_agent(**kwargs)
+        agent = cline_agent(**kwargs)
         mock_cline_for(
           agent,
           {
@@ -173,7 +161,7 @@ describe ComposableAgents::Cline::Agent do
       # @param cli_options [Hash] CLI options to give to the agent's constructor.
       # @return [Array<String>] The CLI options given to Cline CLI.
       def capture_cli_options(cli_options = {})
-        agent = described_agent(cli_options:)
+        agent = cline_agent(cli_options:)
         mock_cline_for(agent)
         agent.run
         agent.cli_stub.issued_commands.last[:command][2..]

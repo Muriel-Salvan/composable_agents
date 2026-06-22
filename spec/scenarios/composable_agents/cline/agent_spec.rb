@@ -34,21 +34,9 @@ describe ComposableAgents::Cline::Agent do
     default_conversation_name: 'Agent Executor'
   )
 
-  # Helper method to instantiate an Agent with test rendering strategy.
-  #
-  # @param params [Hash] Parameters to pass to the agent constructor.
-  # @return [ComposableAgents::Agent] The agent
-  def described_agent(**params)
-    described_class.new(
-      composable_agents_dir: '.composable_agents_test',
-      strategy: ComposableAgentsTest::TestRenderingStrategy,
-      **params
-    )
-  end
-
   describe 'dedicated config directory' do
     it 'uses a dedicated directory to run the Cline CLI config' do
-      agent = described_agent
+      agent = cline_agent
       mock_cline_for(
         agent,
         {

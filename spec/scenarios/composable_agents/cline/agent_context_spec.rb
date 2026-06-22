@@ -2,29 +2,16 @@ require 'fileutils'
 require 'json'
 
 describe ComposableAgents::Cline::Agent do
-  # Helper method to instantiate an agent for context testing using TestRenderingStrategyWithContext
-  # to validate that the context is given properly in user prompts.
-  #
-  # @param kwargs [Hash] Parameters to pass to the agent constructor
-  # @return [ComposableAgents::Agent] The agent
-  def described_agent(**kwargs)
-    described_class.new(
-      composable_agents_dir: '.composable_agents_test',
-      strategy: ComposableAgentsTest::TestRenderingStrategyWithContext,
-      **kwargs
-    )
-  end
-
   describe 'context' do
     it 'has an empty context at the beginning of the first run' do
-      agent = described_agent
+      agent = cline_agent
       mock_cline_for(agent)
       agent.run(user_instructions: 'First message')
       expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]']
     end
 
     it 'accumulates context over several runs' do
-      agent = described_agent
+      agent = cline_agent
       mock_cline_for(
         agent,
         [
@@ -46,7 +33,7 @@ describe ComposableAgents::Cline::Agent do
     end
 
     it 'persists the context through a JSON-serializable state' do
-      agent1 = described_agent
+      agent1 = cline_agent
       mock_cline_for(
         agent1,
         [
@@ -60,7 +47,7 @@ describe ComposableAgents::Cline::Agent do
       # Check that context is JSON-serializable
       expect { JSON.parse(state.to_json) }.not_to raise_error
 
-      agent2 = described_agent
+      agent2 = cline_agent
       mock_cline_for(
         agent2,
         [

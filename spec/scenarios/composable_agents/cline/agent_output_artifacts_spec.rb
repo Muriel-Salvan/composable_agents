@@ -1,19 +1,7 @@
 describe ComposableAgents::Cline::Agent do
-  # Helper method to instantiate an Agent with test rendering strategy.
-  #
-  # @param params [Hash] Parameters to pass to the agent constructor.
-  # @return [ComposableAgents::Agent] The agent
-  def described_agent(**params)
-    described_class.new(
-      composable_agents_dir: '.composable_agents_test',
-      strategy: ComposableAgentsTest::TestRenderingStrategy,
-      **params
-    )
-  end
-
   describe 'output artifacts' do
     it 'gets output artifacts from any message produced by Cline' do
-      agent = described_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
+      agent = cline_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
       mock_cline_for(
         agent,
         {
@@ -86,7 +74,7 @@ describe ComposableAgents::Cline::Agent do
     end
 
     it 'gracefully fails when output artifact JSON parsing fails' do
-      agent = described_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
+      agent = cline_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
       full_messages = [
         {
           ts: 200,
@@ -143,7 +131,7 @@ describe ComposableAgents::Cline::Agent do
     end
 
     it 'removes previous versions of output artifacts when the agent tries to generate a new one with error' do
-      agent = described_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
+      agent = cline_agent(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })
       full_messages = [
         {
           # 1. :logs missing, :result successful
@@ -220,7 +208,7 @@ describe ComposableAgents::Cline::Agent do
     end
 
     it 'parses correctly artifacts that contain ``` ... ``` strings' do
-      agent = described_agent(output_artifacts_contracts: { result: 'Final result' })
+      agent = cline_agent(output_artifacts_contracts: { result: 'Final result' })
       mock_cline_for(
         agent,
         {

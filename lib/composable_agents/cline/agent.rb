@@ -141,6 +141,22 @@ module ComposableAgents
       # @param user_prompt [String] The rendered user prompt
       # @return [String] The output of the prompt
       def prompt(user_prompt)
+        # Add the context to the prompt
+        unless @context.empty?
+          user_prompt = <<~EO_SECTION
+            # Previous sessions context
+
+            Here is the conversation from a previous session for context:
+
+            ```json
+            #{JSON.dump(@context)}
+            ```
+
+            Continue with the task, building on the work from the session above.
+
+            #{user_prompt}
+          EO_SECTION
+        end
         # Call the Cline CLI
         result = cline_cli.task(
           user_prompt,

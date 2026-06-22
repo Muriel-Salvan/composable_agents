@@ -9,11 +9,7 @@ describe ComposableAgents::Cline::Agent do
     #   - config_dir [String] The config directory that was used for this run.
     #   - skills [Hash{String => String}] All skill files content found, per skill file name.
     def capture_skills(**kwargs)
-      agent = described_class.new(
-        composable_agents_dir: '.composable_agents_test',
-        strategy: ComposableAgentsTest::TestRenderingStrategy,
-        **kwargs
-      )
+      agent = cline_agent(**kwargs)
       mock_cline_for(
         agent,
         {
