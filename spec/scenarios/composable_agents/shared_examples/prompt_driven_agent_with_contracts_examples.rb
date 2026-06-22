@@ -74,10 +74,13 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         ]
       )
       expect(agent.run).to include(result: 'partial', logs: 'complete')
-      expect(agent.spy[:user_prompts]).to eq [
-        'USER_PROMPT[]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
-      ]
+      expect_agent_received_prompts(
+        agent,
+        [
+          'USER_PROMPT[]',
+          'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
+        ]
+      )
     end
 
     it 'retries multiple times until all artifacts are present' do
@@ -90,11 +93,14 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         ]
       )
       expect(agent.run).to include(result: 'second', logs: 'final')
-      expect(agent.spy[:user_prompts]).to eq [
-        'USER_PROMPT[]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
-      ]
+      expect_agent_received_prompts(
+        agent,
+        [
+          'USER_PROMPT[]',
+          'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)]',
+          'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]'
+        ]
+      )
     end
   end
 

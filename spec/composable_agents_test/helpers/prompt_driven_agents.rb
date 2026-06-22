@@ -29,6 +29,20 @@ module ComposableAgentsTest
         timestamps = conversation.map { |message| message[:at] }
         expect(timestamps.sort).to eq timestamps
       end
+
+      # Check that an agent received a list of user prompts.
+      # Only check that expected user prompts are included into real ones, as real ones may convey
+      #   more information that isn't relevant with the test case (context...).
+      #
+      # @param agent [ComposableAgent::PromptDrivenAgent] Prompt-driven agent to check
+      # @param expected_user_prompts [Array<String>] List of expected user prompts
+      def expect_agent_received_prompts(agent, expected_user_prompts)
+        received_user_prompts = agent.spy[:user_prompts]
+        expect(received_user_prompts.size).to eq expected_user_prompts.size
+        received_user_prompts.zip(expected_user_prompts).each do |received_user_prompt, expected_user_prompt|
+          expect(received_user_prompt).to include(expected_user_prompt)
+        end
+      end
     end
   end
 end

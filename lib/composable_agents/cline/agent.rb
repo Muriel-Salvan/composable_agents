@@ -141,25 +141,28 @@ module ComposableAgents
       # @param user_prompt [String] The rendered user prompt
       # @return [String] The output of the prompt
       def prompt(user_prompt)
-        # Add the context to the prompt
-        unless @context.empty?
-          user_prompt = <<~EO_SECTION
-            # Previous sessions context
+        # Add the context to the prompt if it is the first prompt of this Cline CLI session
+        full_user_prompt =
+          if @context.empty?
+            user_prompt
+          else
+            <<~EO_SECTION
+              # Previous sessions context
 
-            Here is the conversation from a previous session for context:
+              Here is the conversation from a previous session for context:
 
-            ```json
-            #{JSON.dump(@context)}
-            ```
+              ```json
+              #{JSON.dump(@context)}
+              ```
 
-            Continue with the task, building on the work from the session above.
+              Continue with the task, building on the work from the session above.
 
-            #{user_prompt}
-          EO_SECTION
-        end
+              #{user_prompt}
+            EO_SECTION
+          end
         # Call the Cline CLI
         result = cline_cli.task(
-          user_prompt,
+          full_user_prompt,
           system: @system_prompt,
           on_question: respond_to?(:ask, true) ? proc { |question| ask(question) } : nil,
           on_message: proc do |message, _last, _previous_version|
@@ -177,13 +180,20 @@ module ComposableAgents
         # Keep the context in case we need to resume it
         if cline_cli.session&.messages
           @context.concat(
-            cline_cli.session.messages.map do |message|
+            cline_cli.session.messages.map.with_index do |message, idx_message|
               {
                 role: message.role,
-                content: message.content.map do |content|
+                content: message.content.map.with_index do |content, idx_content|
                   {
                     type: content.type,
-                    text: content.text,
+                    text: (
+                      if idx_message.zero? && idx_content.zero?
+                        # First message is the user prompt, but we don't want to include the context from it
+                        user_prompt
+                      else
+                        content.text
+                      end
+                    ),
                     input:
                       if content.input
                         {

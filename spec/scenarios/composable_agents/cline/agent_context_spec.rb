@@ -7,7 +7,7 @@ describe ComposableAgents::Cline::Agent do
       agent = cline_agent
       mock_cline_for(agent)
       agent.run(user_instructions: 'First message')
-      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]']
+      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[RENDERED_TEXT: First message]']
     end
 
     it 'accumulates context over several runs' do
@@ -22,13 +22,29 @@ describe ComposableAgents::Cline::Agent do
       agent.run(user_instructions: 'First message')
       agent.run(user_instructions: 'Second message')
       expect(agent.spy[:user_prompts]).to eq [
-        'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
-        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">'\
-            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
-        ']>>>]'
+        'USER_PROMPT[RENDERED_TEXT: First message]',
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: Second message]
+        EO_USER_PROMPT
       ]
     end
 
@@ -61,65 +77,159 @@ describe ComposableAgents::Cline::Agent do
       agent2.run(user_instructions: 'Third message')
       agent2.run(user_instructions: 'Fourth message')
       expect(agent2.spy[:user_prompts]).to eq [
-        'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]',
-        'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]}' \
-        ']>>>]',
-        'USER_PROMPT[RENDERED_TEXT: Third message and context <<<[' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
-              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
-                'USER_PROMPT[' \
-                  'RENDERED_TEXT: First message and context <<<[]>>>' \
-                ']' \
-              '</user_input>\\"}]},' \
-              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]}' \
-            ']>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]}' \
-        ']>>>]',
-        'USER_PROMPT[RENDERED_TEXT: Fourth message and context <<<[' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #1"}]},' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
-              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
-                'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-              '</user_input>\\"}]},' \
-              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]}' \
-            ']>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #2"}]},' \
-          '{"role":"user","content":[{"type":"text","text":"<user_input mode=\"act\">' \
-            'USER_PROMPT[RENDERED_TEXT: Third message and context <<<[' \
-              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
-                'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-              '</user_input>\\"}]},' \
-              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #1\\"}]},' \
-              '{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"<user_input mode=\\\\\\"act\\\\\\">' \
-                'USER_PROMPT[RENDERED_TEXT: Second message and context <<<[' \
-                  '{\\\\\\"role\\\\\\":\\\\\\"user\\\\\\",\\\\\\"content\\\\\\":[{\\\\\\"type\\\\\\":\\\\\\"text\\\\\\",\\\\\\"text\\\\\\":' \
-                    '\\\\\\"<user_input mode=\\\\\\\\\\\\\\"act\\\\\\\\\\\\\\">' \
-                      'USER_PROMPT[RENDERED_TEXT: First message and context <<<[]>>>]' \
-                    '</user_input>\\\\\\"}]},' \
-                  '{\\\\\\"role\\\\\\":\\\\\\"assistant\\\\\\",\\\\\\"content\\\\\\":[{\\\\\\"type\\\\\\":\\\\\\"text\\\\\\",\\\\\\"text\\\\\\":' \
-                    '\\\\\\"Assistant Output #1\\\\\\"}]}' \
-                ']>>>]' \
-              '</user_input>\\"}]},' \
-              '{\\"role\\":\\"assistant\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Assistant Output #2\\"}]}' \
-            ']>>>]' \
-          '</user_input>"}]},' \
-          '{"role":"assistant","content":[{"type":"text","text":"Assistant Output #3"}]}' \
-        ']>>>]'
+        'USER_PROMPT[RENDERED_TEXT: First message]',
+        <<~EO_USER_PROMPT.strip,
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: Second message]
+        EO_USER_PROMPT
+        <<~EO_USER_PROMPT.strip,
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            },
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Second message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #2' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: Third message]
+        EO_USER_PROMPT
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            },
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Second message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #2' }]
+            },
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Third message]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #3' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: Fourth message]
+        EO_USER_PROMPT
+      ]
+    end
+
+    it 'does not duplicate context given between runs' do
+      agent = cline_agent
+      mock_cline_for(
+        agent,
+        [
+          { stdout: 'Assistant Output #1' },
+          { stdout: 'Assistant Output #2' },
+          { stdout: 'Assistant Output #3' }
+        ]
+      )
+      agent.run(user_instructions: 'User Input #1')
+      agent.run(user_instructions: 'User Input #2')
+      agent.run(user_instructions: 'User Input #3')
+      expect(agent.spy[:user_prompts].last).to include('Assistant Output #1').once
+    end
+
+    it 'includes the context again in missing output artifacts prompts' do
+      agent = cline_agent(output_artifacts_contracts: { result: 'Final result' })
+      mock_cline_for(
+        agent,
+        [
+          {
+            stdout: 'Assistant Output #1'
+          },
+          {
+            stdout: <<~EO_OUTPUT
+              Assistant Output #2
+              ```json output_artifact=ARTIFACT_RESULT
+              "ok"
+              ```
+            EO_OUTPUT
+          }
+        ]
+      )
+      agent.run
+      expect(agent.spy[:user_prompts]).to eq [
+        'USER_PROMPT[]',
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result)]
+        EO_USER_PROMPT
       ]
     end
   end

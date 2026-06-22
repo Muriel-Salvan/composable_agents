@@ -44,21 +44,7 @@ module ComposableAgentsTest
                 session: {
                   messages: [
                     {
-                      ts: 100 + (2 * idx),
-                      role: 'user',
-                      content: [
-                        {
-                          type: 'text',
-                          text: {
-                            eval: <<~EO_RUBY
-                              "<user_input mode=\\"act\\">\#{ARGV.last}</user_input>"
-                            EO_RUBY
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      ts: 100 + (2 * idx) + 1,
+                      ts: 100 + idx,
                       role: 'assistant',
                       content: [
                         {

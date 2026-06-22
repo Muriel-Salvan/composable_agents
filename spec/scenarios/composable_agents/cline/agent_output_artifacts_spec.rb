@@ -83,7 +83,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #3
+                Assistant Output #1
                 ```json output_artifact=ARTIFACT_LOGS
                 Wrong JSON
                 ```
@@ -92,7 +92,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #6
+                Assistant Output #2
                 ```json output_artifact=ARTIFACT_RESULT
                 "ok"
                 ```
@@ -126,7 +126,47 @@ describe ComposableAgents::Cline::Agent do
       expect(agent.run).to include(result: 'ok', logs: 'logs')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[]' }]
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #1
+                    ```json output_artifact=ARTIFACT_LOGS
+                    Wrong JSON
+                    ```
+                  EO_CONTENT
+                },
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #2
+                    ```json output_artifact=ARTIFACT_RESULT
+                    "ok"
+                    ```
+                  EO_CONTENT
+                }
+              ]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: unexpected character: 'Wrong' at line 1 column 1)]
+        EO_USER_PROMPT
       ]
     end
 
@@ -141,7 +181,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #6
+                Assistant Output #1
                 ```json output_artifact=ARTIFACT_RESULT
                 "ok"
                 ```
@@ -157,7 +197,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #3
+                Assistant Output #2
                 ```json output_artifact=ARTIFACT_LOGS
                 "logs"
                 ```
@@ -166,7 +206,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #6
+                Assistant Output #3
                 ```json output_artifact=ARTIFACT_RESULT
                 Wrong JSON
                 ```
@@ -182,7 +222,7 @@ describe ComposableAgents::Cline::Agent do
             {
               type: 'text',
               text: <<~EO_OUTPUT
-                Assistant Output #6
+                Assistant Output #4
                 ```json output_artifact=ARTIFACT_RESULT
                 "ok"
                 ```
@@ -202,8 +242,111 @@ describe ComposableAgents::Cline::Agent do
       expect(agent.run).to include(result: 'ok', logs: 'logs')
       expect(agent.spy[:user_prompts]).to eq [
         'USER_PROMPT[]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]',
-        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: unexpected character: \'Wrong\' at line 1 column 1)]'
+        <<~EO_USER_PROMPT.strip,
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[]' }]
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #1
+                    ```json output_artifact=ARTIFACT_RESULT
+                    "ok"
+                    ```
+                  EO_CONTENT
+                }
+              ]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]
+        EO_USER_PROMPT
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[]' }]
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #1
+                    ```json output_artifact=ARTIFACT_RESULT
+                    "ok"
+                    ```
+                  EO_CONTENT
+                }
+              ]
+            },
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs)]' }]
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #1
+                    ```json output_artifact=ARTIFACT_RESULT
+                    "ok"
+                    ```
+                  EO_CONTENT
+                }
+              ]
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #2
+                    ```json output_artifact=ARTIFACT_LOGS
+                    "logs"
+                    ```
+                  EO_CONTENT
+                },
+                {
+                  type: 'text',
+                  text: <<~EO_CONTENT
+                    Assistant Output #3
+                    ```json output_artifact=ARTIFACT_RESULT
+                    Wrong JSON
+                    ```
+                  EO_CONTENT
+                }
+              ]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: unexpected character: 'Wrong' at line 1 column 1)]
+        EO_USER_PROMPT
       ]
     end
 
