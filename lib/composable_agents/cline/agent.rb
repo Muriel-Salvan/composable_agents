@@ -67,75 +67,6 @@ module ComposableAgents
 
       private
 
-      # Get the Cline CLI instance to use for this agent.
-      # Memoize it.
-      #
-      # @return [::Cline::Cli] The Cline CLI instance to be used
-      def cline_cli
-        @cline_cli ||= begin
-          # Resolve all the skills and their dependencies (taken from their YAML front matter).
-          selected_skills = []
-          @skills.each do |skill|
-            find_skill(skill, selected_skills)
-          end
-          # Setup the temporary Cline global config dir
-          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
-          ::Cline.configure do |config|
-            config.debug = Mixins::Logger.debug?
-            config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
-          end
-          cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
-          # Copy all selected global skills in this config's skills
-          if ::Cline::Config.global.skills
-            (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
-              new_skill = cline_config.skills.new(skill_name)
-              new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
-              new_skill.enable
-              log_debug "[Cline] - Enable global skill #{skill_name}"
-              new_skill.save
-            end
-          end
-          # Enable/disable project skills to make sure only selected ones are enabled
-          ::Cline::Config.project&.skills&.each do |skill_name, skill|
-            selected_skill = selected_skills.include?(skill_name)
-            next if skill.enabled? == selected_skill
-
-            if selected_skill
-              log_debug "[Cline] - Enable project skill #{skill_name}"
-              skill.enable
-            else
-              log_debug "[Cline] - Disable project skill #{skill_name}"
-              skill.disable
-            end
-            skill.save
-          end
-          # Set the configuration
-          providers = cline_config.providers(create: true)
-          providers.version = 1
-          providers.last_used_provider = @provider
-          # TODO: Find a better way without exposing class names
-          provider_settings = ::Cline::Providers::ProviderSettings.new(
-            provider: @provider,
-            api_key: @api_key,
-            model: @model
-          )
-          @configure_provider&.call(provider_settings)
-          providers.providers = ::Cline::Utils::Schema.map(::Cline::Providers::ProviderEntry).new
-          providers.providers[@provider] = ::Cline::Providers::ProviderEntry.new(
-            token_source: 'manual',
-            updated_at: Time.now.utc.strftime('%FT%T.%LZ'),
-            settings: provider_settings
-          )
-          providers.save
-          global_settings = cline_config.global_settings(create: true)
-          # Don't update the Cline CLI
-          global_settings.auto_update_enabled = false
-          @configure_global&.call(global_settings)
-          global_settings.save
-          cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
-        end
-      end
-
       # Process a user prompt.
       #
       # @param user_prompt [String] The rendered user prompt
@@ -210,6 +141,74 @@ module ComposableAgents
         end
 
         result[:message]&.content&.last&.text || ''
+      end
+
+      # Get the Cline CLI instance to use for this agent.
+      # Memoize it.
+      #
+      # @return [::Cline::Cli] The Cline CLI instance to be used
+      def cline_cli
+        @cline_cli ||= begin
+          # Resolve all the skills and their dependencies (taken from their YAML front matter).
+          selected_skills = []
+          @skills.each do |skill|
+            find_skill(skill, selected_skills)
+          end
+          # Setup the temporary Cline global config dir
+          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
+          ::Cline.configure do |config|
+            config.debug = Mixins::Logger.debug?
+            config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
+          end
+          cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
+          # Copy all selected global skills in this config's skills
+          if ::Cline::Config.global.skills
+            (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
+              new_skill = cline_config.skills.new(skill_name)
+              new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
+              new_skill.enable
+              log_debug "[Cline] - Enable global skill #{skill_name}"
+              new_skill.save
+            end
+          end
+          # Enable/disable project skills to make sure only selected ones are enabled
+          ::Cline::Config.project&.skills&.each do |skill_name, skill|
+            selected_skill = selected_skills.include?(skill_name)
+            next if skill.enabled? == selected_skill
+
+            if selected_skill
+              log_debug "[Cline] - Enable project skill #{skill_name}"
+              skill.enable
+            else
+              log_debug "[Cline] - Disable project skill #{skill_name}"
+              skill.disable
+            end
+            skill.save
+          end
+          # Set the configuration
+          providers = cline_config.providers(create: true)
+          providers.version = 1
+          providers.last_used_provider = @provider
+          providers.providers = {
+            @provider => {
+              token_source: 'manual',
+              updated_at: Time.now.utc.strftime('%FT%T.%LZ'),
+              settings: {
+                provider: @provider,
+                api_key: @api_key,
+                model: @model
+              }
+            }
+          }
+          @configure_provider&.call(providers.providers[@provider].settings)
+          providers.save
+          global_settings = cline_config.global_settings(create: true)
+          # Don't update the Cline CLI
+          global_settings.auto_update_enabled = false
+          @configure_global&.call(global_settings)
+          global_settings.save
+          cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
+        end
       end
 
       # Find a skill among the current Cline environment (global and project) and recursively finds all its dependencies.

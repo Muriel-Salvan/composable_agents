@@ -129,8 +129,7 @@ describe ComposableAgents::Cline::Agent do
       it 'does not change the global settings if not given' do
         expect(capture_global_settings).to eq(
           {
-            autoUpdateEnabled: false,
-            disabledTools: []
+            autoUpdateEnabled: false
           }
         )
       end

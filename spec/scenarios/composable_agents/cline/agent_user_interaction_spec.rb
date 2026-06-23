@@ -30,7 +30,7 @@ describe ComposableAgents::Cline::Agent do
       def answer_to(question)
         @question_log << {
           question: question.respond_to?(:question) ? question.question : question.to_s,
-          options: question.respond_to?(:options) ? question.options : nil
+          options: question.respond_to?(:options) ? question.options.to_a : nil
         }
         @preset_answers.shift || 'Default answer'
       end
