@@ -5,10 +5,6 @@ shared_examples 'a prompt driven agent' do |opts|
   # - new_agent [#call(example, **kwargs) -> Agent] Factory proc that initializes a new agent, decorated for testing purposes.
   #   The returned instance should provide the method `spy -> Hash{Symbol, Object}` so that the test scenarios can inspect the agent.
   #   The returned spy should have the following properties:
-  #     - role [String, nil] The agent's role
-  #     - objective [String, nil] The agent's objective
-  #     - system_instructions [Object, nil] The agent's normalized system instructions
-  #     - constraints [String, nil] The agent's constraints
   #     - system_prompt [Object] The last rendered system prompt
   #     - user_prompts [Array<Object>] The ordered list of user prompts
   #   - Param example [RSpec::Core::ExampleGroup] The example calling this factory
@@ -49,16 +45,42 @@ shared_examples 'a prompt driven agent' do |opts|
 
   describe '#initialize' do
     it 'is initialized with parameters defining a prompt-driven agent' do
-      agent_spy = new_agent(
+      agent = new_agent(
         role: 'Test Executor',
         objective: 'Execute tests',
         system_instructions: 'Read and run test files',
         constraints: 'Don\'t write files'
-      ).spy
-      expect(agent_spy[:role]).to eq 'Test Executor'
-      expect(agent_spy[:objective]).to eq 'Execute tests'
-      expect(agent_spy[:system_instructions]).to eq 'Read and run test files'
-      expect(agent_spy[:constraints]).to eq 'Don\'t write files'
+      )
+      expect(agent.role).to eq 'Test Executor'
+      expect(agent.objective).to eq 'Execute tests'
+      expect(agent.system_instructions).to eq 'Read and run test files'
+      expect(agent.constraints).to eq 'Don\'t write files'
+    end
+
+    describe 'accessors' do
+      it 'allows reading and writing the role' do
+        agent = new_agent
+        agent.role = 'New Role'
+        expect(agent.role).to eq 'New Role'
+      end
+
+      it 'allows reading and writing the objective' do
+        agent = new_agent
+        agent.objective = 'New Objective'
+        expect(agent.objective).to eq 'New Objective'
+      end
+
+      it 'allows reading and writing the system_instructions' do
+        agent = new_agent
+        agent.system_instructions = 'New instructions'
+        expect(agent.system_instructions).to eq 'New instructions'
+      end
+
+      it 'allows reading and writing the constraints' do
+        agent = new_agent
+        agent.constraints = 'New constraints'
+        expect(agent.constraints).to eq 'New constraints'
+      end
     end
   end
 

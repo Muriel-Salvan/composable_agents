@@ -12,6 +12,18 @@ module ComposableAgents
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
   # This agent automatically records non-rendered conversation (prompts + outputs) in a `conversation` store, part of its state.
   class PromptDrivenAgent < Agent
+    # @return [String, nil] Agent's role, or nil for the agent's default
+    attr_accessor :role
+
+    # @return [String, nil] Agent's objective, or nil for the agent's default
+    attr_accessor :objective
+
+    # @return [Object, nil] Agent's original instructions, or nil if no system instructions are needed (see Instructions#initialize)
+    attr_accessor :system_instructions
+
+    # @return [String, nil] Constraints to be respected, or nil for the agent's default
+    attr_accessor :constraints
+
     # [Array<Hash{Symbol => Object}>] The conversation (user prompts, responses) that happened with this agent.
     #   Each item of a conversation has the following properties:
     #   - author [String] Author of the message

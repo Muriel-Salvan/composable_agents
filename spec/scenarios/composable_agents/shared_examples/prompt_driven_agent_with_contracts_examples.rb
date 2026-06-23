@@ -3,10 +3,6 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
   # - new_agent [#call(example, **kwargs) -> Agent] Factory proc that initializes a new agent, decorated for testing purposes.
   #   The returned instance should provide the method `spy -> Hash{Symbol, Object}` so that the test scenarios can inspect the agent.
   #   The returned spy should have the following properties:
-  #     - role [String] The agent's role
-  #     - objective [String] The agent's objective
-  #     - instructions [Object] The agent's normalized instructions
-  #     - constraints [String] The agent's constraints
   #     - system_prompt [Object] The last rendered system prompt
   #     - user_prompts [Array<Object>] The ordered list of user prompts
   #   - Param example [RSpec::Core::ExampleGroup] The example calling this factory

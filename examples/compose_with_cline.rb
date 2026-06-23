@@ -22,13 +22,6 @@ preferences_agent = ComposableAgents::RubyAgent.new(
 itinerary_agent = ComposableAgents::Cline::Agent.new(
   role: 'You are a travel planner',
   objective: 'Find cities that would be the best destinations for the user\'s holidays',
-  system_instructions: {
-    ordered_list: [
-      "Get the user preferences from the artifact named `ARTIFACT_PREFERENCES`.",
-      'Find the best cities that match those preferences.',
-      "Create an artifact named `ARTIFACT_CITIES` as a JSON list of those city names."
-    ]
-  },
   input_artifacts_contracts: {
     preferences: 'The user travel preferences'
   },
@@ -38,6 +31,13 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
   model: 'deepseek/deepseek-v4-flash',
   api_key: ENV.fetch('CLINE_API_KEY', nil)
 )
+itinerary_agent.system_instructions = {
+  ordered_list: [
+    "Get the user preferences from the artifact named `#{itinerary_agent.artifact_ref(:preferences)}`.",
+    'Find the best cities that match those preferences.',
+    "Create an artifact named `#{itinerary_agent.artifact_ref(:cities)}` as a JSON list of those city names."
+  ]
+}
 budget_agent = ComposableAgents::RubyAgent.new(
   proc do |input_artifacts|
     # Compute the budget from the cities list
