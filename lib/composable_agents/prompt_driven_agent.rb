@@ -61,7 +61,7 @@ module ComposableAgents
       singleton_class.include strategy
       @role = role
       @objective = objective
-      @system_instructions = system_instructions ? Instructions.new(system_instructions) : nil
+      @system_instructions = system_instructions
       @constraints = constraints
       @conversation = []
     end
@@ -76,7 +76,7 @@ module ComposableAgents
       @input_artifacts = input_artifacts
       @output_artifacts = {}
       @output_artifacts_errors = {}
-      @system_prompt = render_system_prompt(@system_instructions ? render_instructions(@system_instructions) : nil)
+      @system_prompt = render_system_prompt(render_instructions(@system_instructions))
       log_debug "System prompt: #{@system_prompt}"
       converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
       if respond_to?(:normalized_output_artifacts_contracts, true)
@@ -152,11 +152,13 @@ module ComposableAgents
     # Render instructions using the prompt rendering strategy.
     # Returns nil if instructions is nil.
     #
-    # @param instructions [Instructions] The instructions to render
-    # @return [String] The rendered instructions
+    # @param instructions [Object, nil] Instructions to render, or nil if none (see Instructions#initialize).
+    # @return [String, nil] The rendered instructions, or nil if none
     def render_instructions(instructions)
+      return nil unless instructions
+
       render_instructions_list(
-        instructions.map do |instruction_type, instruction|
+        Instructions.new(instructions).map do |instruction_type, instruction|
           send(:"render_instruction_#{instruction_type}", instruction)
         end
       )
@@ -168,7 +170,7 @@ module ComposableAgents
     # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
     # @param author [String] Author of this message. Usually User if it is user input, but can be Orchestrator or anything else
     def converse(instructions, input_artifacts: {}, author: 'Orchestrator')
-      rendered_instructions = instructions ? render_instructions(Instructions.new(instructions)) : nil
+      rendered_instructions = render_instructions(instructions)
       rendered_user_prompt = render_user_prompt(rendered_instructions, input_artifacts:)
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: rendered_instructions, author:)

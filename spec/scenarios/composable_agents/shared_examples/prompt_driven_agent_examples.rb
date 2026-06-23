@@ -57,7 +57,7 @@ shared_examples 'a prompt driven agent' do |opts|
       ).spy
       expect(agent_spy[:role]).to eq 'Test Executor'
       expect(agent_spy[:objective]).to eq 'Execute tests'
-      expect(agent_spy[:system_instructions].to_a).to eq [[:text, 'Read and run test files']]
+      expect(agent_spy[:system_instructions]).to eq 'Read and run test files'
       expect(agent_spy[:constraints]).to eq 'Don\'t write files'
     end
   end
