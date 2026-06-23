@@ -24,9 +24,9 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
   objective: 'Find cities that would be the best destinations for the user\'s holidays',
   system_instructions: {
     ordered_list: [
-      "Get the user preferences from the artifact named `#{ComposableAgents::PromptRenderingStrategy::MarkdownHeavy.assistant_artifact_name(:preferences)}`.",
+      "Get the user preferences from the artifact named `ARTIFACT_PREFERENCES`.",
       'Find the best cities that match those preferences.',
-      "Create an artifact named `#{ComposableAgents::PromptRenderingStrategy::MarkdownHeavy.assistant_artifact_name(:cities)}` as a JSON list of those city names."
+      "Create an artifact named `ARTIFACT_CITIES` as a JSON list of those city names."
     ]
   },
   input_artifacts_contracts: {

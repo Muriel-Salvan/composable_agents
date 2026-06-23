@@ -6,7 +6,7 @@ module ComposableAgents
     # This prompt strategy needs to be used conjointly with the ArtifactContract mixin.
     # This mixin also adds the following methods to be used:
     # - `#parse_output_artifacts(text)` Parses a text that comes from the agent to retrieve output artifacts from it.
-    # - `.assistant_artifact_name(artifact_name) -> String` Returns the artifact name as seen by the assistant.
+    # - `#artifact_ref(artifact_name) -> String` Returns the artifact name as seen by the assistant.
     #     This can be used to refer to the artifact names properly in the user or system instructions.
     module MarkdownHeavy
       include Markdown
@@ -61,12 +61,12 @@ module ComposableAgents
             # Input artifacts' concept and usage
 
             - Artifacts are documents that you can get as input.
-            - Each artifact is identified by a name, like `#{MarkdownHeavy.assistant_artifact_name(:plan)}`.
+            - Each artifact is identified by a name, like `#{artifact_ref(:plan)}`.
             - You must consider all artifacts given in the "Input artifacts" section of the user prompt.
             - All artifacts presented in the "Input artifacts" section of the user prompt provide their content in an in-line JSON document.
             #{
               input_contracts.map do |artifact_name, artifact_contract|
-                name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+                name = artifact_ref(artifact_name)
                 [
                   "- The content of input artifact `#{name}` describes this: #{artifact_contract[:description]}"
                 ] + (
@@ -88,7 +88,7 @@ module ComposableAgents
 
             - The user will ask you to provide some artifacts as output.
             - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-              ```json output_artifact=#{MarkdownHeavy.assistant_artifact_name(:name)}
+              ```json output_artifact=#{artifact_ref(:name)}
               {artifact_content}
               ```
             - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
@@ -99,17 +99,17 @@ module ComposableAgents
 
             #{
               normalized_output_artifacts_contracts.map do |artifact_name, artifact_contract|
-                assistant_name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+                art_ref = artifact_ref(artifact_name)
                 (
                   [
-                    "## Output artifact `#{assistant_name}`",
+                    "## Output artifact `#{art_ref}`",
                     '',
-                    "- The content of output artifact `#{assistant_name}` should describe this: #{artifact_contract[:description]}"
+                    "- The content of output artifact `#{art_ref}` should describe this: #{artifact_contract[:description]}"
                   ] + (
-                    artifact_contract[:type] ? ["- The output artifact `#{assistant_name}` content format should be #{artifact_contract[:type]}"] : []
+                    artifact_contract[:type] ? ["- The output artifact `#{art_ref}` content format should be #{artifact_contract[:type]}"] : []
                   ) + [
                     <<~EO_ITEM.strip
-                      - The output artifact `#{assistant_name}` should be given in a block like this:
+                      - The output artifact `#{art_ref}` should be given in a block like this:
                       #{example_json_block(artifact_name)}
                     EO_ITEM
                   ]
@@ -138,7 +138,7 @@ module ComposableAgents
 
             #{
               input_artifacts.map do |artifact_name, artifact_content|
-                name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+                name = artifact_ref(artifact_name)
                 <<~EO_ARTIFACT_SECTION.strip
                   ## `#{name}`
 
@@ -171,7 +171,7 @@ module ComposableAgents
           The following output artifacts are missing from your previous responses:
           #{
             missing_output_artifacts.map do |artifact_name, missing_info|
-              ["- `#{MarkdownHeavy.assistant_artifact_name(artifact_name)}`: #{missing_info[:description]}"] +
+              ["- `#{artifact_ref(artifact_name)}`: #{missing_info[:description]}"] +
                 (missing_info[:error] ? ["  An error occurred while reading this artifact from your previous responses: #{missing_info[:error]}"] : [])
             end.flatten(1).join("\n")
           }
@@ -186,11 +186,11 @@ module ComposableAgents
         EO_PROMPT
       end
 
-      # Get the artifact name communicated to the assistant
+      # Get the artifact reference name communicated to the assistant
       #
       # @param artifact_name [Symbol] The artifact name
-      # @return [String] The artifact name used for the assistant
-      def self.assistant_artifact_name(artifact_name)
+      # @return [String] The artifact reference name used for the assistant
+      def artifact_ref(artifact_name)
         "ARTIFACT_#{artifact_name.to_s.upcase}"
       end
 
@@ -203,10 +203,10 @@ module ComposableAgents
         # {artifact_content}
         # ```
         text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
-          assistant_name = Regexp.last_match(1)
+          art_ref = Regexp.last_match(1)
           content = Regexp.last_match(2).strip
           # Convert the assistant artifact name (e.g. ARTIFACT_PLAN) back to a symbol (e.g. :plan)
-          artifact_name = (assistant_name.start_with?('ARTIFACT_') ? assistant_name.sub(/^ARTIFACT_/, '') : assistant_name).downcase.to_sym
+          artifact_name = (art_ref.start_with?('ARTIFACT_') ? art_ref.sub(/^ARTIFACT_/, '') : art_ref).downcase.to_sym
           artifact_json_content = nil
           begin
             artifact_json_content = JSON.parse(content)
@@ -272,20 +272,20 @@ module ComposableAgents
       # @param artifact_name [Symbol] The output artifact name
       # @return [String] Corresponding Markdown example
       def example_json_block(artifact_name)
-        assistant_name = MarkdownHeavy.assistant_artifact_name(artifact_name)
+        art_ref = artifact_ref(artifact_name)
         artifact_type = normalized_output_artifacts_contracts.dig(artifact_name, :type)
         <<~EO_MARKDOWN.strip
-          ```json output_artifact=#{assistant_name}
+          ```json output_artifact=#{art_ref}
           #{
             case artifact_type
             when nil
-              "#{assistant_name}_content"
+              "#{art_ref}_content"
             when :text
-              "{\"text\":\"#{assistant_name}_raw_text_content\"}"
+              "{\"text\":\"#{art_ref}_raw_text_content\"}"
             when :markdown
-              "{\"markdown\":\"#{assistant_name}_markdown_content\"}"
+              "{\"markdown\":\"#{art_ref}_markdown_content\"}"
             when :json
-              "{#{assistant_name}_json_content}"
+              "{#{art_ref}_json_content}"
             else
               raise "Unknown artifact type: #{artifact_type}"
             end

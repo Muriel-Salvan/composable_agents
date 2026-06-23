@@ -73,6 +73,14 @@ module ComposableAgents
         rendered_instructions || ''
       end
 
+      # Get the artifact reference name communicated to the assistant
+      #
+      # @param artifact_name [Symbol] The artifact name
+      # @return [String] The artifact reference name used for the assistant
+      def artifact_ref(artifact_name)
+        artifact_name.to_s
+      end
+
       # Get user instructions for missing output artifacts
       #
       # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts information, per artifact name

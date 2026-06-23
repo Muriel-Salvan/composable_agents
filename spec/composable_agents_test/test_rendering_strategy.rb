@@ -57,6 +57,14 @@ module ComposableAgentsTest
       }]"
     end
 
+    # Get the artifact reference name communicated to the assistant
+    #
+    # @param artifact_name [Symbol] The artifact name
+    # @return [String] The artifact reference name used for the assistant
+    def artifact_ref(artifact_name)
+      "ARTIFACT_#{artifact_name.to_s.upcase}"
+    end
+
     # Get user instructions for missing output artifacts
     #
     # @param missing_output_artifacts [Hash{Symbol => Object}] The missing output artifacts information, per artifact name
@@ -79,9 +87,9 @@ module ComposableAgentsTest
       # This method is used when the test strategy is used with some specific agents, like the Cline::Agent one.
       # It detects Markdown JSON artifacts named ARTIFACT_.*.
       text.scan(/```json\s+output_artifact=(\S+)\n(.*?)```(?=\n|\z)/m) do
-        assistant_name = Regexp.last_match(1)
+        art_ref = Regexp.last_match(1)
         content = Regexp.last_match(2).strip
-        artifact_name = assistant_name.gsub('ARTIFACT_', '').downcase.to_sym
+        artifact_name = art_ref.gsub('ARTIFACT_', '').downcase.to_sym
         json_content =
           begin
             JSON.parse(content)
