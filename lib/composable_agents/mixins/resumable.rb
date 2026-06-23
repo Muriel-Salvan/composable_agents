@@ -69,9 +69,10 @@ module ComposableAgents
       # If this step was already executed, skip it and update its artifacts from the file system store.
       #
       # @param name [Symbol] Step name.
+      # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
-      def step(name = :step, &)
-        internal_step(name:, agent: nil, &)
+      def step(name = :step, **kwargs, &)
+        internal_step(name:, agent: nil, extra_input_artifacts: kwargs, &)
       end
 
       # Define a step that will just run an agent.
@@ -79,8 +80,9 @@ module ComposableAgents
       # Handle the context of the agent if needed.
       #
       # @param agent [Agent] The agent to run.
-      def step_agent(agent)
-        internal_step(name: :"agent_run_#{agent.name}", agent:) do
+      # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
+      def step_agent(agent, **kwargs)
+        internal_step(name: :"agent_run_#{agent.name}", agent:, extra_input_artifacts: kwargs) do
           @artifacts.merge!(agent.run(**@artifacts))
         end
       end
@@ -96,8 +98,10 @@ module ComposableAgents
       #
       # @param name [Symbol] Step name.
       # @param agent [Agent, NilClass] Agent that is used in this step, or nil if none.
+      # @param extra_input_artifacts [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
-      def internal_step(name:, agent:)
+      def internal_step(name:, agent:, extra_input_artifacts: {})
+        @artifacts.merge!(extra_input_artifacts)
         if @run_id.nil?
           yield
         else

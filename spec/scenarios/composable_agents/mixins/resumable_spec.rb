@@ -577,4 +577,248 @@ describe ComposableAgents::Mixins::Resumable do
       end
     end
   end
+
+  context 'with additional input artifacts in step' do
+    # Creates a resumable agent instance for testing extra input artifacts
+    #
+    # @return [ComposableAgents::Agent] Resumable agent instance
+    def resumable_agent
+      Class.new(ComposableAgents::Agent) do
+        prepend ComposableAgents::Mixins::Resumable
+
+        attr_accessor :executed_steps
+
+        def run(**_input_artifacts)
+          @executed_steps ||= []
+          step(:step1, extra_artifact: 100) do
+            @artifacts[:step1_output] = @artifacts[:input] + @artifacts[:extra_artifact]
+            executed_steps << :step1
+          end
+          step(:step2, extra_artifact: 200) do
+            @artifacts[:step2_output] = @artifacts[:step1_output] + @artifacts[:extra_artifact]
+            executed_steps << :step2
+          end
+          @artifacts
+        end
+      end.new(composable_agents_dir:, run_id:)
+    end
+
+    context 'without any run ID' do
+      let(:run_id) { nil }
+
+      it 'executes steps normally with additional artifacts' do
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_artifact: 200,
+          step1_output: 101,
+          step2_output: 301
+        )
+        expect(agent.executed_steps).to eq %i[step1 step2]
+      end
+    end
+
+    context 'with a run ID' do
+      let(:run_id) { 'test-run' }
+
+      it 'executes steps normally with additional artifacts' do
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_artifact: 200,
+          step1_output: 101,
+          step2_output: 301
+        )
+        expect(agent.executed_steps).to eq %i[step1 step2]
+      end
+
+      it 'does not execute same steps again when artifacts are the same' do
+        resumable_agent.run(input: 1)
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_artifact: 200,
+          step1_output: 101,
+          step2_output: 301
+        )
+        expect(agent.executed_steps).to eq []
+      end
+
+      it 're-executes steps when extra artifacts differ' do
+        first_agent = Class.new(ComposableAgents::Agent) do
+          prepend ComposableAgents::Mixins::Resumable
+
+          def run(**_input_artifacts)
+            step(:step1, extra: 10) do
+              @artifacts[:result] = @artifacts[:input] + @artifacts[:extra]
+            end
+            @artifacts
+          end
+        end.new(composable_agents_dir:, run_id:)
+
+        second_agent = Class.new(ComposableAgents::Agent) do
+          prepend ComposableAgents::Mixins::Resumable
+
+          attr_accessor :executed_steps
+
+          def run(**_input_artifacts)
+            @executed_steps ||= []
+            step(:step1, extra: 20) do
+              @artifacts[:result] = @artifacts[:input] + @artifacts[:extra]
+              executed_steps << :step1
+            end
+            @artifacts
+          end
+        end.new(composable_agents_dir:, run_id:)
+
+        first_agent.run(input: 1)
+        expect(second_agent.run(input: 1)).to eq(
+          input: 1,
+          extra: 20,
+          result: 21
+        )
+        expect(second_agent.executed_steps).to eq %i[step1]
+      end
+    end
+  end
+
+  context 'with additional input artifacts in step_agent' do
+    # Creates a resumable agent instance for testing extra input artifacts
+    #
+    # @return [ComposableAgents::Agent] Resumable agent instance
+    def resumable_agent
+      child = Class.new(ComposableAgents::Agent) do
+        attr_accessor :runs_count
+
+        def initialize(*)
+          super
+          @runs_count = 0
+        end
+
+        def run(**input_artifacts)
+          @runs_count += 1
+          {
+            child_output: input_artifacts[:input] + 10
+          }
+        end
+      end.new
+
+      agent = Class.new(ComposableAgents::Agent) do
+        prepend ComposableAgents::Mixins::Resumable
+
+        attr_accessor :child_agent
+
+        def run(**input_artifacts)
+          @artifacts.merge!(input_artifacts)
+          step_agent(child_agent, extra_param: 42)
+          @artifacts
+        end
+      end.new(composable_agents_dir:, run_id:)
+      agent.child_agent = child
+      agent
+    end
+
+    context 'without any run ID' do
+      let(:run_id) { nil }
+
+      it 'executes step_agent normally with additional artifacts' do
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_param: 42,
+          child_output: 11
+        )
+        expect(agent.child_agent.runs_count).to eq 1
+      end
+    end
+
+    context 'with a run ID' do
+      let(:run_id) { 'test-run' }
+
+      it 'executes step_agent normally with additional artifacts' do
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_param: 42,
+          child_output: 11
+        )
+        expect(agent.child_agent.runs_count).to eq 1
+      end
+
+      it 'does not execute same step_agent again when artifacts are the same' do
+        resumable_agent.run(input: 1)
+        agent = resumable_agent
+        expect(agent.run(input: 1)).to eq(
+          input: 1,
+          extra_param: 42,
+          child_output: 11
+        )
+        expect(agent.child_agent.runs_count).to eq 0
+      end
+
+      it 're-executes step_agent when extra artifacts differ' do
+        child1 = Class.new(ComposableAgents::Agent) do
+          attr_accessor :runs_count
+
+          def initialize(*)
+            super
+            @runs_count = 0
+          end
+
+          def run(**input_artifacts)
+            @runs_count += 1
+            { child_output: input_artifacts[:input] + 10 }
+          end
+        end.new
+
+        child2 = Class.new(ComposableAgents::Agent) do
+          attr_accessor :runs_count
+
+          def initialize(*)
+            super
+            @runs_count = 0
+          end
+
+          def run(**input_artifacts)
+            @runs_count += 1
+            { child_output: input_artifacts[:input] + 20 }
+          end
+        end.new
+
+        first_agent = Class.new(ComposableAgents::Agent) do
+          prepend ComposableAgents::Mixins::Resumable
+
+          attr_accessor :child_agent
+
+          def run(**input_artifacts)
+            @artifacts.merge!(input_artifacts)
+            step_agent(child_agent, extra_param: 10)
+            @artifacts
+          end
+        end.new(composable_agents_dir:, run_id:)
+        first_agent.child_agent = child1
+
+        second_agent = Class.new(ComposableAgents::Agent) do
+          prepend ComposableAgents::Mixins::Resumable
+
+          attr_accessor :child_agent
+
+          def run(**input_artifacts)
+            @artifacts.merge!(input_artifacts)
+            step_agent(child_agent, extra_param: 20)
+            @artifacts
+          end
+        end.new(composable_agents_dir:, run_id:)
+        second_agent.child_agent = child2
+
+        first_agent.run(input: 1)
+        expect(second_agent.run(input: 1)).to eq(
+          input: 1,
+          extra_param: 20,
+          child_output: 21
+        )
+        expect(child2.runs_count).to eq 1
+      end
+    end
+  end
 end
