@@ -576,6 +576,53 @@ describe ComposableAgents::Mixins::Resumable do
         end
       end
     end
+
+    context 'when using agents with mutable states' do
+      let(:run_id) { 'test-run' }
+
+      # Creates a child agent for step_agent testing
+      def child_agent
+        Class.new(ComposableAgents::Agent) do
+          attr_accessor :runs
+          attr_accessor :state
+
+          def initialize(*args, **kwargs)
+            super
+            @state = { 'context' => { 'values' => [] } }
+          end
+
+          # Run the agent
+          #
+          # @param value [Integer] Input value
+          def run(value:)
+            @runs ||= []
+            @runs << {
+              input: value,
+              state: @state
+            }
+            @state['context']['values'] << value
+            {
+              value: value + 1
+            }
+          end
+
+          def export_state
+            { 'state' => @state }
+          end
+
+          def import_state(state)
+            @state = state['state']
+          end
+        end.new
+      end
+
+      it 'does not execute same steps again even with a child agent modifying a nested state' do
+        resumable_agent.run(value: 0)
+        agent2 = resumable_agent
+        expect(agent2.run(value: 0)[:value]).to eq 2
+        expect(agent2.child_agent.runs).to be_nil
+      end
+    end
   end
 
   context 'with additional input artifacts in step' do
