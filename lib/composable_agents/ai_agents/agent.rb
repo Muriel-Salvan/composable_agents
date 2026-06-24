@@ -29,9 +29,7 @@ module ComposableAgents
       #
       # @return [Object] Serialized state that can be marshalled to JSON
       def export_state
-        super.merge(
-          'context' => Base64.encode64(Marshal.dump(@context))
-        )
+        super.merge(deep_transform_keys(context: Base64.encode64(Marshal.dump(@context)), &:to_s))
       end
 
       # Import the agent state from persistence
@@ -39,7 +37,7 @@ module ComposableAgents
       # @param state [Object] Serialized state
       def import_state(state)
         super
-        @context = Marshal.load(Base64.decode64(state['context']))
+        @context = Marshal.load(Base64.decode64(deep_transform_keys(state, &:to_sym)[:context]))
       end
 
       private

@@ -116,19 +116,21 @@ module ComposableAgents
     #
     # @return [Object] Serialized state that can be marshalled to JSON
     def export_state
-      {
-        'conversation' => @conversation.map do |message|
-          message.merge(at: message[:at].strftime('%F %T'))
-        end
-      }
+      deep_transform_keys(
+        {
+          conversation: @conversation.map do |message|
+            message.merge(at: message[:at].strftime('%F %T'))
+          end
+        },
+        &:to_s
+      )
     end
 
     # Import the agent state from persistence
     #
     # @param state [Object] Serialized state
     def import_state(state)
-      @conversation = state['conversation'].map do |message|
-        message = message.transform_keys(&:to_sym)
+      @conversation = deep_transform_keys(state, &:to_sym)[:conversation].map do |message|
         message.merge(at: Time.parse("#{message.delete(:at)} UTC"))
       end
     end
@@ -211,6 +213,25 @@ module ComposableAgents
         message: message.is_a?(String) ? message : message&.to_hash,
         question:
       }
+    end
+
+    # Apply a deep nested transformation on a Hash's keys.
+    # Traverse nested arrays and hashes.
+    #
+    # @param obj [Object] The source object to transform (could be Hash, Array, or any other object).
+    # @yield [#call(key) -> Object] Transformation operation
+    # @yieldparam key [Object] Source key to be transformed
+    # @yieldreturn [Object] Transformed key
+    # @return [Object] The transformed object
+    def deep_transform_keys(obj, &)
+      case obj
+      when Hash
+        obj.each_with_object({}) { |(key, value), result| result[yield(key)] = deep_transform_keys(value, &) }
+      when Array
+        obj.map { |value| deep_transform_keys(value, &) }
+      else
+        obj
+      end
     end
   end
 end
