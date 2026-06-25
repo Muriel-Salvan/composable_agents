@@ -190,6 +190,8 @@ module ComposableAgents
             end
             skill.save
           end
+          # TODO: When using skillkit, also create a global rule only containing selected skills (use skillkit if possible to generate it).
+          #   Or maybe just don't use skillkit to generate this AGENTS.md file. Skills should be discoverable without it. To be tested.
           # Set the configuration
           providers = cline_config.providers(create: true)
           providers.version = 1
