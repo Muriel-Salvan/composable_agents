@@ -225,8 +225,8 @@ module ComposableAgents
         return if found_skills.include?(skill)
 
         # Find the skill among the global or local configs
-        found_skill = (::Cline::Config.global.skills && ::Cline::Config.global.skills[skill]) ||
-          (::Cline::Config.project.skills && ::Cline::Config.project.skills[skill])
+        found_skill = (::Cline::Config.global&.skills && ::Cline::Config.global.skills[skill]) ||
+          (::Cline::Config.project&.skills && ::Cline::Config.project.skills[skill])
         raise MissingSkillError, "Cline Skill #{skill} is unknown, neither in the global nor project configurations" unless found_skill
 
         found_skills << skill

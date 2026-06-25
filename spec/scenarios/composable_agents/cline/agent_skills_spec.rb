@@ -108,6 +108,22 @@ describe ComposableAgents::Cline::Agent do
       end
     end
 
+    context 'when neither global nor project config exist' do
+      before do
+        # We are in the project directory already.
+        # Just remove the Cline config dirs.
+        FileUtils.rm_rf global_config_dir
+        FileUtils.rm_rf '.cline'
+      end
+
+      it 'fails with the proper error message when looking for a skill' do
+        expect { capture_skills(skills: %w[unknown-skill]) }.to raise_error(
+          ComposableAgents::Cline::MissingSkillError,
+          'Cline Skill unknown-skill is unknown, neither in the global nor project configurations'
+        )
+      end
+    end
+
     context 'when global skills are present' do
       before do
         create_skill(global_config_dir, 'test-skill-1')
