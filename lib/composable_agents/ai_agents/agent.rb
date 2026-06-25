@@ -40,6 +40,15 @@ module ComposableAgents
         @context = Marshal.load(Base64.decode64(deep_transform_keys(state, &:to_sym)[:context]))
       end
 
+      # Return the full name of the agent.
+      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
+      # The full name can be used in logs and traces to better identify the agent.
+      #
+      # @return [String] The agent's full name
+      def full_name
+        "#{name || 'Unnamed'} (AiAgent #{@model})"
+      end
+
       private
 
       # Get the agent runner.
@@ -51,7 +60,7 @@ module ComposableAgents
           [
             Agents::Agent.new(
               model: @model,
-              name: @name,
+              name:,
               params: @params,
               instructions: @system_prompt,
               tools: [

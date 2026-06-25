@@ -81,10 +81,10 @@ module ComposableAgents
       # @param artifacts_contracts [Hash<Symbol, Object>] The artifacts contracts to be normalized
       # @return [Hash<Symbol, Hash<Symbol, Object>>] The normalized artifacts contracts (always in their Hash form as described in the class documentation)
       def normalize_contracts(artifacts_contracts)
-        artifacts_contracts.to_h do |name, contract_def|
+        artifacts_contracts.to_h do |art_name, contract_def|
           contract_def = { description: contract_def } unless contract_def.is_a?(Hash)
           [
-            name,
+            art_name,
             # Default values
             {
               description: 'Artifact',

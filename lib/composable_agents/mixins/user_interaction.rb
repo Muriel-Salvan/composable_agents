@@ -11,7 +11,7 @@ module ComposableAgents
       # @param question [String] The agent's question
       # @return [String] The answer that should be sent back to the agent
       def ask(question)
-        track_message(message: question, author: "Agent #{name}", question: true)
+        track_message(message: question, author: "Agent #{full_name}", question: true)
         answer = answer_to(question)
         track_message(message: answer, author: 'User')
         answer

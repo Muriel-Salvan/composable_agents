@@ -38,7 +38,7 @@ module ComposableAgentsTest
     # @return [String] The rendered system prompt
     def render_system_prompt(rendered_instructions)
       "SYSTEM_PROMPT[#{rendered_instructions}#{
-        " with #{@input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless @input_artifacts.empty?
+        " with #{@input_artifacts.map { |art_name, content| "#{art_name} (#{content})" }.join(', ')}" unless @input_artifacts.empty?
       }]"
     end
 
@@ -53,7 +53,7 @@ module ComposableAgentsTest
     # @return [String] The rendered user prompt
     def render_user_prompt(rendered_instructions, input_artifacts:)
       "USER_PROMPT[#{rendered_instructions}#{
-        " with #{input_artifacts.map { |name, content| "#{name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
+        " with #{input_artifacts.map { |art_name, content| "#{art_name} (#{content})" }.join(', ')}" unless input_artifacts.empty?
       }]"
     end
 

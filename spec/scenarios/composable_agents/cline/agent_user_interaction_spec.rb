@@ -44,7 +44,7 @@ describe ComposableAgents::Cline::Agent do
 
   describe 'user interaction' do
     it 'answers the assistant\'s question if needed' do
-      agent = described_agent(preset_answers: 'Test answer')
+      agent = described_agent(preset_answers: 'Test answer', provider: 'test-provider', model: 'test-model')
       # Run a mock Cline session that has ask_question as the last message content.
       mock_cline_for(
         agent,
@@ -76,12 +76,12 @@ describe ComposableAgents::Cline::Agent do
         [
           { author: 'User', message: 'RENDERED_TEXT: User prompt' },
           {
-            author: 'Agent Executor',
+            author: 'Agent Unnamed (Cline test-provider/test-model)',
             message: { question: 'What is your name?', options: %w[Alice Bob] },
             question: true
           },
           { author: 'User', message: 'Test answer' },
-          { author: 'Agent Executor', message: '' }
+          { author: 'Agent Unnamed (Cline test-provider/test-model)', message: '' }
         ]
       )
       # Validate that our agent was indeed called with the right question

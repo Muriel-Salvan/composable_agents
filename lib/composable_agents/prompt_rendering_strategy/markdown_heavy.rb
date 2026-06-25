@@ -18,18 +18,19 @@ module ComposableAgents
       def render_instruction_ordered_list(instruction)
         return '' if instruction.empty?
 
+        checklist_name = "#{name || 'Agent'} Execution Checklist"
         <<~EO_INSTRUCTIONS
           Always follow all those sequential steps.
 
-          # 1. Create the #{name} Execution Checklist (MANDATORY)
+          # 1. Create the #{checklist_name} (MANDATORY)
 
-          - Before executing anything, create a checklist named #{name} Execution Checklist with all steps of these instructions.
+          - Before executing anything, create a checklist named #{checklist_name} with all steps of these instructions.
           - Do not create files to track this checklist: keep it in your memory.
-          - The #{name} Execution Checklist must include all numbered steps explicitly.
-          - After completing each step of these instructions, mark the item in the #{name} Execution Checklist as completed.
+          - The #{checklist_name} must include all numbered steps explicitly.
+          - After completing each step of these instructions, mark the item in the #{checklist_name} as completed.
           - Do not skip any item.
           - If an item cannot be executed, explicitly explain why.
-          - Never mark the task as completed while any item from the #{name} Execution Checklist remains open.
+          - Never mark the task as completed while any item from the #{checklist_name} remains open.
 
           #{instruction.map.with_index { |step, step_idx| "# #{step_idx + 2}. #{Utils::Markdown.align_markdown_headers(step, level: 2).strip}" }.join("\n\n")}
 
@@ -37,7 +38,7 @@ module ComposableAgents
 
           Before declaring the task complete:
 
-          - Re-list all numbered steps from the #{name} Execution Checklist.
+          - Re-list all numbered steps from the #{checklist_name}.
           - Confirm each one was executed.
           - If any step was not executed, execute it now.
         EO_INSTRUCTIONS
@@ -66,17 +67,17 @@ module ComposableAgents
             - All artifacts presented in the "Input artifacts" section of the user prompt provide their content in an in-line JSON document.
             #{
               input_contracts.map do |artifact_name, artifact_contract|
-                name = artifact_ref(artifact_name)
+                art_ref = artifact_ref(artifact_name)
                 [
-                  "- The content of input artifact `#{name}` describes this: #{artifact_contract[:description]}"
+                  "- The content of input artifact `#{art_ref}` describes this: #{artifact_contract[:description]}"
                 ] + (
                   if artifact_contract[:optional]
-                    ["- The input artifact `#{name}` is optional and may not be given to you."]
+                    ["- The input artifact `#{art_ref}` is optional and may not be given to you."]
                   else
-                    ["- The input artifact `#{name}` is expected to be in the user prompt."]
+                    ["- The input artifact `#{art_ref}` is expected to be in the user prompt."]
                   end
                 ) + [
-                  "- The input artifact `#{name}` artifact content is embedded directly in the user prompt as in-line JSON. It is NOT a file. Do NOT try to open it as a file."
+                  "- The input artifact `#{art_ref}` artifact content is embedded directly in the user prompt as in-line JSON. It is NOT a file. Do NOT try to open it as a file."
                 ]
               end.compact.flatten(1).join("\n")
             }
@@ -138,11 +139,11 @@ module ComposableAgents
 
             #{
               input_artifacts.map do |artifact_name, artifact_content|
-                name = artifact_ref(artifact_name)
+                art_ref = artifact_ref(artifact_name)
                 <<~EO_ARTIFACT_SECTION.strip
-                  ## `#{name}`
+                  ## `#{art_ref}`
 
-                  ```json input_artifact=#{name}
+                  ```json input_artifact=#{art_ref}
                   #{JSON.dump(artifact_content)}
                   ```
                 EO_ARTIFACT_SECTION

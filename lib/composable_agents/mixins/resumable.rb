@@ -68,11 +68,11 @@ module ComposableAgents
       # This will store the state of this step in the file system.
       # If this step was already executed, skip it and update its artifacts from the file system store.
       #
-      # @param name [Symbol] Step name.
+      # @param step_name [Symbol] Step name.
       # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
-      def step(name = :step, **kwargs, &)
-        internal_step(name:, agent: nil, extra_input_artifacts: kwargs, &)
+      def step(step_name = :step, **kwargs, &)
+        internal_step(step_name:, agent: nil, extra_input_artifacts: kwargs, &)
       end
 
       # Define a step that will just run an agent.
@@ -82,7 +82,7 @@ module ComposableAgents
       # @param agent [Agent] The agent to run.
       # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
       def step_agent(agent, **kwargs)
-        internal_step(name: :"agent_run_#{agent.name}", agent:, extra_input_artifacts: kwargs) do
+        internal_step(step_name: :"agent_run_#{(agent.name || 'unnamed').gsub(/[^\w]/, '_')}", agent:, extra_input_artifacts: kwargs) do
           @artifacts.merge!(agent.run(**@artifacts))
         end
       end
@@ -96,11 +96,11 @@ module ComposableAgents
       # Handle the state of an optional agent in the case this step is executed for an agent.
       # This method should not be used directly.
       #
-      # @param name [Symbol] Step name.
+      # @param step_name [Symbol] Step name.
       # @param agent [Agent, NilClass] Agent that is used in this step, or nil if none.
       # @param extra_input_artifacts [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
-      def internal_step(name:, agent:, extra_input_artifacts: {})
+      def internal_step(step_name:, agent:, extra_input_artifacts: {})
         @artifacts.merge!(extra_input_artifacts)
         if @run_id.nil?
           yield
@@ -108,21 +108,21 @@ module ComposableAgents
           # Compute the current step state
           step_state = current_step_state(agent:)
           # Read the persisted step state if any
-          full_name = "#{@steps_idx.join('-')}-#{name}"
-          saved_input_state, saved_output_state = saved_step_states(full_name)
+          step_full_name = "#{@steps_idx.join('-')}-#{step_name}"
+          saved_input_state, saved_output_state = saved_step_states(step_full_name)
           # If the input exists, it means the step was already executed.
           # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
           if step_state == saved_input_state
             set_current_step_state(saved_output_state, agent:)
-            log_debug "[Step #{full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
+            log_debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
           else
             # Clone state before yielding because it will certainly be modified
             input_step_state = clone_step_state(step_state)
             @steps_idx << 0
             yield
             @steps_idx.pop
-            store_step_states(full_name, input: input_step_state, output: current_step_state(agent:))
-            log_debug "[Step #{full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
+            store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
+            log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
           end
           @steps_idx[-1] += 1
         end

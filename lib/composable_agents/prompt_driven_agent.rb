@@ -189,8 +189,8 @@ module ComposableAgents
       log_debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: rendered_instructions, author:)
       response = prompt(rendered_user_prompt)
-      log_debug "Raw Agent #{name} response: #{response}"
-      track_message(message: response, author: "Agent#{" #{name}" if name}")
+      log_debug "Raw Agent #{full_name} response: #{response}"
+      track_message(message: response, author: "Agent #{full_name}")
     end
 
     # Process a user prompt.

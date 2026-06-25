@@ -52,7 +52,7 @@ describe ComposableAgents::Mixins::AiAgentUserInteraction do
       def answer_to(question)
         "[#{question}]: 42"
       end
-    end.new(name: 'test-agent')
+    end.new(name: 'test-agent', model: 'test-model')
     test_agent.run(user_instructions: 'Start interactive session')
     expect_conversation(
       test_agent.conversation,
@@ -62,7 +62,7 @@ describe ComposableAgents::Mixins::AiAgentUserInteraction do
           message: 'Start interactive session'
         },
         {
-          author: 'Agent test-agent',
+          author: 'Agent test-agent (AiAgent test-model)',
           message: 'What is the meaning of life?',
           question: true
         },
@@ -71,7 +71,7 @@ describe ComposableAgents::Mixins::AiAgentUserInteraction do
           message: '[What is the meaning of life?]: 42'
         },
         {
-          author: 'Agent test-agent',
+          author: 'Agent test-agent (AiAgent test-model)',
           message: 'The answer is [What is the meaning of life?]: 42'
         }
       ]

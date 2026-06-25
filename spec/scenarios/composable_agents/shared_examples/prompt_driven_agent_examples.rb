@@ -18,6 +18,7 @@ shared_examples 'a prompt driven agent' do |opts|
   #   - Return [Agent] The new agent decorated instance
   # - contracts [Boolean] Is the agent using artifacts contracts? Defaults to `false`.
   # - default_conversation_name [String] The default conversation name
+  # - named_agent_conversation_name [String] The conversation name used for an agent named 'Test Assistant'
 
   # Set default values
   opts.replace(
@@ -40,7 +41,12 @@ shared_examples 'a prompt driven agent' do |opts|
   # @param kwargs [Hash] The parameters to be given to the agent's constructor
   # @return [Agent] The new agent decorated instance
   def new_agent(mocked_assistant_outputs: [], **kwargs)
-    opts[:new_agent].call(self, mocked_assistant_outputs:, strategy: ComposableAgentsTest::TestRenderingStrategy, **kwargs)
+    opts[:new_agent].call(
+      self,
+      mocked_assistant_outputs:,
+      strategy: ComposableAgentsTest::TestRenderingStrategy,
+      **kwargs
+    )
   end
 
   describe '#initialize' do
@@ -242,7 +248,7 @@ shared_examples 'a prompt driven agent' do |opts|
         named_agent.conversation,
         [
           { author: 'User', message: 'RENDERED_TEXT: Test user prompt' },
-          { author: 'Agent Test Assistant', message: 'Assistant Output #1' }
+          { author: opts[:named_agent_conversation_name], message: 'Assistant Output #1' }
         ]
       )
     end
@@ -272,7 +278,7 @@ shared_examples 'a prompt driven agent' do |opts|
       expect { JSON.parse(state.to_json) }.not_to raise_error
       other_agent = new_agent(
         mocked_assistant_outputs: 'Other Assistant Output #1',
-        name: 'Test Other Assistant'
+        name: 'Test Assistant'
       )
       other_agent.import_state(state)
       # Re-imported state should be the same
@@ -296,7 +302,7 @@ shared_examples 'a prompt driven agent' do |opts|
           { author: 'User', message: 'RENDERED_TEXT: Second message' },
           { author: opts[:default_conversation_name], message: 'Assistant Output #2' },
           { author: 'User', message: 'RENDERED_TEXT: Third message' },
-          { author: 'Agent Test Other Assistant', message: 'Other Assistant Output #1' }
+          { author: opts[:named_agent_conversation_name], message: 'Other Assistant Output #1' }
         ]
       )
     end

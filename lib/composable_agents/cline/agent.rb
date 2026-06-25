@@ -36,8 +36,6 @@ module ComposableAgents
         **kwargs
       )
         super(*args, strategy:, **kwargs)
-        # Name is used in many places. Provide a default one.
-        @name ||= 'Executor'
         @provider = provider
         @model = model
         @api_key = api_key ? ::Cline::SecretString.new(api_key.dup) : nil
@@ -61,6 +59,15 @@ module ComposableAgents
       def import_state(state)
         super
         @context = deep_transform_keys(state, &:to_sym)[:context]
+      end
+
+      # Return the full name of the agent.
+      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
+      # The full name can be used in logs and traces to better identify the agent.
+      #
+      # @return [String] The agent's full name
+      def full_name
+        "#{name || 'Unnamed'} (Cline #{@provider}/#{@model})"
       end
 
       private
@@ -153,7 +160,7 @@ module ComposableAgents
             find_skill(skill, selected_skills)
           end
           # Setup the temporary Cline global config dir
-          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}-#{name.gsub(/[^\w.]/, '_')}"
+          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}#{"-#{name.gsub(/[^\w.]/, '_')}" if name}"
           ::Cline.configure do |config|
             config.debug = Mixins::Logger.debug?
             config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"

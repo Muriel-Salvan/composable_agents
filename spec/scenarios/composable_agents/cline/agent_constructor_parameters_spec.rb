@@ -20,16 +20,6 @@ describe ComposableAgents::Cline::Agent do
       JSON.parse(agent.conversation.last[:message], symbolize_names: true)
     end
 
-    describe 'name' do
-      it 'defaults to "Executor"' do
-        expect(cline_agent.name).to eq 'Executor'
-      end
-
-      it 'accepts a custom name' do
-        expect(cline_agent(name: 'Test Assistant').name).to eq 'Test Assistant'
-      end
-    end
-
     describe 'provider' do
       it 'defaults to "cline"' do
         provider_settings = capture_provider_settings

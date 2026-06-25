@@ -7,7 +7,12 @@ describe ComposableAgents::Cline::Agent do
     'a prompt driven agent',
     new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
       example.instance_eval do
-        agent = described_class.new(composable_agents_dir: '.composable_agents_test', **kwargs)
+        agent = described_class.new(
+          composable_agents_dir: '.composable_agents_test',
+          provider: 'test-provider',
+          model: 'test-model',
+          **kwargs
+        )
         mock_cline_for(
           agent,
           mocked_outputs_to_cline_outputs(mocked_assistant_outputs)
@@ -16,14 +21,20 @@ describe ComposableAgents::Cline::Agent do
       end
     end,
     contracts: true,
-    default_conversation_name: 'Agent Executor'
+    default_conversation_name: 'Agent Unnamed (Cline test-provider/test-model)',
+    named_agent_conversation_name: 'Agent Test Assistant (Cline test-provider/test-model)'
   )
 
   it_behaves_like(
     'a prompt driven agent with artifacts contracts',
     new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
       example.instance_eval do
-        agent = described_class.new(composable_agents_dir: '.composable_agents_test', **kwargs)
+        agent = described_class.new(
+          composable_agents_dir: '.composable_agents_test',
+          provider: 'test-provider',
+          model: 'test-model',
+          **kwargs
+        )
         mock_cline_for(
           agent,
           mocked_outputs_to_cline_outputs(mocked_assistant_outputs)
@@ -31,7 +42,8 @@ describe ComposableAgents::Cline::Agent do
         agent
       end
     end,
-    default_conversation_name: 'Agent Executor'
+    default_conversation_name: 'Agent Unnamed (Cline test-provider/test-model)',
+    named_agent_conversation_name: 'Agent Test Assistant (Cline test-provider/test-model)'
   )
 
   describe 'dedicated config directory' do

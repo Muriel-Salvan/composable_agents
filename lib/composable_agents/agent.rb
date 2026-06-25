@@ -43,7 +43,7 @@ module ComposableAgents
     #
     # @return [Array<String>] Fields to log
     def log_fields
-      @name.nil? ? [] : [@name]
+      [full_name]
     end
   end
 end

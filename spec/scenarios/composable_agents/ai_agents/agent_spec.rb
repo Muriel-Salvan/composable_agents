@@ -74,14 +74,16 @@ describe ComposableAgents::AiAgents::Agent do
     'a prompt driven agent',
     new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
       example.instance_eval do
-        agent = described_class.new(**kwargs)
+        agent = described_class.new(composable_agents_dir: '.composable_agents_test', model: 'test-model', **kwargs)
         mock_agent_runner_for(
           agent,
           mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
         )
         agent
       end
-    end
+    end,
+    default_conversation_name: 'Agent Unnamed (AiAgent test-model)',
+    named_agent_conversation_name: 'Agent Test Assistant (AiAgent test-model)'
   )
 
   it_behaves_like(
@@ -89,7 +91,7 @@ describe ComposableAgents::AiAgents::Agent do
     new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
       agent = Class.new(described_class) do
         prepend ComposableAgents::Mixins::ArtifactContract
-      end.new(**kwargs)
+      end.new(composable_agents_dir: '.composable_agents_test', model: 'test-model', **kwargs)
       example.instance_eval do
         mock_agent_runner_for(
           agent,
@@ -97,7 +99,9 @@ describe ComposableAgents::AiAgents::Agent do
         )
       end
       agent
-    end
+    end,
+    default_conversation_name: 'Agent Unnamed (AiAgent test-model)',
+    named_agent_conversation_name: 'Agent Test Assistant (AiAgent test-model)'
   )
 
   # Helper method to instantiate an Agent with test rendering strategy.
@@ -135,6 +139,24 @@ describe ComposableAgents::AiAgents::Agent do
           Detailed error message
         EO_ERROR
       )
+    end
+  end
+
+  describe '#full_name' do
+    context 'without a name' do
+      let(:agent) { described_agent(model: 'gpt-4-turbo') }
+
+      it 'returns "Unnamed" with the model in parentheses' do
+        expect(agent.full_name).to eq('Unnamed (AiAgent gpt-4-turbo)')
+      end
+    end
+
+    context 'with a name' do
+      let(:agent) { described_agent(name: 'MyAgent', model: 'gpt-4-turbo') }
+
+      it 'returns the name with the model in parentheses' do
+        expect(agent.full_name).to eq('MyAgent (AiAgent gpt-4-turbo)')
+      end
     end
   end
 

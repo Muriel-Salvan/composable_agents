@@ -15,6 +15,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
   # - default_conversation_name [String] The default conversation name
+  # - named_agent_conversation_name [String] The conversation name used for an agent named 'Test Assistant'
 
   # Set default values
   opts.replace(
@@ -123,7 +124,7 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
 
     it 'records retry prompts with the agent name when given' do
       agent = new_agent(
-        name: 'Travel Planner',
+        name: 'Test Assistant',
         output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' },
         mocked_assistant_outputs: [
           { text: 'Assistant Output #1', output_artifacts: {} },
@@ -135,9 +136,9 @@ shared_examples 'a prompt driven agent with artifacts contracts' do |opts|
         agent.conversation,
         [
           { author: 'User', message: nil },
-          { author: 'Agent Travel Planner', message: /Assistant Output #1/ },
+          { author: opts[:named_agent_conversation_name], message: /Assistant Output #1/ },
           { author: 'Orchestrator', message: 'RENDERED_TEXT: MISSING_PROMPT: result (Final result), logs (Execution logs)' },
-          { author: 'Agent Travel Planner', message: /Assistant Output #2/ }
+          { author: opts[:named_agent_conversation_name], message: /Assistant Output #2/ }
         ]
       )
     end
