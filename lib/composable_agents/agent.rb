@@ -20,6 +20,15 @@ module ComposableAgents
       @composable_agents_dir = composable_agents_dir
     end
 
+    # Return the full name of the agent.
+    # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
+    # The full name can be used in logs and traces to better identify the agent.
+    #
+    # @return [String] The agent's full name
+    def full_name
+      "#{name || 'Unnamed'}#{" (#{self.class.name.split('::').last})" if self.class != Agent && self.class.name}"
+    end
+
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
     # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
