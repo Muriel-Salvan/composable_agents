@@ -140,6 +140,29 @@ describe ComposableAgents::AiAgents::Agent do
         EO_ERROR
       )
     end
+
+    it 'raises an exception without response body when error does not respond to response' do
+      agent = described_agent
+      mock_agent_runner_for(
+        agent,
+        {
+          error: double(
+            backtrace: ['backtrace line 1', 'backtrace line 2'],
+            detailed_message: 'Test error message'
+          ),
+          context: {},
+          output: nil
+        }
+      )
+      expect { agent.run }.to raise_error(
+        RuntimeError,
+        <<~EO_ERROR.strip
+          Error: Test error message
+          backtrace line 1
+          backtrace line 2
+        EO_ERROR
+      )
+    end
   end
 
   describe '#full_name' do

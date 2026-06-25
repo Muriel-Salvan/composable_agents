@@ -82,7 +82,7 @@ module ComposableAgents
           raise <<~EO_ERROR.strip
             Error: #{result.error.detailed_message}
             #{result.error.backtrace.join("\n")}
-            #{result.error.response.response_body}
+            #{result.error.response.response_body if result.error.respond_to?(:response)}
           EO_ERROR
         end
 
