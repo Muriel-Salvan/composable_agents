@@ -11,7 +11,7 @@ describe ComposableAgents::Cline::Agent do
         {
           stdout: {
             eval: <<~EO_RUBY
-              JSON.parse(File.read("\#{config_dir}/data/settings/providers.json")).to_json
+              JSON.dump(JSON.parse(File.read("\#{config_dir}/data/settings/providers.json")))
             EO_RUBY
           }
         }
@@ -107,7 +107,7 @@ describe ComposableAgents::Cline::Agent do
           {
             stdout: {
               eval: <<~EO_RUBY
-                JSON.parse(File.read("\#{config_dir}/data/settings/global-settings.json")).to_json
+                JSON.dump(JSON.parse(File.read("\#{config_dir}/data/settings/global-settings.json")))
               EO_RUBY
             }
           }

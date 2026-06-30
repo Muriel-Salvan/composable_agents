@@ -202,7 +202,7 @@ describe ComposableAgents::AiAgents::Agent do
       agent1.run(user_instructions: 'Second message')
       state = agent1.export_state
       # Check that context is JSON-serializable
-      expect(JSON.parse(state.to_json)).to eq state
+      expect(JSON.parse(JSON.dump(state))).to eq state
       # Import the context in another agent
       agent2 = described_agent(name: 'Test Agent 2')
       mock_agent_runner_for(agent2)

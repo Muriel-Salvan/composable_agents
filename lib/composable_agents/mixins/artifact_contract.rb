@@ -159,7 +159,7 @@ module ComposableAgents
             end
           when :json
             begin
-              unless JSON.parse(content.to_json) == content
+              unless JSON.parse(JSON.dump(content)) == content
                 raise ArtifactTypeError, "Artifact #{artifact_name} should be a JSON object but serializing it into JSON changed its data"
               end
             rescue StandardError => e

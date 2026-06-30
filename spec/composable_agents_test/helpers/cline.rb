@@ -88,7 +88,7 @@ module ComposableAgentsTest
             stdout << (desc[:output_artifacts] || {}).map do |artifact_name, artifact_content|
               <<~EO_STDOUT
                 ```json output_artifact=ARTIFACT_#{artifact_name.to_s.upcase}
-                #{artifact_content.to_json}
+                #{JSON.dump(artifact_content)}
                 ```
               EO_STDOUT
             end.join("\n")

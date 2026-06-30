@@ -61,7 +61,7 @@ describe ComposableAgents::Cline::Agent do
       agent1.run(user_instructions: 'Second message')
       state = agent1.export_state
       # Check that context is JSON-serializable
-      expect(JSON.parse(state.to_json)).to eq state
+      expect(JSON.parse(JSON.dump(state))).to eq state
 
       agent2 = cline_agent
       mock_cline_for(

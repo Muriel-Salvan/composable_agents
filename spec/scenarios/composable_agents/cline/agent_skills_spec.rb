@@ -15,15 +15,17 @@ describe ComposableAgents::Cline::Agent do
         {
           stdout: {
             eval: <<~EO_RUBY
-              {
-                config_dir:,
-                skills: (Dir.glob("\#{config_dir}/skills/**/*") + Dir.glob('.cline/skills/**/*')).to_h do |skill_file|
-                  [
-                    skill_file,
-                    File.directory?(skill_file) ? nil : File.read(skill_file)
-                  ]
-                end.compact
-              }.to_json
+              JSON.dump(
+                {
+                  config_dir:,
+                  skills: (Dir.glob("\#{config_dir}/skills/**/*") + Dir.glob('.cline/skills/**/*')).to_h do |skill_file|
+                    [
+                      skill_file,
+                      File.directory?(skill_file) ? nil : File.read(skill_file)
+                    ]
+                  end.compact
+                }
+              )
             EO_RUBY
           }
         }

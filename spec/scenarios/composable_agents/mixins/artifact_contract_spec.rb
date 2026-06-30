@@ -180,7 +180,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
             )
           end.to raise_error(
             ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
-            /Artifact json_field should be a JSON object but parsing it raised error: undefined method 'to_json' for an instance of BasicObject/
+            /Artifact json_field should be a JSON object but parsing it raised error: undefined method 'to_s' for an instance of BasicObject/
           )
         end
 
@@ -532,7 +532,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
       }
       expect { agent.run }.to raise_error(
         ComposableAgents::Mixins::ArtifactContract::ArtifactTypeError,
-        /Artifact json_result should be a JSON object but parsing it raised error: undefined method 'to_json' for an instance of BasicObject/
+        /Artifact json_result should be a JSON object but parsing it raised error: undefined method 'to_s' for an instance of BasicObject/
       )
     end
 

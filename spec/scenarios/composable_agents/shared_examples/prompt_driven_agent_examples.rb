@@ -275,7 +275,7 @@ shared_examples 'a prompt driven agent' do |opts|
       agent.run(user_instructions: 'Second message')
       state = agent.export_state
       # Should be JSON-serializable
-      expect { JSON.parse(state.to_json) }.not_to raise_error
+      expect { JSON.parse(JSON.dump(state)) }.not_to raise_error
       other_agent = new_agent(
         mocked_assistant_outputs: 'Other Assistant Output #1',
         name: 'Test Assistant'

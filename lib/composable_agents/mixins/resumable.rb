@@ -175,10 +175,12 @@ module ComposableAgents
         FileUtils.mkdir_p(File.dirname(step_json_file))
         File.write(
           step_json_file,
-          {
-            input:,
-            output:
-          }.to_json
+          JSON.dump(
+            {
+              input:,
+              output:
+            }
+          )
         )
       end
 
@@ -200,7 +202,7 @@ module ComposableAgents
           artifacts: step_state[:artifacts].dup
         }
         # Perform a deep clone using JSON
-        cloned_step_state[:agent_state] = JSON.parse(step_state[:agent_state].to_json) if step_state.key?(:agent_state)
+        cloned_step_state[:agent_state] = JSON.parse(JSON.dump(step_state[:agent_state])) if step_state.key?(:agent_state)
         cloned_step_state
       end
     end
