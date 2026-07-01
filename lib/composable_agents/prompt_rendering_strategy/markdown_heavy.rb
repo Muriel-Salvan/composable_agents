@@ -9,6 +9,8 @@ module ComposableAgents
     # - `#artifact_ref(artifact_name) -> String` Returns the artifact name as seen by the assistant.
     #     This can be used to refer to the artifact names properly in the user or system instructions.
     module MarkdownHeavy
+      # @!group Internal
+
       include Markdown
 
       # Render an instruction of type ordered_list

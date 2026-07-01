@@ -3,6 +3,8 @@ module ComposableAgents
   # Instructions are always normalized as a list of individual instructions that each can be rendered differently depending on the rendering strategy.
   # This is used by PromptDrivenAgent agents only.
   class Instructions
+    # @!group Public API
+
     include Enumerable
 
     # Constructor

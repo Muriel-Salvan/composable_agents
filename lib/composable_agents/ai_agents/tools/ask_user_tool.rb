@@ -4,6 +4,8 @@ module ComposableAgents
     module Tools
       # Tool that is used to ask the user for some input
       class AskUserTool < Agents::Tool
+        # @!group Internal
+
         include Mixins::Logger
 
         description <<~EO_DESCRIPTION

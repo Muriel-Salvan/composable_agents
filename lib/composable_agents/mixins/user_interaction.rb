@@ -6,6 +6,8 @@ module ComposableAgents
     # An agent using this Mixin should define the private method `#answer_to`` to handle the question.
     # Default handling is asking the question on the terminal.
     module UserInteraction
+      # @!group Public API
+
       # Answer an agent's question
       #
       # @param question [String] The agent's question

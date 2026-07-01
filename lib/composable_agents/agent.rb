@@ -5,6 +5,8 @@ module ComposableAgents
   class Agent
     include Mixins::Logger
 
+    # @!group Public API
+
     # @return [String, nil] The agent name, if any
     attr_reader :name
 
@@ -28,6 +30,8 @@ module ComposableAgents
     def full_name
       "#{name || 'Unnamed'}#{" (#{self.class.name.split('::').last})" if self.class != Agent && self.class.name}"
     end
+
+    # @!group Internal
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #

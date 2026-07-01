@@ -3,6 +3,8 @@ module ComposableAgents
     module Tools
       # Tool that is used to create a new artifact's content
       class CreateArtifactTool < Agents::Tool
+        # @!group Internal
+
         include Mixins::Logger
 
         description <<~EO_DESCRIPTION

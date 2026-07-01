@@ -3,6 +3,8 @@ module ComposableAgents
   module Mixins
     # Logging mixin for agents
     module Logger
+      # @!group Public API
+
       # Check if debug mode is enabled
       #
       # @return [Boolean] True if debug mode is enabled

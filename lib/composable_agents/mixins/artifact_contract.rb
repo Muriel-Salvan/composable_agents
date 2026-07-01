@@ -16,6 +16,8 @@ module ComposableAgents
     #     - `json` for JSON.
     #     Type can be used by some agents to tailor their output format and prompts.
     module ArtifactContract
+      # @!group Public API
+
       # Raised when required input artifacts are missing
       class MissingInputArtifactError < RuntimeError
       end
@@ -44,6 +46,8 @@ module ComposableAgents
         @input_artifacts_contracts = input_artifacts_contracts
         @output_artifacts_contracts = output_artifacts_contracts
       end
+
+      # @!group Internal
 
       # Execute the agent to generate some output artifacts based on some input artifacts.
       #

@@ -9,6 +9,8 @@ module ComposableAgents
 
     # Agent implementation that uses an ai-agent's AgentRunner.
     class Agent < PromptDrivenAgent
+      # @!group Public API
+
       prepend Mixins::ArtifactContract
 
       # Initialize a new agent that uses the Cline CLI in a dedicated config
@@ -46,6 +48,17 @@ module ComposableAgents
         @context = []
       end
 
+      # Return the full name of the agent.
+      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
+      # The full name can be used in logs and traces to better identify the agent.
+      #
+      # @return [String] The agent's full name
+      def full_name
+        "#{name || 'Unnamed'} (Cline #{@provider}/#{@model})"
+      end
+
+      # @!group Internal
+
       # Export the agent state for persistence
       #
       # @return [Object] Serialized state that can be marshalled to JSON
@@ -59,15 +72,6 @@ module ComposableAgents
       def import_state(state)
         super
         @context = deep_transform_keys(state, &:to_sym)[:context]
-      end
-
-      # Return the full name of the agent.
-      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
-      # The full name can be used in logs and traces to better identify the agent.
-      #
-      # @return [String] The agent's full name
-      def full_name
-        "#{name || 'Unnamed'} (Cline #{@provider}/#{@model})"
       end
 
       private

@@ -3,6 +3,8 @@ module ComposableAgents
     # Mixin that adds user interaction capabilities to AiAgent::Agent agents.
     # This uses an AiAgent tool to then call the normal UserInteraction interface.
     module AiAgentUserInteraction
+      # @!group Internal
+
       # Hook used when this mixin is included in a base class
       #
       # @param base [Class] The base class

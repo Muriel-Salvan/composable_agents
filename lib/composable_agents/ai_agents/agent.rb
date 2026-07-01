@@ -6,6 +6,8 @@ module ComposableAgents
   module AiAgents
     # Agent implementation that uses an ai-agent's AgentRunner.
     class Agent < PromptDrivenAgent
+      # @!group Public API
+
       # Initialize a new agent with a list of ai-agents' Agents to be used with an AgentRunner
       #
       # @param model [String] Model to be used
@@ -25,6 +27,17 @@ module ComposableAgents
         @context = {}
       end
 
+      # Return the full name of the agent.
+      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
+      # The full name can be used in logs and traces to better identify the agent.
+      #
+      # @return [String] The agent's full name
+      def full_name
+        "#{name || 'Unnamed'} (AiAgent #{@model})"
+      end
+
+      # @!group Internal
+
       # Export the agent state for persistence
       #
       # @return [Object] Serialized state that can be marshalled to JSON
@@ -38,15 +51,6 @@ module ComposableAgents
       def import_state(state)
         super
         @context = Marshal.load(Base64.decode64(deep_transform_keys(state, &:to_sym)[:context]))
-      end
-
-      # Return the full name of the agent.
-      # This method is intended to be overridden by subclasses to give better full names, tailored to the kind of agent.
-      # The full name can be used in logs and traces to better identify the agent.
-      #
-      # @return [String] The agent's full name
-      def full_name
-        "#{name || 'Unnamed'} (AiAgent #{@model})"
       end
 
       private

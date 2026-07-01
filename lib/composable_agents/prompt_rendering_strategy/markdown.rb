@@ -3,6 +3,8 @@ module ComposableAgents
   module PromptRenderingStrategy
     # Render prompt as Markdown documents
     module Markdown
+      # @!group Internal
+
       # Render an instruction of type text
       #
       # @param instruction [String] The instruction to render

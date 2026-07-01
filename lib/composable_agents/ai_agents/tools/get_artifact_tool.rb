@@ -3,6 +3,8 @@ module ComposableAgents
     module Tools
       # Tool that is used to read an artifact's content
       class GetArtifactTool < Agents::Tool
+        # @!group Internal
+
         include Mixins::Logger
 
         description 'Get an input artifact'

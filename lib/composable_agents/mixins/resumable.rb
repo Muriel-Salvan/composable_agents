@@ -16,6 +16,8 @@ module ComposableAgents
     # - `#export_state -> Object` Optional method returning the current JSON-serializable state of the agent.
     # - `#import_state(state)` Optional method that sets the agent state from a JSON-serializable object.
     module Resumable
+      # @!group Public API
+
       # Constructor
       #
       # @param run_id [String, nil] ID identifying this run to reuse previously executed steps, or nil if there is no resumability needed
@@ -23,6 +25,8 @@ module ComposableAgents
         super(*args, **kwargs)
         @run_id = run_id
       end
+
+      # @!group Internal
 
       # Execute the agent to generate some output artifacts based on some input artifacts.
       #

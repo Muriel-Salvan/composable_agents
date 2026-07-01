@@ -12,6 +12,8 @@ module ComposableAgents
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
   # This agent automatically records non-rendered conversation (prompts + outputs) in a `conversation` store, part of its state.
   class PromptDrivenAgent < Agent
+    # @!group Public API
+
     # @return [String, nil] Agent's role, or nil for the agent's default
     attr_accessor :role
 
@@ -31,25 +33,6 @@ module ComposableAgents
     #   - message [String] The message itself
     #   - question [Boolean] Is this message a question expecting a reply? Defaults to false.
     attr_reader :conversation
-
-    # Define input artifacts contracts
-    #
-    # @return [Hash{Symbol => Object}] Set of input artifacts description, per artifact name
-    def input_artifacts_contracts
-      {
-        user_instructions: {
-          description: 'User instructions',
-          optional: true
-        }
-      }
-    end
-
-    # Define output artifacts contracts
-    #
-    # @return [Hash{Symbol => Object}>] Set of output artifacts description, per artifact name
-    def output_artifacts_contracts
-      {}
-    end
 
     # Initialize a new PromptDrivenAgent with the information needed for prompts and the selected prompt rendering strategy.
     # If no name is provided, it will default to 'Executor'.
@@ -110,6 +93,27 @@ module ComposableAgents
         end
       end
       @output_artifacts
+    end
+
+    # @!group Internal
+
+    # Define input artifacts contracts
+    #
+    # @return [Hash{Symbol => Object}] Set of input artifacts description, per artifact name
+    def input_artifacts_contracts
+      {
+        user_instructions: {
+          description: 'User instructions',
+          optional: true
+        }
+      }
+    end
+
+    # Define output artifacts contracts
+    #
+    # @return [Hash{Symbol => Object}>] Set of output artifacts description, per artifact name
+    def output_artifacts_contracts
+      {}
     end
 
     # Export the agent state for persistence

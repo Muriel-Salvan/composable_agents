@@ -4,6 +4,8 @@ module ComposableAgents
   # This agent allows wrapping arbitrary Ruby logic as an Agent by providing
   # a Proc that handles the transformation of input artifacts to output artifacts.
   class RubyAgent < Agent
+    # @!group Public API
+
     # Initialize a new RubyAgent with a processing proc
     #
     # @param processor [#call(Hash{Symbol => Object}) => Hash{Symbol => Object}] The agent logic.

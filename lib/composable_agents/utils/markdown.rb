@@ -6,6 +6,8 @@ module ComposableAgents
     # Internal util methods to handle Markdown
     module Markdown
       class << self
+        # @!group Internal
+
         # Align markdown headers in a String to a given level.
         # This method parses the String as a markdown document, sees the minimum current header level,
         # and changes it while preserving the structure and hierarchy so that this min level is equal to `level`.
