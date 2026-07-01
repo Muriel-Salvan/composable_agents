@@ -28,7 +28,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#parse_outpu
         ```
       EO_TEXT
       expect(agent.output_artifacts).to be_empty
-      expect(agent.output_artifacts_errors).to eq(report: 'unexpected token \'not\' at line 1 column 1')
+      expect(agent.output_artifacts_errors[:report]).to include('unexpected token')
     end
   end
 
@@ -52,7 +52,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#parse_outpu
         ```
       EO_TEXT
       expect(agent.output_artifacts).to be_empty
-      expect(agent.output_artifacts_errors).to eq(result: 'unexpected token \'not\' at line 1 column 1')
+      expect(agent.output_artifacts_errors[:result]).to include('unexpected token')
     end
 
     it 'reports errors correctly when text key is missing' do
@@ -100,7 +100,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#parse_outpu
         ```
       EO_TEXT
       expect(agent.output_artifacts).to be_empty
-      expect(agent.output_artifacts_errors).to eq(doc: 'unexpected token \'not\' at line 1 column 1')
+      expect(agent.output_artifacts_errors[:doc]).to include('unexpected token')
     end
 
     it 'reports errors correctly when markdown key is missing' do
@@ -149,7 +149,7 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#parse_outpu
         ```
       EO_TEXT
       expect(agent.output_artifacts).to be_empty
-      expect(agent.output_artifacts_errors).to eq(data: 'unexpected token \'not\' at line 1 column 1')
+      expect(agent.output_artifacts_errors[:data]).to include('unexpected token')
     end
   end
 

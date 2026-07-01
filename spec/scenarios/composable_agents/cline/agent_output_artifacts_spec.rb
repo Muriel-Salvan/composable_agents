@@ -1,3 +1,5 @@
+require 'English'
+
 describe ComposableAgents::Cline::Agent do
   describe 'output artifacts' do
     it 'gets output artifacts from any message produced by Cline' do
@@ -165,7 +167,14 @@ describe ComposableAgents::Cline::Agent do
 
           Continue with the task, building on the work from the session above.
 
-          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: unexpected character: 'Wrong' at line 1 column 1)]
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: logs (Execution logs) (Error: #{
+            # Error messages differ between OS.
+            begin
+              JSON.parse('Wrong JSON')
+            rescue JSON::ParserError
+              $ERROR_INFO.message
+            end
+          })]
         EO_USER_PROMPT
       ]
     end
@@ -345,7 +354,14 @@ describe ComposableAgents::Cline::Agent do
 
           Continue with the task, building on the work from the session above.
 
-          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: unexpected character: 'Wrong' at line 1 column 1)]
+          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result) (Error: #{
+            # Error messages differ between OS.
+            begin
+              JSON.parse('Wrong JSON')
+            rescue JSON::ParserError
+              $ERROR_INFO.message
+            end
+          })]
         EO_USER_PROMPT
       ]
     end
