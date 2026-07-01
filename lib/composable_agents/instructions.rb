@@ -12,7 +12,7 @@ module ComposableAgents
     #   - [Object] Individual instruction description.
     #   An individual instruction can be one of the following:
     #     - [String] Direct instructions to be used (equivalent to { text: instructions })
-    #     - [Hash{Symbol => Object}] A structure describing the instructions
+    #     - [Hash\\{Symbol => Object}] A structure describing the instructions
     #       Here is the list of keys that can define different instructions:
     #       - text [String] The instructions are given as text directly.
     #       - ordered_list [Array<String>] The instructions are a precise list of steps to perform.

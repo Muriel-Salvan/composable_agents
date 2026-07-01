@@ -1,5 +1,6 @@
 module ComposableAgents
   module AiAgents
+    # Collection of tools that can be used with ai-agents' agents
     module Tools
       # Tool that is used to ask the user for some input
       class AskUserTool < Agents::Tool
@@ -23,7 +24,7 @@ module ComposableAgents
         # Perform the tool's action.
         # This is called by ai-agents when the model requires it.
         #
-        # @param tool_context [Agents::ToolContext] The tool context
+        # @param _tool_context [Agents::ToolContext] The tool context
         # @param question [String] The question asked
         # @return [String] The tool's response
         def perform(_tool_context, question:)

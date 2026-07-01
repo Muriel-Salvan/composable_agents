@@ -1,4 +1,5 @@
 module ComposableAgents
+  # Collection of prompt rendering strategies that can be used with PromptDrivenAgent's agents
   module PromptRenderingStrategy
     # Render prompt as Markdown documents
     module Markdown

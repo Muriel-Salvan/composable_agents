@@ -1,4 +1,5 @@
 module ComposableAgents
+  # Collection of useful mixins that add functionality to agents prepending them.
   module Mixins
     # Logging mixin for agents
     module Logger

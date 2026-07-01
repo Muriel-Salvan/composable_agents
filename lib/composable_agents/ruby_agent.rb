@@ -6,10 +6,10 @@ module ComposableAgents
   class RubyAgent < Agent
     # Initialize a new RubyAgent with a processing proc
     #
-    # @param processor [#call(Hash<Symbol, Object>) => Hash<Symbol, Object>] The agent logic.
+    # @param processor [#call(Hash{Symbol => Object}) => Hash{Symbol => Object}] The agent logic.
     #   This proc will receive the input artifacts hash and must return a hash of output artifacts.
-    #   - Param input_artifacts [Hash<Symbol, Object>] Input artifacts provided to the agent
-    #   - Return [Hash<Symbol, Object>] Output artifacts produced by the agent
+    #   - Param input_artifacts [Hash\\{Symbol => Object}] Input artifacts provided to the agent
+    #   - Return [Hash\\{Symbol => Object}] Output artifacts produced by the agent
     def initialize(processor, *args, **kwargs)
       super(*args, **kwargs)
       @processor = processor
@@ -17,8 +17,8 @@ module ComposableAgents
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
-    # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-    # @return [Hash<Symbol,Object>] The output artifacts returned by the Proc
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
+    # @return [Hash{Symbol => Object}] The output artifacts returned by the Proc
     def run(**input_artifacts)
       @processor.call(input_artifacts)
     end

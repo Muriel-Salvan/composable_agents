@@ -21,8 +21,8 @@ describe ComposableAgents::Mixins::ArtifactContract do
 
           # Run the agent with a set of input artifacts and get the corresponding output artifacts.
           #
-          # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
-          # @return Hash<Symbol,Object> Output artifacts content
+          # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+          # @return Hash{Symbol => Object} Output artifacts content
           def run(**input_artifacts)
             @received_artifacts = input_artifacts
           end
@@ -233,8 +233,8 @@ describe ComposableAgents::Mixins::ArtifactContract do
 
           # Run the agent with a set of input artifacts and get the corresponding output artifacts.
           #
-          # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
-          # @return Hash<Symbol,Object> Output artifacts content
+          # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+          # @return Hash{Symbol => Object} Output artifacts content
           def run(**_input_artifacts)
             mocked_output_artifacts
           end
@@ -307,8 +307,8 @@ describe ComposableAgents::Mixins::ArtifactContract do
   context 'with artifacts contracts taken from the constructor' do
     # Create an agent configured with the given input and output artifacts contracts
     #
-    # @param input_artifacts_contracts [Hash<Symbol, Object>] The input artifacts contracts
-    # @param output_artifacts_contracts [Hash<Symbol, Object>] The output artifacts contracts
+    # @param input_artifacts_contracts [Hash{Symbol => Object}] The input artifacts contracts
+    # @param output_artifacts_contracts [Hash{Symbol => Object}] The output artifacts contracts
     def described_agent(input_artifacts_contracts: {}, output_artifacts_contracts: {})
       Class.new(ComposableAgents::Agent) do
         prepend ComposableAgents::Mixins::ArtifactContract
@@ -318,8 +318,8 @@ describe ComposableAgents::Mixins::ArtifactContract do
 
         # Run the agent with a set of input artifacts and get the corresponding output artifacts.
         #
-        # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
-        # @return Hash<Symbol,Object> Output artifacts content
+        # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+        # @return Hash{Symbol => Object} Output artifacts content
         def run(**input_artifacts)
           @received_artifacts = input_artifacts
           mocked_output_artifacts || {}

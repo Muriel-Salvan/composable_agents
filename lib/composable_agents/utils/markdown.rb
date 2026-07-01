@@ -1,6 +1,7 @@
 require 'commonmarker'
 
 module ComposableAgents
+  # Various internal helpers and utilities
   module Utils
     # Internal util methods to handle Markdown
     module Markdown
@@ -9,11 +10,9 @@ module ComposableAgents
         # This method parses the String as a markdown document, sees the minimum current header level,
         # and changes it while preserving the structure and hierarchy so that this min level is equal to `level`.
         #
-        # Parameters::
-        # * *markdown* (String): The markdown content to align
-        # * *level* (Integer): The target level for the minimum header [default: 2]
-        # Result::
-        # * String: The aligned markdown content
+        # @param markdown [String] The markdown content to align
+        # @param level [Integer] The target level for the minimum header
+        # @return [String] The aligned markdown content
         def align_markdown_headers(markdown, level: 2)
           doc = Commonmarker.parse(markdown)
           min_level = find_minimum_header_level(doc)
@@ -27,10 +26,8 @@ module ComposableAgents
 
         # Find the minimum header level in a CommonMarker document
         #
-        # Parameters::
-        # * *doc* (CommonMarker::Document): The parsed CommonMarker document
-        # Result::
-        # * Integer or nil: The minimum header level found, or nil if no headers exist
+        # @param doc [CommonMarker::Document] The parsed CommonMarker document
+        # @return [Integer, nil] The minimum header level found, or nil if no headers exist
         def find_minimum_header_level(doc)
           min_level = nil
           doc.walk do |node|
@@ -44,9 +41,8 @@ module ComposableAgents
 
         # Adjust header levels in a CommonMarker document by a given difference
         #
-        # Parameters::
-        # * *doc* (CommonMarker::Document): The parsed CommonMarker document
-        # * *level_diff* (Integer): The difference to add to each header level
+        # @param doc [CommonMarker::Document] The parsed CommonMarker document
+        # @param level_diff [Integer] The difference to add to each header level
         def adjust_header_levels(doc, level_diff)
           doc.walk do |node|
             node.header_level = node.header_level + level_diff if node.type == :heading

@@ -1,3 +1,10 @@
+require 'simplecov'
+SimpleCov.start do
+  minimum_coverage 99
+end
+require 'simplecov-cobertura'
+SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+
 require 'composable_agents'
 require 'fileutils'
 require 'zeitwerk'

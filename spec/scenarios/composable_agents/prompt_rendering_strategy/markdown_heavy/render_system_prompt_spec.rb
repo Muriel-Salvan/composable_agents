@@ -2,9 +2,9 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_syst
   # Render the system prompt for a given agent's constructor parameters
   #
   # @param rendered_instructions [Array<String>] The rendered instructions
-  # @param role [String, NilClass] Agent's role, or nil for default
-  # @param input_artifacts_contracts [Hash<Symbol, Object>, NilClass] Hash of input artifact names and their contracts, or nil if none.
-  # @param input_artifacts [Hash<Symbol, Object>] Hash of input artifact names and content to be given to the system prompt.
+  # @param role [String, nil] Agent's role, or nil for default
+  # @param input_artifacts_contracts [Hash{Symbol => Object}, nil] Hash of input artifact names and their contracts, or nil if none.
+  # @param input_artifacts [Hash{Symbol => Object}] Hash of input artifact names and content to be given to the system prompt.
   # @param kwargs [Hash] The constructor parameters of the agent
   # @return [String] The rendered system prompt
   def system_prompt(

@@ -9,7 +9,7 @@ module ComposableAgents
       # Initialize a new agent with a list of ai-agents' Agents to be used with an AgentRunner
       #
       # @param model [String] Model to be used
-      # @param params [Hash<Symbol, Object>] Additional parameters to give to the ai-agents' agent
+      # @param params [Hash{Symbol => Object}] Additional parameters to give to the ai-agents' agent
       # @param handoff_agents [Array<Agents::Agent>] The list of additional agents that can be used for handoffs.
       def initialize(
         *args,

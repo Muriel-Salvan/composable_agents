@@ -10,7 +10,7 @@ module ComposableAgents
 
         # Constructor
         #
-        # @param artifacts [Hash<Symbol,String>] The artifacts store
+        # @param artifacts [Hash{Symbol => Object}>] The artifacts store
         def initialize(artifacts)
           super()
           @artifacts = artifacts
@@ -19,7 +19,7 @@ module ComposableAgents
         # Perform the tool's action.
         # This is called by ai-agents when the model requires it.
         #
-        # @param tool_context [Agents::ToolContext] The tool context
+        # @param _tool_context [Agents::ToolContext] The tool context
         # @param name [String] The required artifact's name
         # @return [String] The tool's response
         def perform(_tool_context, name:)

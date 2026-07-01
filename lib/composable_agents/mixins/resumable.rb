@@ -18,7 +18,7 @@ module ComposableAgents
     module Resumable
       # Constructor
       #
-      # @param run_id [String, NilClass] ID identifying this run to reuse previously executed steps, or nil if there is no resumability needed
+      # @param run_id [String, nil] ID identifying this run to reuse previously executed steps, or nil if there is no resumability needed
       def initialize(*args, run_id: nil, **kwargs)
         super(*args, **kwargs)
         @run_id = run_id
@@ -26,8 +26,8 @@ module ComposableAgents
 
       # Execute the agent to generate some output artifacts based on some input artifacts.
       #
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-      # @return [Hash<Symbol,Object>] The output artifacts returned by the Proc
+      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
+      # @return [Hash{Symbol => Object}] The output artifacts returned by the Proc
       def run(**input_artifacts)
         # The artifacts store, JSON serializable
         @artifacts = input_artifacts.dup
@@ -69,7 +69,7 @@ module ComposableAgents
       # If this step was already executed, skip it and update its artifacts from the file system store.
       #
       # @param step_name [Symbol] Step name.
-      # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
+      # @param kwargs [Hash{Symbol => Object}] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
       def step(step_name = :step, **kwargs, &)
         internal_step(step_name:, agent: nil, extra_input_artifacts: kwargs, &)
@@ -80,7 +80,7 @@ module ComposableAgents
       # Handle the context of the agent if needed.
       #
       # @param agent [Agent] The agent to run.
-      # @param kwargs [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
+      # @param kwargs [Hash{Symbol => Object}] Additional input artifacts to merge before the step executes.
       def step_agent(agent, **kwargs)
         internal_step(step_name: :"agent_run_#{(agent.name || 'unnamed').gsub(/[^\w]/, '_')}", agent:, extra_input_artifacts: kwargs) do
           @artifacts.merge!(agent.run(**@artifacts))
@@ -97,8 +97,8 @@ module ComposableAgents
       # This method should not be used directly.
       #
       # @param step_name [Symbol] Step name.
-      # @param agent [Agent, NilClass] Agent that is used in this step, or nil if none.
-      # @param extra_input_artifacts [Hash<Symbol,Object>] Additional input artifacts to merge before the step executes.
+      # @param agent [Agent, nil] Agent that is used in this step, or nil if none.
+      # @param extra_input_artifacts [Hash{Symbol => Object}] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
       def internal_step(step_name:, agent:, extra_input_artifacts: {})
         @artifacts.merge!(extra_input_artifacts)
@@ -130,8 +130,8 @@ module ComposableAgents
 
       # Get the current step state.
       #
-      # @param agent [Agent, NilClass] Agent that is used in this step, or nil if none.
-      # @return [Hash<Symbol, Object>] The current step state
+      # @param agent [Agent, nil] Agent that is used in this step, or nil if none.
+      # @return [Hash{Symbol => Object}] The current step state
       def current_step_state(agent:)
         step_state = {
           artifacts: @artifacts
@@ -152,9 +152,9 @@ module ComposableAgents
       # This will read the step states from the persistence layer.
       #
       # @param step_full_name [String] Step full name
-      # @return [Array<Hash<Symbol, Object>, NilClass>] The saved step states:
-      #   0. [Hash<Symbol, Object>, NilClass] The input step state or nil if none
-      #   1. [Hash<Symbol, Object>, NilClass] The output step state or nil if none
+      # @return [Array<Hash{Symbol => Object}, nil>] The saved step states:
+      #   0. [Hash{Symbol => Object}, nil] The input step state or nil if none
+      #   1. [Hash{Symbol => Object}, nil] The output step state or nil if none
       def saved_step_states(step_full_name)
         step_json_file = saved_step_states_json(step_full_name)
         step_info = File.exist?(step_json_file) ? JSON.parse(File.read(step_json_file)).transform_keys(&:to_sym) : {}
@@ -168,8 +168,8 @@ module ComposableAgents
       # Store step states for a given full step name in the persistence layer.
       #
       # @param step_full_name [String] Step full name
-      # @param input [Hash<Symbol, Object>] The input step state
-      # @param output [Hash<Symbol, Object>] The output step state
+      # @param input [Hash{Symbol => Object}] The input step state
+      # @param output [Hash{Symbol => Object}] The output step state
       def store_step_states(step_full_name, input:, output:)
         step_json_file = saved_step_states_json(step_full_name)
         FileUtils.mkdir_p(File.dirname(step_json_file))
@@ -186,8 +186,8 @@ module ComposableAgents
 
       # Set the current state to a given step state
       #
-      # @param step_state [Hash<Symbol, Object>] The step state to use
-      # @param agent [Agent, NilClass] Agent that is used in this step, or nil if none.
+      # @param step_state [Hash{Symbol => Object}] The step state to use
+      # @param agent [Agent, nil] Agent that is used in this step, or nil if none.
       def set_current_step_state(step_state, agent:)
         @artifacts = step_state[:artifacts]
         agent.import_state(step_state[:agent_state]) if !agent.nil? && agent.respond_to?(:import_state)
@@ -195,8 +195,8 @@ module ComposableAgents
 
       # Clone a step state.
       #
-      # @param step_state [Hash<Symbol, Object>] Step state to be cloned
-      # @return [Hash<Symbol, Object>] Cloned step state
+      # @param step_state [Hash{Symbol => Object}] Step state to be cloned
+      # @return [Hash{Symbol => Object}] Cloned step state
       def clone_step_state(step_state)
         cloned_step_state = {
           artifacts: step_state[:artifacts].dup

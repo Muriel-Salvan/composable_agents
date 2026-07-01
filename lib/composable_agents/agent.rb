@@ -10,7 +10,7 @@ module ComposableAgents
 
     # Constructor
     #
-    # @param name [String, NilClass] Agent name, or nil if none
+    # @param name [String, nil] Agent name, or nil if none
     # @param composable_agents_dir [String] Base directory where composable agents can store data
     def initialize(
       name: nil,
@@ -31,8 +31,8 @@ module ComposableAgents
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
-    # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
-    # @return Hash<Symbol,Object> Output artifacts content
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+    # @return [Hash{Symbol => Object}] Output artifacts content
     def run(**input_artifacts)
       raise NotImplementedError, 'This method should be implemented by an Agent subclass'
     end

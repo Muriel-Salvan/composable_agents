@@ -6,8 +6,8 @@ module ComposableAgents
     # The contracts should be provided by methods named #input_artifacts_contracts and #output_artifacts_contracts
     # A contract can be one of the following objects:
     # - [String] The artifact's description
-    # - [Hash{Symbol => Object}] The artifact's detailed contract. It can contain the following attributes:
-    #   - description [String] The artifact's description. This is also the default value when the contract is expressed as a String.
+    # - [Hash\\{Symbol => Object}] The artifact's detailed contract. It can contain the following attributes:
+    #   - description [String] The artifact's description. This is also the default value when the contract is expressed as a [String].
     #   - optional [Boolean] Is the artifact optional? Defaults to false.
     #   - type [Symbol] The type of this artifact. Defaults to :text.
     #     Possible values are:
@@ -30,9 +30,9 @@ module ComposableAgents
 
       # Constructor
       #
-      # @param input_artifacts_contracts [Hash<Symbol, Object>, NilClass] Hash of input artifact names and their contracts,
+      # @param input_artifacts_contracts [Hash{Symbol => Object}, nil] Hash of input artifact names and their contracts,
       #   or nil if provided through the input_artifacts_contracts method
-      # @param output_artifacts_contracts [Hash<Symbol, Object>, NilClass] Hash of output artifact names and their contracts,
+      # @param output_artifacts_contracts [Hash{Symbol => Object}, nil] Hash of output artifact names and their contracts,
       #   or nil if provided through the output_artifacts_contracts method
       def initialize(
         *args,
@@ -47,8 +47,8 @@ module ComposableAgents
 
       # Execute the agent to generate some output artifacts based on some input artifacts.
       #
-      # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content
-      # @return Hash<Symbol,Object> Output artifacts content
+      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+      # @return [Hash{Symbol => Object}] Output artifacts content
       # @raise [MissingInputArtifactError] If required input artifacts are missing
       # @raise [MissingOutputArtifactError] If expected output artifacts are missing after run
       def run(**input_artifacts)
@@ -62,7 +62,7 @@ module ComposableAgents
 
       # Define input artifacts contracts
       #
-      # @return [Hash<Symbol, Object>] Set of input artifacts contract, per artifact name
+      # @return [Hash{Symbol => Object}] Set of input artifacts contract, per artifact name
       def input_artifacts_contracts
         # If the contracts were given by the constructor, use them
         (defined?(super) ? super : {}).merge(@input_artifacts_contracts || {})
@@ -70,7 +70,7 @@ module ComposableAgents
 
       # Define output artifacts contracts
       #
-      # @return [Hash<Symbol, Object>] Set of output artifacts contract, per artifact name
+      # @return [Hash{Symbol => Object}] Set of output artifacts contract, per artifact name
       def output_artifacts_contracts
         # If the contracts were given by the constructor, use them
         (defined?(super) ? super : {}).merge(@output_artifacts_contracts || {})
@@ -78,8 +78,8 @@ module ComposableAgents
 
       # Normalize artifacts' contracts
       #
-      # @param artifacts_contracts [Hash<Symbol, Object>] The artifacts contracts to be normalized
-      # @return [Hash<Symbol, Hash<Symbol, Object>>] The normalized artifacts contracts (always in their Hash form as described in the class documentation)
+      # @param artifacts_contracts [Hash{Symbol => Object}] The artifacts contracts to be normalized
+      # @return [Hash{Symbol => Hash{Symbol => Object}}] The normalized artifacts contracts (always in their Hash form as described in the class documentation)
       def normalize_contracts(artifacts_contracts)
         artifacts_contracts.to_h do |art_name, contract_def|
           contract_def = { description: contract_def } unless contract_def.is_a?(Hash)
@@ -96,14 +96,14 @@ module ComposableAgents
 
       # Retrieve and memoize normalized input artifacts contracts
       #
-      # @return [Hash<Symbol, Hash<Symbol, Object>>] Set of normalized input artifacts contract, per artifact name
+      # @return [Hash{Symbol => Hash{Symbol => Object}}] Set of normalized input artifacts contract, per artifact name
       def normalized_input_artifacts_contracts
         @normalized_input_artifacts_contracts ||= normalize_contracts(input_artifacts_contracts)
       end
 
       # Retrieve and memoize normalized output artifacts contracts
       #
-      # @return [Hash<Symbol, Hash<Symbol, Object>>] Set of normalized output artifacts contract, per artifact name
+      # @return [Hash{Symbol => Hash{Symbol => Object}}] Set of normalized output artifacts contract, per artifact name
       def normalized_output_artifacts_contracts
         @normalized_output_artifacts_contracts ||= normalize_contracts(output_artifacts_contracts)
       end
@@ -127,7 +127,7 @@ module ComposableAgents
 
       # Validate that all expected output artifacts are present
       #
-      # @param artifacts [Hash<Symbol, Object>] Output artifacts to validate
+      # @param artifacts [Hash{Symbol => Object}] Output artifacts to validate
       # @raise [MissingOutputArtifactError] If any expected artifacts are missing
       def validate_output_artifacts(artifacts)
         artifacts_contracts = normalized_output_artifacts_contracts.reject { |_name, contract| contract[:optional] }

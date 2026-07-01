@@ -6,6 +6,13 @@ node_modules/
 package.json
 package-lock.json
 
+# Yard is used to generate doc. Don't commit generated yard files.
+.yardoc/
+doc/
+
+# SimpleCov is used to generate code coverage reports. Don't commit generated coverage files.
+coverage/
+
 # Running examples creates composable agents directory.
 .composable_agents/
 

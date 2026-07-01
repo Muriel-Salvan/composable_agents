@@ -19,8 +19,16 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v6
 
+      - name: Install node-pty
+        run: npm install node-pty
+
       - name: Run unit tests
         run: bundle exec rspec --format documentation
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   package:
     needs: test

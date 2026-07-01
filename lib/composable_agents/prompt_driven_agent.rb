@@ -24,7 +24,7 @@ module ComposableAgents
     # @return [String, nil] Constraints to be respected, or nil for the agent's default
     attr_accessor :constraints
 
-    # [Array<Hash{Symbol => Object}>] The conversation (user prompts, responses) that happened with this agent.
+    # @return [Array<Hash{Symbol => Object}>] The conversation (user prompts, responses) that happened with this agent.
     #   Each item of a conversation has the following properties:
     #   - author [String] Author of the message
     #   - at [String] UTC timestamp of the message at format YYYY-mm-dd HH:MM:SS
@@ -34,7 +34,7 @@ module ComposableAgents
 
     # Define input artifacts contracts
     #
-    # @return [Hash<Symbol, String>] Set of input artifacts description, per artifact name
+    # @return [Hash{Symbol => Object}] Set of input artifacts description, per artifact name
     def input_artifacts_contracts
       {
         user_instructions: {
@@ -46,7 +46,7 @@ module ComposableAgents
 
     # Define output artifacts contracts
     #
-    # @return [Hash<Symbol, String>] Set of output artifacts description, per artifact name
+    # @return [Hash{Symbol => Object}>] Set of output artifacts description, per artifact name
     def output_artifacts_contracts
       {}
     end
@@ -82,8 +82,8 @@ module ComposableAgents
     #
     # @param user_instructions [Object, nil] Instructions for the user prompt, that will be rendered.
     #   The kind of instructions that can be given are defined by the Instructions's constructor (see Instructions#initialize).
-    # @param input_artifacts [Hash<Symbol,Object>] The input artifacts content, per artifact name
-    # @return [Hash<Symbol,Object>] The output artifacts
+    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
+    # @return [Hash{Symbol => Object}] The output artifacts
     def run(user_instructions: nil, **input_artifacts)
       @input_artifacts = input_artifacts
       @output_artifacts = {}

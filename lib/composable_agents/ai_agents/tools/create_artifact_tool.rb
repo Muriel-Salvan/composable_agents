@@ -24,7 +24,7 @@ module ComposableAgents
         # Perform the tool's action.
         # This is called by ai-agents when the model requires it.
         #
-        # @param tool_context [Agents::ToolContext] The tool context
+        # @param _tool_context [Agents::ToolContext] The tool context
         # @param name [String] The required artifact's name
         # @param content [String] The required artifact's content
         # @return [String] The tool's response
