@@ -1,3 +1,9 @@
+# [v1.0.1](https://github.com/Muriel-Salvan/composable_agents/compare/v1.0.0...v1.0.1) (2026-07-01 16:37:12)
+
+### Patches
+
+* [docs: expand README with full documentation, usage examples, and badges](https://github.com/Muriel-Salvan/composable_agents/commit/d7ba08fe6408248a2a00338a6638135ba9626116)
+
 # [v0.0.1](https://github.com/Muriel-Salvan/composable_agents/compare/...v0.0.1) (2026-07-01 15:49:59)
 
 ### Patches
