@@ -97,6 +97,16 @@ describe ComposableAgents::Cline::Agent do
     # @return [String] The global config dir
     attr_reader :global_config_dir
 
+    context 'when no global config dir is present' do
+      before do
+        FileUtils.rm_rf global_config_dir
+      end
+
+      it 'runs without any skill' do
+        expect(capture_skills(skills: [])[:skills]).to eq({})
+      end
+    end
+
     context 'when no skill is present' do
       it 'runs without any skill' do
         expect(capture_skills(skills: [])[:skills]).to eq({})

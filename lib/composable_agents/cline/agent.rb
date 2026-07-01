@@ -171,7 +171,7 @@ module ComposableAgents
           end
           cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
           # Copy all selected global skills in this config's skills
-          if ::Cline::Config.global.skills
+          if ::Cline::Config.global&.skills
             (::Cline::Config.global.skills.keys & selected_skills).each do |skill_name|
               new_skill = cline_config.skills.new(skill_name)
               new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)

@@ -61,7 +61,7 @@ describe ComposableAgents::Cline::Agent do
       )
       agent.run
       used_config_dir = agent.conversation.last[:message]
-      expect(used_config_dir).not_to eq Cline::Config.global.dir
+      expect(used_config_dir).not_to eq Cline::Config.global&.dir
       # Could be that project dir does not exist. Check all possible cases.
       expect(used_config_dir).not_to eq Cline::Config.project&.dir
       expect(used_config_dir).not_to eq '.cline'
