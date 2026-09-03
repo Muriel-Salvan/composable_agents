@@ -48,10 +48,6 @@ module ComposableAgents
       #   Each element of this array corresponds to a run, and is the ordered list of top-level step nodes of that run.
       #   Each step node has those properties:
       #   - step_name [Symbol] The step name.
-      #   - status [Symbol] The status of the step:
-      #     - `started``: The step has started its execution.
-      #     - `cached``: The step was skipped because of a previous execution.
-      #     - `executed``: The step has completed its execution.
       #   - index [Array<Integer>] Position of the step in the hierarchy of recursive step calls.
       #     It is the succession of indices from the root of the hierarchy to this step node,
       #     each index being the position of the node among its sibling nodes (children of the same parent).
@@ -80,9 +76,13 @@ module ComposableAgents
       #     step(:b) do
       #       # index == [1, 0]
       #     end
-      #   # TODO: Add a created_at Time property that stores the timestamp of the creation. Add it in all existing test cases validation (using a fixed time mocked).
-      #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
+      #   - status [Symbol] The status of the step:
+      #     - `started``: The step has started its execution.
+      #     - `cached``: The step was skipped because of a previous execution.
+      #     - `executed``: The step has completed its execution.
+      #   - created_at [Time] Timestamp of the creation of this step node.
       #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
+      #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
       #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
       attr_reader :steps_run
 
@@ -170,6 +170,7 @@ module ComposableAgents
           # the indices of the ancestor step nodes, followed by this node's position among its sibling nodes.
           index: (parent_node ? parent_node[:index] : []) + [(parent_node ? parent_node[:children] : @steps_run.last).size],
           status: :started,
+          created_at: Time.now,
           agent:,
           extra_input_artifacts: extra_input_artifacts.clone,
           children: []

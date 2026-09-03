@@ -11,6 +11,12 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
   end
 
   let(:run_id) { nil }
+  # Fixed timestamp used to mock Time.now, so that the created_at step properties are deterministic.
+  let(:step_creation_time) { Time.new(2026, 9, 3, 12, 34, 56, '+00:00') }
+
+  before do
+    allow(Time).to receive(:now).and_return(step_creation_time)
+  end
 
   # Creates a simple child agent to be used with the step_agent method.
   #
@@ -50,6 +56,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -77,6 +84,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: { extra_artifact: 42 },
           agent: nil,
           children: []
@@ -107,6 +115,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :agent_run_child,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: child,
           children: []
@@ -136,6 +145,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :agent_run_child,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: { input: 42 },
           agent: child,
           children: []
@@ -169,6 +179,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -177,6 +188,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -185,6 +197,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step3,
           index: [2],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -224,6 +237,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -231,6 +245,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step11,
               index: [0, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -239,6 +254,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step12,
               index: [0, 1],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -249,6 +265,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -256,6 +273,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step21,
               index: [1, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -296,6 +314,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -303,6 +322,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :agent_run_child1,
               index: [0, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: { input: 1 },
               agent: child1,
               children: []
@@ -311,6 +331,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step11,
               index: [0, 1],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -321,6 +342,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :agent_run_child2,
           index: [1],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: { input: 2 },
           agent: child2,
           children: []
@@ -358,6 +380,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -366,6 +389,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -376,6 +400,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -407,6 +432,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -415,6 +441,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -425,6 +452,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :cached,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -433,6 +461,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :cached,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: []
@@ -472,6 +501,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :started,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -479,6 +509,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step11,
               index: [0, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -487,6 +518,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step12,
               index: [0, 1],
               status: :started,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -499,6 +531,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -506,6 +539,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step11,
               index: [0, 0],
               status: :cached,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -514,6 +548,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step12,
               index: [0, 1],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -556,6 +591,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step1,
           index: [0],
           status: :executed,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -563,6 +599,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step11,
               index: [0, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -573,6 +610,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
           step_name: :step2,
           index: [1],
           status: :started,
+          created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
           children: [
@@ -580,6 +618,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step21,
               index: [1, 0],
               status: :executed,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
@@ -588,6 +627,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               step_name: :step22,
               index: [1, 1],
               status: :started,
+              created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
               children: []
