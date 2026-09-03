@@ -1,3 +1,22 @@
+# [v1.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v1.0.1...v1.1.0) (2026-09-03 14:36:17)
+
+## Global changes
+### Patches
+
+* [docs(resumable): simplify type annotations in steps_run docs](https://github.com/Muriel-Salvan/composable_agents/commit/dc4ef8838791f0d62a65646b46cd2fc9600027c6)
+* [feat: record error status and message for failed steps](https://github.com/Muriel-Salvan/composable_agents/commit/db54a74e92381012db19a5a00bb02b86c0885422)
+* [feat(resumable): add created_at timestamp to step run tracking](https://github.com/Muriel-Salvan/composable_agents/commit/5158c186003ec8bbcde5fb5a10fad026f94f849c)
+* [refactor: track step index in steps_run hierarchy](https://github.com/Muriel-Salvan/composable_agents/commit/8c0d73c1a3abb9b762d2d09be8430480eeb5f384)
+* [[Feature(Resumable)] Implement steps_run with history of all runs.](https://github.com/Muriel-Salvan/composable_agents/commit/97e3f7477155aa6e2d3e6ee85e5389bb1d2ac70e)
+* [[Feature(Resumable)] Add status to steps_run](https://github.com/Muriel-Salvan/composable_agents/commit/2abd016de83cee43a821674e219deba1f6b79a24)
+* [feat: add steps_run hierarchy tracking to resumable mixin](https://github.com/Muriel-Salvan/composable_agents/commit/c656ea56a8ce81729075f8d98f0227c7402106e3)
+
+## Changes for Resumable
+### Features
+
+* [[Feature(Resumable)] Implement steps_run with history of all runs.](https://github.com/Muriel-Salvan/composable_agents/commit/97e3f7477155aa6e2d3e6ee85e5389bb1d2ac70e)
+* [[Feature(Resumable)] Add status to steps_run](https://github.com/Muriel-Salvan/composable_agents/commit/2abd016de83cee43a821674e219deba1f6b79a24)
+
 # [v1.0.1](https://github.com/Muriel-Salvan/composable_agents/compare/v1.0.0...v1.0.1) (2026-07-01 16:37:12)
 
 ### Patches
