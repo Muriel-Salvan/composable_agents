@@ -1,3 +1,9 @@
+# [v1.1.1](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.0...v1.1.1) (2026-09-03 15:35:07)
+
+### Patches
+
+* [build(deps): update ai-agents, commonmarker, and zeitwerk versions](https://github.com/Muriel-Salvan/composable_agents/commit/66fc281db2e68e6f07edcde15371a865bcf97d13)
+
 # [v1.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v1.0.1...v1.1.0) (2026-09-03 14:36:17)
 
 ## Global changes
