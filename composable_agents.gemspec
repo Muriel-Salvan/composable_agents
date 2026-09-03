@@ -16,10 +16,10 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 3.1'
 
-  spec.add_dependency 'ai-agents', '~> 0.10'
+  spec.add_dependency 'ai-agents', '~> 0.12'
   spec.add_dependency 'cline-rb', '~> 1.1'
-  spec.add_dependency 'commonmarker', '~> 2.7'
-  spec.add_dependency 'zeitwerk', '~> 2.7'
+  spec.add_dependency 'commonmarker', '~> 2.10'
+  spec.add_dependency 'zeitwerk', '~> 2.8'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 end
