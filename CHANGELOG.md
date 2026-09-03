@@ -1,3 +1,9 @@
+# [v1.1.2](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.1...v1.1.2) (2026-09-03 16:08:18)
+
+### Patches
+
+* [ci: add RubyGems credential configuration workflow](https://github.com/Muriel-Salvan/composable_agents/commit/76219abd1356bf1fc070347a74aa4472c24b4fc6)
+
 # [v1.1.1](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.0...v1.1.1) (2026-09-03 15:35:07)
 
 ### Patches
