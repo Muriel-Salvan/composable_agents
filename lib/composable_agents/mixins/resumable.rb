@@ -75,7 +75,10 @@ module ComposableAgents
       # @return [Array<Hash{Symbol => Object}>, nil] Ordered list of top-level step nodes, or nil if the agent has never been run.
       #   Each element of this array has those properties:
       #   - step_name [Symbol] The step name.
-      #   TODO: Add a status property, indicating the status of the step: started (at creation time), cached (when skipped because of a previous execution), executed (after its execution). Add validation of this status in existing test cases, and also add unit tests validating the cached status, and also unit tests validating the started status (by dumping the status in the middle of a run in nested steps: previous steps should be executed, current parent steps should be started, previous sibling steps should be executed, current step should be started).
+      #   - status [Symbol] The status of the step:
+      #     - `started``: The step has started its execution.
+      #     - `cached``: The step was skipped because of a previous execution.
+      #     - `executed``: The step has completed its execution.
       #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
       #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
       #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
@@ -124,6 +127,7 @@ module ComposableAgents
           @artifacts.merge!(extra_input_artifacts)
           if @run_id.nil?
             yield
+            @current_step_node[:status] = :executed
           else
             # Compute the current step state
             step_state = current_step_state(agent:)
@@ -133,6 +137,7 @@ module ComposableAgents
             # If the input exists, it means the step was already executed.
             # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
             if step_state == saved_input_state
+              @current_step_node[:status] = :cached
               set_current_step_state(saved_output_state, agent:)
               log_debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
             else
@@ -141,6 +146,7 @@ module ComposableAgents
               @steps_idx << 0
               yield
               @steps_idx.pop
+              @current_step_node[:status] = :executed
               store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
               log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
             end
@@ -159,13 +165,20 @@ module ComposableAgents
       def record_step(step_name:, agent:, extra_input_artifacts:)
         @steps_run ||= []
         parent_node = @current_step_node
-        node = { step_name:, agent:, extra_input_artifacts: extra_input_artifacts.clone, children: [] }
+        node = {
+          step_name:,
+          agent:,
+          extra_input_artifacts: extra_input_artifacts.clone,
+          children: [],
+          status: :started
+        }
         if parent_node
           parent_node[:children] << node
         else
           @steps_run << node
         end
         @current_step_node = node
+        # TODO: Set status to error in case of an exception raised (all exceptions, even Ctrl-C). The error message should also be stored in an error property (to be also documented above). Add a test case validating errors in steps and their messages.
         yield
       ensure
         @current_step_node = parent_node
