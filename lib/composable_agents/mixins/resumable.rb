@@ -82,11 +82,11 @@ module ComposableAgents
       #     - `executed``: The step has completed its execution.
       #     - `error``: The step has raised an exception during its execution.
       #   - created_at [Time] Timestamp of the creation of this step node.
-      #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
+      #   - extra_input_artifacts [Hash] Additional artifacts given as input to this step.
       #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
       #   - error [String, nil] The message of the exception raised during the step execution.
       #     This property is only present when the status is `error`.
-      #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
+      #   - children [Array<Hash>] Sub-steps that are invoked from this step.
       attr_reader :steps_run
 
       private
