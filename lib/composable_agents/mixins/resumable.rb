@@ -63,8 +63,23 @@ module ComposableAgents
         #   # @steps_idx == [1, 0]
         # end
         @steps_idx = [0] unless @run_id.nil?
+        # TODO: Add @steps_idx as a property of the steps_run hierarchy, regardless of @run_id. The property should be called :index, be documented using the above comment in the corresponding attr_reader documentation. The computation of it should be done in record_step only, and it should be used using @current_step_node in internal_step. Existing test cases should validate its value in the assertions.
+        @steps_run = []
+        @current_step_node = nil
         super
       end
+
+      # Hierarchy of the steps executed during the last run of this agent.
+      #
+      # TODO: Store a list of those lists: 1 list per run. This way we won't lose previous runs information anymore. Change the unit test validating steps_run reset to now validate subsequent runs get recorded properly.
+      # @return [Array<Hash{Symbol => Object}>, nil] Ordered list of top-level step nodes, or nil if the agent has never been run.
+      #   Each element of this array has those properties:
+      #   - step_name [Symbol] The step name.
+      #   TODO: Add a status property, indicating the status of the step: started (at creation time), cached (when skipped because of a previous execution), executed (after its execution). Add validation of this status in existing test cases, and also add unit tests validating the cached status, and also unit tests validating the started status (by dumping the status in the middle of a run in nested steps: previous steps should be executed, current parent steps should be started, previous sibling steps should be executed, current step should be started).
+      #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
+      #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
+      #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
+      attr_reader :steps_run
 
       private
 
@@ -105,31 +120,55 @@ module ComposableAgents
       # @param extra_input_artifacts [Hash{Symbol => Object}] Additional input artifacts to merge before the step executes.
       # @yield The code called for this step
       def internal_step(step_name:, agent:, extra_input_artifacts: {})
-        @artifacts.merge!(extra_input_artifacts)
-        if @run_id.nil?
-          yield
-        else
-          # Compute the current step state
-          step_state = current_step_state(agent:)
-          # Read the persisted step state if any
-          step_full_name = "#{@steps_idx.join('-')}-#{step_name}"
-          saved_input_state, saved_output_state = saved_step_states(step_full_name)
-          # If the input exists, it means the step was already executed.
-          # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
-          if step_state == saved_input_state
-            set_current_step_state(saved_output_state, agent:)
-            log_debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
-          else
-            # Clone state before yielding because it will certainly be modified
-            input_step_state = clone_step_state(step_state)
-            @steps_idx << 0
+        record_step(step_name:, agent:, extra_input_artifacts:) do
+          @artifacts.merge!(extra_input_artifacts)
+          if @run_id.nil?
             yield
-            @steps_idx.pop
-            store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
-            log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
+          else
+            # Compute the current step state
+            step_state = current_step_state(agent:)
+            # Read the persisted step state if any
+            step_full_name = "#{@steps_idx.join('-')}-#{step_name}"
+            saved_input_state, saved_output_state = saved_step_states(step_full_name)
+            # If the input exists, it means the step was already executed.
+            # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
+            if step_state == saved_input_state
+              set_current_step_state(saved_output_state, agent:)
+              log_debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
+            else
+              # Clone state before yielding because it will certainly be modified
+              input_step_state = clone_step_state(step_state)
+              @steps_idx << 0
+              yield
+              @steps_idx.pop
+              store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
+              log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
+            end
+            @steps_idx[-1] += 1
           end
-          @steps_idx[-1] += 1
         end
+      end
+
+      # Record a step node in the steps hierarchy, then execute the step's code.
+      # Steps executed while this node is the current one are recorded as its children.
+      #
+      # @param step_name [Symbol] Name of the step, mirroring the one used by the persisted steps.
+      # @param agent [ComposableAgents::Agent, nil] The agent run by this step, or nil for plain steps.
+      # @param extra_input_artifacts [Hash{Symbol => Object}] Input artifacts given to the step.
+      # @yield The code of the step to be executed
+      def record_step(step_name:, agent:, extra_input_artifacts:)
+        @steps_run ||= []
+        parent_node = @current_step_node
+        node = { step_name:, agent:, extra_input_artifacts: extra_input_artifacts.clone, children: [] }
+        if parent_node
+          parent_node[:children] << node
+        else
+          @steps_run << node
+        end
+        @current_step_node = node
+        yield
+      ensure
+        @current_step_node = parent_node
       end
 
       # Get the current step state.
