@@ -24,11 +24,11 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
     end.new(name:, composable_agents_dir:)
   end
 
-  it 'returns nil when nothing has run' do
+  it 'returns an empty list when nothing has run' do
     agent = Class.new(ComposableAgents::Agent) do
       prepend ComposableAgents::Mixins::Resumable
     end.new
-    expect(agent.steps_run).to be_nil
+    expect(agent.steps_run).to eq []
   end
 
   it 'records a single simple step' do
@@ -45,13 +45,15 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -69,13 +71,15 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: { extra_artifact: 42 },
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: { extra_artifact: 42 },
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -96,13 +100,15 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :agent_run_child,
-        agent: child,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :agent_run_child,
+          agent: child,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -122,13 +128,15 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :agent_run_child,
-        agent: child,
-        extra_input_artifacts: { input: 42 },
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :agent_run_child,
+          agent: child,
+          extra_input_artifacts: { input: 42 },
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -152,27 +160,29 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      },
-      {
-        step_name: :step2,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      },
-      {
-        step_name: :step3,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        },
+        {
+          step_name: :step3,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -202,43 +212,45 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :step11,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          },
-          {
-            step_name: :step12,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          }
-        ],
-        status: :executed
-      },
-      {
-        step_name: :step2,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :step21,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          }
-        ],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step11,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            },
+            {
+              step_name: :step12,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            }
+          ],
+          status: :executed
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step21,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            }
+          ],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -267,39 +279,41 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :agent_run_child1,
-            agent: child1,
-            extra_input_artifacts: { input: 1 },
-            children: [],
-            status: :executed
-          },
-          {
-            step_name: :step11,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          }
-        ],
-        status: :executed
-      },
-      {
-        step_name: :agent_run_child2,
-        agent: child2,
-        extra_input_artifacts: { input: 2 },
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :agent_run_child1,
+              agent: child1,
+              extra_input_artifacts: { input: 1 },
+              children: [],
+              status: :executed
+            },
+            {
+              step_name: :step11,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            }
+          ],
+          status: :executed
+        },
+        {
+          step_name: :agent_run_child2,
+          agent: child2,
+          extra_input_artifacts: { input: 2 },
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
-  it 'resets the recorded steps on each run' do
+  it 'keeps the recorded steps of each run' do
     agent = Class.new(ComposableAgents::Agent) do
       prepend ComposableAgents::Mixins::Resumable
 
@@ -319,17 +333,35 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
     end.new(composable_agents_dir:, run_id:)
 
     agent.run
-    # Run again with a different workflow: steps_run should only record the new run's steps
+    # Run again with a different workflow: steps_run should record each run's steps, in order
     agent.skip_step2 = true
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ],
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -351,20 +383,38 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
     agent.run
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :cached
-      },
-      {
-        step_name: :step2,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [],
-        status: :cached
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :executed
+        }
+      ],
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :cached
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [],
+          status: :cached
+        }
+      ]
     ]
   end
 
@@ -394,28 +444,54 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
     agent.interrupt_step12 = false
     agent.run
     expect(agent.steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :step11,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :cached
-          },
-          {
-            step_name: :step12,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          }
-        ],
-        status: :executed
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step11,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            },
+            {
+              step_name: :step12,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :started
+            }
+          ],
+          status: :started
+        }
+      ],
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step11,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :cached
+            },
+            {
+              step_name: :step12,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            }
+          ],
+          status: :executed
+        }
+      ]
     ]
   end
 
@@ -446,43 +522,45 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
 
     agent.run
     expect(agent.dumped_steps_run).to eq [
-      {
-        step_name: :step1,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :step11,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          }
-        ],
-        status: :executed
-      },
-      {
-        step_name: :step2,
-        agent: nil,
-        extra_input_artifacts: {},
-        children: [
-          {
-            step_name: :step21,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :executed
-          },
-          {
-            step_name: :step22,
-            agent: nil,
-            extra_input_artifacts: {},
-            children: [],
-            status: :started
-          }
-        ],
-        status: :started
-      }
+      [
+        {
+          step_name: :step1,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step11,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            }
+          ],
+          status: :executed
+        },
+        {
+          step_name: :step2,
+          agent: nil,
+          extra_input_artifacts: {},
+          children: [
+            {
+              step_name: :step21,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :executed
+            },
+            {
+              step_name: :step22,
+              agent: nil,
+              extra_input_artifacts: {},
+              children: [],
+              status: :started
+            }
+          ],
+          status: :started
+        }
+      ]
     ]
   end
 end

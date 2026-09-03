@@ -23,6 +23,7 @@ module ComposableAgents
       # @param run_id [String, nil] ID identifying this run to reuse previously executed steps, or nil if there is no resumability needed
       def initialize(*args, run_id: nil, **kwargs)
         super(*args, **kwargs)
+        @steps_run = []
         @run_id = run_id
       end
 
@@ -64,16 +65,17 @@ module ComposableAgents
         # end
         @steps_idx = [0] unless @run_id.nil?
         # TODO: Add @steps_idx as a property of the steps_run hierarchy, regardless of @run_id. The property should be called :index, be documented using the above comment in the corresponding attr_reader documentation. The computation of it should be done in record_step only, and it should be used using @current_step_node in internal_step. Existing test cases should validate its value in the assertions.
-        @steps_run = []
+        # List of the steps_run hierarchies, one per run. Each run appends its own new list.
+        @steps_run << []
         @current_step_node = nil
         super
       end
 
-      # Hierarchy of the steps executed during the last run of this agent.
+      # Hierarchies of the steps executed during each run of this agent.
       #
-      # TODO: Store a list of those lists: 1 list per run. This way we won't lose previous runs information anymore. Change the unit test validating steps_run reset to now validate subsequent runs get recorded properly.
-      # @return [Array<Hash{Symbol => Object}>, nil] Ordered list of top-level step nodes, or nil if the agent has never been run.
-      #   Each element of this array has those properties:
+      # @return [Array<Array<Hash{Symbol => Object}>>>] List of per-run step hierarchies.
+      #   Each element of this array corresponds to a run, and is the ordered list of top-level step nodes of that run.
+      #   Each step node has those properties:
       #   - step_name [Symbol] The step name.
       #   - status [Symbol] The status of the step:
       #     - `started``: The step has started its execution.
@@ -175,7 +177,7 @@ module ComposableAgents
         if parent_node
           parent_node[:children] << node
         else
-          @steps_run << node
+          @steps_run.last << node
         end
         @current_step_node = node
         # TODO: Set status to error in case of an exception raised (all exceptions, even Ctrl-C). The error message should also be stored in an error property (to be also documented above). Add a test case validating errors in steps and their messages.
