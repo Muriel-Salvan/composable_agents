@@ -489,7 +489,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       end
     end.new(composable_agents_dir:, run_id: 'test-run')
 
-    # First run: interrupted inside step12, so only step11 is persisted
+    # First run: interrupted inside step12, so step1 and step12 are recorded with an error status, and only step11 is persisted
     agent.interrupt_step12 = true
     expect { agent.run }.to raise_error(RuntimeError, 'Test interruption')
     # Second run: step11 is skipped because of the previous execution, step12 is executed
@@ -500,10 +500,11 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
         {
           step_name: :step1,
           index: [0],
-          status: :started,
+          status: :error,
           created_at: step_creation_time,
           extra_input_artifacts: {},
           agent: nil,
+          error: 'Test interruption',
           children: [
             {
               step_name: :step11,
@@ -517,10 +518,11 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
             {
               step_name: :step12,
               index: [0, 1],
-              status: :started,
+              status: :error,
               created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
+              error: 'Test interruption',
               children: []
             }
           ]
@@ -551,6 +553,121 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
               created_at: step_creation_time,
               extra_input_artifacts: {},
               agent: nil,
+              children: []
+            }
+          ]
+        }
+      ]
+    ]
+  end
+
+  it 'records error status and error message when a step raises an exception' do
+    agent = Class.new(ComposableAgents::Agent) do
+      prepend ComposableAgents::Mixins::Resumable
+
+      def run
+        step(:step1) do
+          raise 'Test error'
+        end
+        step(:step2) do
+          # Nothing to do
+        end
+        {}
+      end
+    end.new(composable_agents_dir:, run_id:)
+
+    expect { agent.run }.to raise_error(RuntimeError, 'Test error')
+    expect(agent.steps_run).to eq [
+      [
+        {
+          step_name: :step1,
+          index: [0],
+          status: :error,
+          created_at: step_creation_time,
+          extra_input_artifacts: {},
+          agent: nil,
+          error: 'Test error',
+          children: []
+        }
+      ]
+    ]
+  end
+
+  it 'records error status for Ctrl-C interruptions' do
+    agent = Class.new(ComposableAgents::Agent) do
+      prepend ComposableAgents::Mixins::Resumable
+
+      def run
+        step(:step1) do
+          raise Interrupt, 'Test interrupt'
+        end
+        {}
+      end
+    end.new(composable_agents_dir:, run_id:)
+
+    expect { agent.run }.to raise_error(Interrupt, 'Test interrupt')
+    expect(agent.steps_run).to eq [
+      [
+        {
+          step_name: :step1,
+          index: [0],
+          status: :error,
+          created_at: step_creation_time,
+          extra_input_artifacts: {},
+          agent: nil,
+          error: 'Test interrupt',
+          children: []
+        }
+      ]
+    ]
+  end
+
+  it 'records error status on all ancestor steps when a nested step raises an exception' do
+    agent = Class.new(ComposableAgents::Agent) do
+      prepend ComposableAgents::Mixins::Resumable
+
+      def run
+        step(:step1) do
+          step(:step11) do
+            # Nothing to do
+          end
+          step(:step12) do
+            raise 'Test nested error'
+          end
+        end
+        {}
+      end
+    end.new(composable_agents_dir:, run_id:)
+
+    expect { agent.run }.to raise_error(RuntimeError, 'Test nested error')
+    expect(agent.steps_run).to eq [
+      [
+        {
+          step_name: :step1,
+          index: [0],
+          status: :error,
+          created_at: step_creation_time,
+          extra_input_artifacts: {},
+          agent: nil,
+          error: 'Test nested error',
+          children: [
+            {
+              step_name: :step11,
+              index: [0, 0],
+              status: :executed,
+              created_at: step_creation_time,
+              extra_input_artifacts: {},
+              agent: nil,
+              children: []
+            },
+            {
+              step_name: :step12,
+              index: [0, 1],
+              status: :error,
+              created_at: step_creation_time,
+              extra_input_artifacts: {},
+              agent: nil,
+              error: 'Test nested error',
               children: []
             }
           ]

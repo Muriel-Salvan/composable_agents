@@ -80,9 +80,12 @@ module ComposableAgents
       #     - `started``: The step has started its execution.
       #     - `cached``: The step was skipped because of a previous execution.
       #     - `executed``: The step has completed its execution.
+      #     - `error``: The step has raised an exception during its execution.
       #   - created_at [Time] Timestamp of the creation of this step node.
       #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
       #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
+      #   - error [String, nil] The message of the exception raised during the step execution.
+      #     This property is only present when the status is `error`.
       #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
       attr_reader :steps_run
 
@@ -181,8 +184,13 @@ module ComposableAgents
           @steps_run.last << node
         end
         @current_step_node = node
-        # TODO: Set status to error in case of an exception raised (all exceptions, even Ctrl-C). The error message should also be stored in an error property (to be also documented above). Add a test case validating errors in steps and their messages.
-        yield
+        begin
+          yield
+        rescue Exception => e # rubocop:disable Lint/RescueException -- Record the error status of any failing step, including Ctrl-C interruptions (Interrupt)
+          node[:status] = :error
+          node[:error] = e.message
+          raise
+        end
       ensure
         @current_step_node = parent_node
       end
