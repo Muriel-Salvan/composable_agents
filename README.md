@@ -610,7 +610,7 @@ flowchart LR
     E --> F
 ```
 
-The `Resumable` mixin tracks a **hierarchical step index** (`@steps_idx`) that mirrors the nesting of `step` blocks. Each step's input/output state is saved as a JSON file. On re-execution with the same `run_id`, the framework loads the saved state instead of re-running completed steps — saving both time and API costs.
+The `Resumable` mixin tracks a **hierarchical step index** for each step, stored as the `index` property of each node in the `steps_run` hierarchy, mirroring the nesting of `step` blocks. Each step's input/output state is saved as a JSON file. On re-execution with the same `run_id`, the framework loads the saved state instead of re-running completed steps — saving both time and API costs.
 
 ## Development
 

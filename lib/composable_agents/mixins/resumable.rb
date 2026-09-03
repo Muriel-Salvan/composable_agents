@@ -36,35 +36,6 @@ module ComposableAgents
       def run(**input_artifacts)
         # The artifacts store, JSON serializable
         @artifacts = input_artifacts.dup
-        # List of the levels' next step index, following the hierarchy of recusive step calls.
-        # This is only used if there is a persistent run ID.
-        # For example here are the values of this variable if we have this code:
-        # # @steps_idx == [0]
-        # step(:a) do
-        #   # @steps_idx == [0, 0]
-        #   step(:a1) do
-        #     # @steps_idx == [0, 0, 0]
-        #   end
-        #   # @steps_idx == [0, 1]
-        #   step(:a2) do
-        #     # @steps_idx == [0, 1, 0]
-        #     step(:a21) do
-        #       # @steps_idx == [0, 1, 0, 0]
-        #     end
-        #     # @steps_idx == [0, 1, 1]
-        #     step(:a22) do
-        #       # @steps_idx == [0, 1, 1, 0]
-        #     end
-        #     # @steps_idx == [0, 1, 2]
-        #   end
-        #   # @steps_idx == [0, 2]
-        # end
-        # # @steps_idx == [1]
-        # step(:b) do
-        #   # @steps_idx == [1, 0]
-        # end
-        @steps_idx = [0] unless @run_id.nil?
-        # TODO: Add @steps_idx as a property of the steps_run hierarchy, regardless of @run_id. The property should be called :index, be documented using the above comment in the corresponding attr_reader documentation. The computation of it should be done in record_step only, and it should be used using @current_step_node in internal_step. Existing test cases should validate its value in the assertions.
         # List of the steps_run hierarchies, one per run. Each run appends its own new list.
         @steps_run << []
         @current_step_node = nil
@@ -81,6 +52,35 @@ module ComposableAgents
       #     - `started``: The step has started its execution.
       #     - `cached``: The step was skipped because of a previous execution.
       #     - `executed``: The step has completed its execution.
+      #   - index [Array<Integer>] Position of the step in the hierarchy of recursive step calls.
+      #     It is the succession of indices from the root of the hierarchy to this step node,
+      #     each index being the position of the node among its sibling nodes (children of the same parent).
+      #     For example here are the values of the index property of the step nodes if we have this code:
+      #     # index == [0]
+      #     step(:a) do
+      #       # index == [0, 0]
+      #       step(:a1) do
+      #         # index == [0, 0, 0]
+      #       end
+      #       # index == [0, 1]
+      #       step(:a2) do
+      #         # index == [0, 1, 0]
+      #         step(:a21) do
+      #           # index == [0, 1, 0, 0]
+      #         end
+      #         # index == [0, 1, 1]
+      #         step(:a22) do
+      #           # index == [0, 1, 1, 0]
+      #         end
+      #         # index == [0, 1, 2]
+      #       end
+      #       # index == [0, 2]
+      #     end
+      #     # index == [1]
+      #     step(:b) do
+      #       # index == [1, 0]
+      #     end
+      #   # TODO: Add a created_at Time property that stores the timestamp of the creation. Add it in all existing test cases validation (using a fixed time mocked).
       #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
       #   - extra_input_artifacts [Hash{Symbol => Object}] Additional artifacts given as input to this step.
       #   - children [Array<Hash{Symbol => Object}>] Sub-steps that are invoked from this step.
@@ -134,7 +134,7 @@ module ComposableAgents
             # Compute the current step state
             step_state = current_step_state(agent:)
             # Read the persisted step state if any
-            step_full_name = "#{@steps_idx.join('-')}-#{step_name}"
+            step_full_name = "#{@current_step_node[:index].join('-')}-#{step_name}"
             saved_input_state, saved_output_state = saved_step_states(step_full_name)
             # If the input exists, it means the step was already executed.
             # If it is the same state as the current one, skip the step and set the current state to the stored output step state.
@@ -145,14 +145,11 @@ module ComposableAgents
             else
               # Clone state before yielding because it will certainly be modified
               input_step_state = clone_step_state(step_state)
-              @steps_idx << 0
               yield
-              @steps_idx.pop
               @current_step_node[:status] = :executed
               store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
               log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
             end
-            @steps_idx[-1] += 1
           end
         end
       end
@@ -169,10 +166,13 @@ module ComposableAgents
         parent_node = @current_step_node
         node = {
           step_name:,
+          # Compute the index of this step in the hierarchy of recursive step calls:
+          # the indices of the ancestor step nodes, followed by this node's position among its sibling nodes.
+          index: (parent_node ? parent_node[:index] : []) + [(parent_node ? parent_node[:children] : @steps_run.last).size],
+          status: :started,
           agent:,
           extra_input_artifacts: extra_input_artifacts.clone,
-          children: [],
-          status: :started
+          children: []
         }
         if parent_node
           parent_node[:children] << node
