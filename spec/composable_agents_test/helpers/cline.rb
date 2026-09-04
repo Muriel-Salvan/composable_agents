@@ -29,6 +29,10 @@ module ComposableAgentsTest
       #   Possible attributes of a mocked result are the ones of mocked_assistant_outputs (see prompt_driven_agent_examples.rb),
       #   and also the following ones:
       #   - stub [Object] The Cline CLI stub instructions (see ClineTest::CliStub#mock_commands).
+      #   - metrics [Hash{Symbol => Object}] Usage metrics to attach to the assistant message
+      #     (see Cline::SessionMessage::Metrics attributes, using camelCase JSON keys).
+      #   - messages [Array<Hash{Symbol => Object}>, nil] List of session messages to be created instead of the default
+      #     single assistant message. Each message can have a `metrics` attribute for usage (see above).
       def mock_cline_for(agent, mocked_run_results = [])
         mocked_run_results = [mocked_run_results] unless mocked_run_results.is_a?(Array)
         @cli_stub = ClineTest::CliStub.new(
@@ -43,16 +47,20 @@ module ComposableAgentsTest
                 log: {},
                 session: {
                   messages: [
-                    {
-                      ts: 100 + idx,
-                      role: 'assistant',
-                      content: [
+                    mocked_run_result[:messages] ||
+                      [
                         {
-                          type: 'text',
-                          text: mocked_run_result[:stdout] || 'Assistant Output'
-                        }
+                          ts: 100 + idx,
+                          role: 'assistant',
+                          content: [
+                            {
+                              type: 'text',
+                              text: mocked_run_result[:stdout] || 'Assistant Output'
+                            }
+                          ],
+                          metrics: mocked_run_result[:metrics]
+                        }.compact
                       ]
-                    }
                   ]
                 }
               }

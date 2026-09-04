@@ -8,6 +8,18 @@ module ComposableAgents
     end
 
     # Agent implementation that uses an ai-agent's AgentRunner.
+    # This agent publishes the following run information:
+    # - usage [Hash] Cumulative usage of the API requests (cost and tokens) made during the run.
+    #   This information is published in realtime, as soon as the Cline CLI reports API requests.
+    #   Here are the properties it contains:
+    #   - cost [Float] Cumulative monetary cost of all API requests of the run.
+    #   - input_tokens [Integer] Cumulative number of input tokens of all API requests of the run.
+    #   - output_tokens [Integer] Cumulative number of output tokens of all API requests of the run.
+    #   - cache_read_tokens [Integer] Cumulative number of tokens read from cache by all API requests of the run.
+    #   - cache_write_tokens [Integer] Cumulative number of tokens written to cache by all API requests of the run.
+    #   - context_tokens [Integer, nil] Number of context tokens consumed by the last API request of the run.
+    #     This property is not cumulative, as each API request contains the full context.
+    #   - context_tokens_limit [Integer, nil] Maximum context window limit of the model used, or nil if unknown.
     class Agent < PromptDrivenAgent
       # @!group Public API
 
@@ -55,6 +67,18 @@ module ComposableAgents
       # @return [String] The agent's full name
       def full_name
         "#{name || 'Unnamed'} (Cline #{@provider}/#{@model})"
+      end
+
+      # Execute the agent to generate some output artifacts based on some input artifacts.
+      # Also reset the usage statistics accumulated for this run (published realtime in the run info).
+      #
+      # @param user_instructions [Object, nil] Instructions for the user prompt, that will be rendered.
+      #   The kind of instructions that can be given are defined by the Instructions's constructor (see Instructions#initialize).
+      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
+      # @return [Hash{Symbol => Object}] The output artifacts
+      def run(user_instructions: nil, **input_artifacts)
+        @usage_by_ts = {}
+        super
       end
 
       # @!group Internal
@@ -112,6 +136,25 @@ module ComposableAgents
                 parse_output_artifacts(content.text) if content.type == 'text' && content.text
               end
             end
+            # Track usage (cost and tokens) of API requests, and publish it realtime in the run info.
+            # Messages are keyed by their timestamp, as the same message can be updated (last version wins),
+            #   and the usage of all API requests of the session is summed to give the run's cumulative usage.
+            next unless (usage = message.usage)
+
+            @usage_by_ts[message.ts] = usage
+            usages = @usage_by_ts.values
+            publish_run_info(
+              usage: {
+                cost: usages.sum { |run_usage| run_usage.cost || 0.0 },
+                input_tokens: usages.sum { |run_usage| run_usage.input_tokens || 0 },
+                output_tokens: usages.sum { |run_usage| run_usage.output_tokens || 0 },
+                cache_read_tokens: usages.sum { |run_usage| run_usage.cache_read_tokens || 0 },
+                cache_write_tokens: usages.sum { |run_usage| run_usage.cache_write_tokens || 0 },
+                # Context tokens are not summed, as each API request contains the full context: keep the last request's value.
+                context_tokens: usages.last&.context_tokens,
+                context_tokens_limit: usages.last&.context_tokens_limit
+              }
+            )
           end,
           **@cli_options
         )

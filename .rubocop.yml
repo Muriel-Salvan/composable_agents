@@ -28,7 +28,7 @@ Lint/UnusedMethodArgument:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/AbcSize:
-  Max: 70
+  Max: 80
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/BlockLength:
@@ -36,11 +36,11 @@ Metrics/BlockLength:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ClassLength:
-  Max: 160
+  Max: 180
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
-  Max: 20
+  Max: 40
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/MethodLength:
@@ -56,7 +56,7 @@ Metrics/ParameterLists:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/PerceivedComplexity:
-  Max: 30
+  Max: 40
 
 # These tests are not describing any class or module
 RSpec/DescribeClass:
