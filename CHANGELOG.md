@@ -1,3 +1,28 @@
+# [v2.0.0](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.2...v2.0.0) (2026-09-04 12:17:53)
+
+## Global changes
+### Patches
+
+* [[Feature(AiAgents)] Publish realtime LLM usage (cost, tokens) in run info](https://github.com/Muriel-Salvan/composable_agents/commit/e6302ae30ec4a8c54b449c23ebf795f6b6a3e055)
+* [feat(cline): track and publish realtime API usage in run info](https://github.com/Muriel-Salvan/composable_agents/commit/c07eed20e81eda7fd08c32fb28426ca262844aaa)
+* [[Breaking(Resumable)] track steps per run and document resumable run info](https://github.com/Muriel-Salvan/composable_agents/commit/ba839759e24e6a1ca9eb4ee14e552c6b7b8da017)
+* [[Feature(Agent)]: add run tracking and info publishing to agents](https://github.com/Muriel-Salvan/composable_agents/commit/67567699bdfd66d6cf65bd3095e8b08e04ca301e)
+
+## Changes for Agent
+### Features
+
+* [[Feature(Agent)]: add run tracking and info publishing to agents](https://github.com/Muriel-Salvan/composable_agents/commit/67567699bdfd66d6cf65bd3095e8b08e04ca301e)
+
+## Changes for AiAgents
+### Features
+
+* [[Feature(AiAgents)] Publish realtime LLM usage (cost, tokens) in run info](https://github.com/Muriel-Salvan/composable_agents/commit/e6302ae30ec4a8c54b449c23ebf795f6b6a3e055)
+
+## Changes for Resumable
+### Breaking changes
+
+* [[Breaking(Resumable)] track steps per run and document resumable run info](https://github.com/Muriel-Salvan/composable_agents/commit/ba839759e24e6a1ca9eb4ee14e552c6b7b8da017)
+
 # [v1.1.2](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.1...v1.1.2) (2026-09-03 16:08:18)
 
 ### Patches
