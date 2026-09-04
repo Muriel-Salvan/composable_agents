@@ -15,6 +15,50 @@ module ComposableAgents
     # This mixin uses the following methods from the agent:
     # - `#export_state -> Object` Optional method returning the current JSON-serializable state of the agent.
     # - `#import_state(state)` Optional method that sets the agent state from a JSON-serializable object.
+    #
+    # This mixin publishes the following run information:
+    # - steps [Array<Hash>>] Hierarchy of the steps executed during the run.
+    #   Each step node has those properties:
+    #   - step_name [Symbol] The step name.
+    #   - index [Array<Integer>] Position of the step in the hierarchy of recursive step calls.
+    #     It is the succession of indices from the root of the hierarchy to this step node,
+    #     each index being the position of the node among its sibling nodes (children of the same parent).
+    #     For example here are the values of the index property of the step nodes if we have this code:
+    #     # index == [0]
+    #     step(:a) do
+    #       # index == [0, 0]
+    #       step(:a1) do
+    #         # index == [0, 0, 0]
+    #       end
+    #       # index == [0, 1]
+    #       step(:a2) do
+    #         # index == [0, 1, 0]
+    #         step(:a21) do
+    #           # index == [0, 1, 0, 0]
+    #         end
+    #         # index == [0, 1, 1]
+    #         step(:a22) do
+    #           # index == [0, 1, 1, 0]
+    #         end
+    #         # index == [0, 1, 2]
+    #       end
+    #       # index == [0, 2]
+    #     end
+    #     # index == [1]
+    #     step(:b) do
+    #       # index == [1, 0]
+    #     end
+    #   - status [Symbol] The status of the step:
+    #     - `started``: The step has started its execution.
+    #     - `cached``: The step was skipped because of a previous execution.
+    #     - `executed``: The step has completed its execution.
+    #     - `error``: The step has raised an exception during its execution.
+    #   - created_at [Time] Timestamp of the creation of this step node.
+    #   - extra_input_artifacts [Hash] Additional artifacts given as input to this step.
+    #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
+    #   - error [String, nil] The message of the exception raised during the step execution.
+    #     This property is only present when the status is `error`.
+    #   - children [Array<Hash>] Sub-steps that are invoked from this step.
     module Resumable
       # @!group Public API
 
@@ -23,7 +67,6 @@ module ComposableAgents
       # @param run_id [String, nil] ID identifying this run to reuse previously executed steps, or nil if there is no resumability needed
       def initialize(*args, run_id: nil, **kwargs)
         super(*args, **kwargs)
-        @steps_run = []
         @run_id = run_id
       end
 
@@ -36,58 +79,10 @@ module ComposableAgents
       def run(**input_artifacts)
         # The artifacts store, JSON serializable
         @artifacts = input_artifacts.dup
-        # List of the steps_run hierarchies, one per run. Each run appends its own new list.
-        @steps_run << []
+        @current_run_steps = []
         @current_step_node = nil
         super
       end
-
-      # Hierarchies of the steps executed during each run of this agent.
-      #
-      # @return [Array<Array<Hash{Symbol => Object}>>>] List of per-run step hierarchies.
-      #   Each element of this array corresponds to a run, and is the ordered list of top-level step nodes of that run.
-      #   Each step node has those properties:
-      #   - step_name [Symbol] The step name.
-      #   - index [Array<Integer>] Position of the step in the hierarchy of recursive step calls.
-      #     It is the succession of indices from the root of the hierarchy to this step node,
-      #     each index being the position of the node among its sibling nodes (children of the same parent).
-      #     For example here are the values of the index property of the step nodes if we have this code:
-      #     # index == [0]
-      #     step(:a) do
-      #       # index == [0, 0]
-      #       step(:a1) do
-      #         # index == [0, 0, 0]
-      #       end
-      #       # index == [0, 1]
-      #       step(:a2) do
-      #         # index == [0, 1, 0]
-      #         step(:a21) do
-      #           # index == [0, 1, 0, 0]
-      #         end
-      #         # index == [0, 1, 1]
-      #         step(:a22) do
-      #           # index == [0, 1, 1, 0]
-      #         end
-      #         # index == [0, 1, 2]
-      #       end
-      #       # index == [0, 2]
-      #     end
-      #     # index == [1]
-      #     step(:b) do
-      #       # index == [1, 0]
-      #     end
-      #   - status [Symbol] The status of the step:
-      #     - `started``: The step has started its execution.
-      #     - `cached``: The step was skipped because of a previous execution.
-      #     - `executed``: The step has completed its execution.
-      #     - `error``: The step has raised an exception during its execution.
-      #   - created_at [Time] Timestamp of the creation of this step node.
-      #   - extra_input_artifacts [Hash] Additional artifacts given as input to this step.
-      #   - agent [Agent, nil] The agent that is invoked in this step, or nil if none.
-      #   - error [String, nil] The message of the exception raised during the step execution.
-      #     This property is only present when the status is `error`.
-      #   - children [Array<Hash>] Sub-steps that are invoked from this step.
-      attr_reader :steps_run
 
       private
 
@@ -165,13 +160,13 @@ module ComposableAgents
       # @param extra_input_artifacts [Hash{Symbol => Object}] Input artifacts given to the step.
       # @yield The code of the step to be executed
       def record_step(step_name:, agent:, extra_input_artifacts:)
-        @steps_run ||= []
+        publish_run_info(steps: @current_run_steps) unless current_run_info.respond_to?(:steps)
         parent_node = @current_step_node
         node = {
           step_name:,
           # Compute the index of this step in the hierarchy of recursive step calls:
           # the indices of the ancestor step nodes, followed by this node's position among its sibling nodes.
-          index: (parent_node ? parent_node[:index] : []) + [(parent_node ? parent_node[:children] : @steps_run.last).size],
+          index: (parent_node ? parent_node[:index] : []) + [(parent_node ? parent_node[:children] : @current_run_steps).size],
           status: :started,
           created_at: Time.now,
           agent:,
@@ -181,7 +176,7 @@ module ComposableAgents
         if parent_node
           parent_node[:children] << node
         else
-          @steps_run.last << node
+          @current_run_steps << node
         end
         @current_step_node = node
         begin

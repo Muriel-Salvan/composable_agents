@@ -38,9 +38,9 @@ module ComposableAgents
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
-    # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
+    # @param _input_artifacts [Hash{Symbol => Object}] The input artifacts content
     # @return [Hash{Symbol => Object}] Output artifacts content
-    def run(**input_artifacts)
+    def run(**_input_artifacts)
       @current_run_info = RunInfo.new
       @runs_info << @current_run_info
       publish_run_info(started_at: Time.now)
@@ -48,6 +48,9 @@ module ComposableAgents
     end
 
     private
+
+    # @return [RunInfo, nil] The current run info, or nil if no run has started yet
+    attr_reader :current_run_info
 
     # Fields to be logged
     #
@@ -60,7 +63,7 @@ module ComposableAgents
     #
     # @param kwargs [Hash{Symbol => Object}] Set of properties to publish
     def publish_run_info(**kwargs)
-      @current_run_info.publish(**kwargs)
+      current_run_info.publish(**kwargs)
     end
   end
 end
