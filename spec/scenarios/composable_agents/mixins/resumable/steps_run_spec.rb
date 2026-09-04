@@ -25,6 +25,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
   def child_agent(name: 'child')
     Class.new(ComposableAgents::Agent) do
       def run(**input_artifacts)
+        super
         { child_output: input_artifacts[:input] + 10 }
       end
     end.new(name:, composable_agents_dir:)
@@ -42,6 +43,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           # Nothing to do
         end
@@ -70,6 +72,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1, extra_artifact: 42) do
           # Nothing to do
         end
@@ -101,6 +104,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :child_agent
 
       def run
+        super
         @artifacts.merge!(input: 42)
         step_agent(child_agent)
         @artifacts
@@ -132,6 +136,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :child_agent
 
       def run
+        super
         step_agent(child_agent, input: 42)
         @artifacts
       end
@@ -159,6 +164,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           # Nothing to do
         end
@@ -211,6 +217,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           # Nothing to do
           step(:step11) do
@@ -294,6 +301,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :child2_agent
 
       def run
+        super
         step(:step1) do
           step_agent(child1_agent, input: 1)
           step(:step11) do
@@ -358,6 +366,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :skip_step2
 
       def run
+        super
         step(:step1) do
           # Nothing to do
         end
@@ -414,6 +423,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           # Nothing to do
         end
@@ -477,6 +487,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :interrupt_step12
 
       def run
+        super
         step(:step1) do
           step(:step11) do
             # Nothing to do
@@ -566,6 +577,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           raise 'Test error'
         end
@@ -598,6 +610,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           raise Interrupt, 'Test interrupt'
         end
@@ -627,6 +640,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       prepend ComposableAgents::Mixins::Resumable
 
       def run
+        super
         step(:step1) do
           step(:step11) do
             # Nothing to do
@@ -683,6 +697,7 @@ describe ComposableAgents::Mixins::Resumable, '#steps_run' do
       attr_accessor :dumped_steps_run
 
       def run
+        super
         step(:step1) do
           step(:step11) do
             # Nothing to do

@@ -1,4 +1,4 @@
-RSpec.describe ComposableAgents::Agent do
+RSpec.describe ComposableAgents::Agent, '#full_name' do
   context 'when instantiated directly' do
     let(:agent) { described_class.new }
 

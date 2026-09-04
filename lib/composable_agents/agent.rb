@@ -7,8 +7,11 @@ module ComposableAgents
 
     # @!group Public API
 
-    # @return [String, nil] The agent name, if any
+    # @return [String, nil] The agent name, if any.
     attr_reader :name
+
+    # @return [Array<RunInfo>] The list of run information of this agent.
+    attr_reader :runs_info
 
     # Constructor
     #
@@ -20,6 +23,8 @@ module ComposableAgents
     )
       @name = name
       @composable_agents_dir = composable_agents_dir
+      @runs_info = []
+      @current_run_info = nil
     end
 
     # Return the full name of the agent.
@@ -31,14 +36,15 @@ module ComposableAgents
       "#{name || 'Unnamed'}#{" (#{self.class.name.split('::').last})" if self.class != Agent && self.class.name}"
     end
 
-    # @!group Internal
-
     # Execute the agent to generate some output artifacts based on some input artifacts.
     #
     # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
     # @return [Hash{Symbol => Object}] Output artifacts content
     def run(**input_artifacts)
-      raise NotImplementedError, 'This method should be implemented by an Agent subclass'
+      @current_run_info = RunInfo.new
+      @runs_info << @current_run_info
+      publish_run_info(started_at: Time.now)
+      {}
     end
 
     private
@@ -48,6 +54,13 @@ module ComposableAgents
     # @return [Array<String>] Fields to log
     def log_fields
       [full_name]
+    end
+
+    # Publish run information for the current run
+    #
+    # @param kwargs [Hash{Symbol => Object}] Set of properties to publish
+    def publish_run_info(**kwargs)
+      @current_run_info.publish(**kwargs)
     end
   end
 end

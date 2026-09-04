@@ -27,6 +27,7 @@ class PreferencesAgent < ComposableAgents::Agent
   end
 
   def run
+    super
     puts 'What kind of holidays are you looking for?'
     {
       preferences: $stdin.gets.strip
@@ -73,6 +74,7 @@ class BudgetAgent < ComposableAgents::Agent
   end
 
   def run(**input_artifacts)
+    super
     {
       budget: JSON.parse(input_artifacts[:cities]).size * 1000
     }

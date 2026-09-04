@@ -93,6 +93,7 @@ class BudgetAgent < ComposableAgents::Agent
   end
 
   def run(**input_artifacts)
+    super
     {
       budget: JSON.parse(input_artifacts[:cities]).size * 1000
     }
@@ -109,6 +110,7 @@ class MainAgent < ComposableAgents::Agent
   end
 
   def run
+    super
     puts '1. Ask the preferences agent to gather holidays preferences...'
     step_agent(PreferencesAgent.new)
     puts '2. Ask the itinerary agent to get a list of cities for those preferences...'

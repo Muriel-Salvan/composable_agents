@@ -23,6 +23,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :skip_step2
 
         def run(**input_artifacts)
+          super
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input] + 1
@@ -147,6 +148,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :interrupt_step12
 
         def run(**input_artifacts)
+          super
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input] + 1
@@ -252,6 +254,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :skip_step2
 
         def run(**input_artifacts)
+          super
           @executed_steps ||= []
           step(:step1) do
             @artifacts[:step1_output] = input_artifacts[:input]
@@ -321,6 +324,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :skip_step2
 
         def run(**input_artifacts)
+          super
           @artifacts.merge!(input_artifacts)
           step_agent(child_agent)
           step_agent(child_agent) unless skip_step2
@@ -339,6 +343,7 @@ describe ComposableAgents::Mixins::Resumable do
           attr_accessor :run_inputs
 
           def run(**input_artifacts)
+            super
             @run_inputs ||= []
             @run_inputs << input_artifacts.dup
             {
@@ -473,6 +478,7 @@ describe ComposableAgents::Mixins::Resumable do
           end
 
           def run(**input_artifacts)
+            super
             @runs ||= []
             @runs << {
               input: input_artifacts[:values],
@@ -595,6 +601,7 @@ describe ComposableAgents::Mixins::Resumable do
           #
           # @param value [Integer] Input value
           def run(value:)
+            super
             @runs ||= []
             @runs << {
               input: value,
@@ -636,6 +643,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :executed_steps
 
         def run(**_input_artifacts)
+          super
           @executed_steps ||= []
           step(:step1, extra_artifact: 100) do
             @artifacts[:step1_output] = @artifacts[:input] + @artifacts[:extra_artifact]
@@ -696,6 +704,7 @@ describe ComposableAgents::Mixins::Resumable do
           prepend ComposableAgents::Mixins::Resumable
 
           def run(**_input_artifacts)
+            super
             step(:step1, extra: 10) do
               @artifacts[:result] = @artifacts[:input] + @artifacts[:extra]
             end
@@ -709,6 +718,7 @@ describe ComposableAgents::Mixins::Resumable do
           attr_accessor :executed_steps
 
           def run(**_input_artifacts)
+            super
             @executed_steps ||= []
             step(:step1, extra: 20) do
               @artifacts[:result] = @artifacts[:input] + @artifacts[:extra]
@@ -743,6 +753,7 @@ describe ComposableAgents::Mixins::Resumable do
         end
 
         def run(**input_artifacts)
+          super
           @runs_count += 1
           {
             child_output: input_artifacts[:input] + 10
@@ -756,6 +767,7 @@ describe ComposableAgents::Mixins::Resumable do
         attr_accessor :child_agent
 
         def run(**input_artifacts)
+          super
           @artifacts.merge!(input_artifacts)
           step_agent(child_agent, extra_param: 42)
           @artifacts
@@ -813,6 +825,7 @@ describe ComposableAgents::Mixins::Resumable do
           end
 
           def run(**input_artifacts)
+            super
             @runs_count += 1
             { child_output: input_artifacts[:input] + 10 }
           end
@@ -827,6 +840,7 @@ describe ComposableAgents::Mixins::Resumable do
           end
 
           def run(**input_artifacts)
+            super
             @runs_count += 1
             { child_output: input_artifacts[:input] + 20 }
           end
@@ -838,6 +852,7 @@ describe ComposableAgents::Mixins::Resumable do
           attr_accessor :child_agent
 
           def run(**input_artifacts)
+            super
             @artifacts.merge!(input_artifacts)
             step_agent(child_agent, extra_param: 10)
             @artifacts
@@ -851,6 +866,7 @@ describe ComposableAgents::Mixins::Resumable do
           attr_accessor :child_agent
 
           def run(**input_artifacts)
+            super
             @artifacts.merge!(input_artifacts)
             step_agent(child_agent, extra_param: 20)
             @artifacts

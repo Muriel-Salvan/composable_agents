@@ -24,6 +24,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
           # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
           # @return Hash{Symbol => Object} Output artifacts content
           def run(**input_artifacts)
+            super
             @received_artifacts = input_artifacts
           end
         end.new
@@ -82,6 +83,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
             end
 
             def run(**input_artifacts)
+              super
               @received_artifacts = input_artifacts
             end
           end.new
@@ -118,6 +120,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
             end
 
             def run(**input_artifacts)
+              super
               @received_artifacts = input_artifacts
             end
           end.new
@@ -201,6 +204,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
             end
 
             def run(**input_artifacts)
+              super
               @received_artifacts = input_artifacts
             end
           end.new
@@ -236,6 +240,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
           # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
           # @return Hash{Symbol => Object} Output artifacts content
           def run(**_input_artifacts)
+            super
             mocked_output_artifacts
           end
         end.new
@@ -286,6 +291,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
             end
 
             def run(**_input_artifacts)
+              super
               mocked_output_artifacts
             end
           end.new
@@ -321,6 +327,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content
         # @return Hash{Symbol => Object} Output artifacts content
         def run(**input_artifacts)
+          super
           @received_artifacts = input_artifacts
           mocked_output_artifacts || {}
         end
@@ -474,6 +481,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         end
 
         def run(**_input_artifacts)
+          super
           mocked_output_artifacts
         end
       end.new
@@ -551,6 +559,7 @@ describe ComposableAgents::Mixins::ArtifactContract do
         end
 
         def run(**_input_artifacts)
+          super
           mocked_output_artifacts
         end
       end.new

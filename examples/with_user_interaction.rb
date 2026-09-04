@@ -110,6 +110,7 @@ class BudgetAgent < ComposableAgents::Agent
   end
 
   def run(**input_artifacts)
+    super
     {
       budget: JSON.parse(input_artifacts[:cities]).size * 1000
     }

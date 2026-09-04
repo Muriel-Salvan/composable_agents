@@ -68,6 +68,7 @@ module ComposableAgents
     # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
     # @return [Hash{Symbol => Object}] The output artifacts
     def run(user_instructions: nil, **input_artifacts)
+      super
       @input_artifacts = input_artifacts
       @output_artifacts = {}
       @output_artifacts_errors = {}
