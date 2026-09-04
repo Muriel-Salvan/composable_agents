@@ -15,6 +15,8 @@ describe ComposableAgents::AiAgents::Agent do
     allow(Agents::AgentRunner).to receive(:new) do |agents|
       agent.spy_system_prompt = agents.first.instructions
       instance = instance_double(Agents::AgentRunner)
+      # The agent registers an on_llm_call_complete callback on the runner, that can be safely ignored in these mocks.
+      allow(instance).to receive(:on_llm_call_complete) { instance }
       allow(instance).to receive(:run) do |user_prompt, context:|
         agent.spy_user_prompts ||= []
         agent.spy_user_prompts << user_prompt

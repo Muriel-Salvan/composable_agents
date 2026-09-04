@@ -9,6 +9,8 @@ describe ComposableAgents::Mixins::AiAgentUserInteraction do
     allow(Agents::AgentRunner).to receive(:new) do |agents|
       @agent_runner_agents = agents
       stub_agent_runner = instance_double(Agents::AgentRunner, agents:)
+      # The agent registers an on_llm_call_complete callback on the runner, that can be safely ignored in this stub.
+      allow(stub_agent_runner).to receive(:on_llm_call_complete) { stub_agent_runner }
       allow(stub_agent_runner).to receive(:run) { run.is_a?(Proc) ? run.call(stub_agent_runner) : run }
       stub_agent_runner
     end
