@@ -3,8 +3,6 @@ module ComposableAgents
   # Agents may internally use LLMs, tools, or other agents.
   # Agents are stateless: they take input artifacts and return output artifacts.
   class Agent
-    include Mixins::Logger
-
     # @!group Public API
 
     # @return [String, nil] The agent name, if any.
@@ -17,12 +15,18 @@ module ComposableAgents
     #
     # @param name [String, nil] Agent name, or nil if none
     # @param composable_agents_dir [String] Base directory where composable agents can store data
+    # @param logger [::Logger] Logger to be used by this agent. Any Ruby-like logger is accepted.
+    #   Defaults to ComposableAgents::Logger's singleton instance.
+    #   This agent's log fields (see #log_fields) are prefixed to logged messages when the logger supports it
+    #     (see ComposableAgents::Logger#tagged), and are left as-is otherwise.
     def initialize(
       name: nil,
-      composable_agents_dir: '.composable_agents'
+      composable_agents_dir: '.composable_agents',
+      logger: ComposableAgents::Logger.instance
     )
       @name = name
       @composable_agents_dir = composable_agents_dir
+      @provided_logger = logger
       @runs_info = []
       @current_run_info = nil
     end
@@ -51,6 +55,15 @@ module ComposableAgents
 
     # @return [RunInfo, nil] The current run info, or nil if no run has started yet
     attr_reader :current_run_info
+
+    # Get the logger to be used by this agent, with this agent's log fields (see #log_fields) prefixed to messages.
+    # If the provided logger does not support fields tagging, it is used as-is (fields are ignored).
+    # Memoized.
+    #
+    # @return [::Logger] The logger to be used by this agent
+    def logger
+      @logger ||= @provided_logger.respond_to?(:tagged) ? @provided_logger.tagged(*log_fields) : @provided_logger
+    end
 
     # Fields to be logged
     #

@@ -1,12 +1,9 @@
 module ComposableAgents
   module AiAgents
-    # Collection of tools that can be used with ai-agents' agents
     module Tools
       # Tool that is used to ask the user for some input
-      class AskUserTool < Agents::Tool
+      class AskUserTool < BaseTool
         # @!group Internal
-
-        include Mixins::Logger
 
         description <<~EO_DESCRIPTION
           Ask the user a question and wait for their response.
@@ -18,8 +15,10 @@ module ComposableAgents
         # Constructor
         #
         # @param agent [Agent] The agent that is using this tool
-        def initialize(agent)
-          super()
+        # @param logger [::Logger] Logger to be used by this tool. Any Ruby-like logger is accepted.
+        #   Defaults to ComposableAgents::Logger's singleton instance.
+        def initialize(agent, logger: ComposableAgents::Logger.instance)
+          super(logger:)
           @agent = agent
         end
 

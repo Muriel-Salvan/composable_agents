@@ -94,8 +94,8 @@ module ComposableAgents
               params: @params,
               instructions: @system_prompt,
               tools: [
-                Tools::CreateArtifactTool.new(self),
-                Tools::GetArtifactTool.new(@input_artifacts)
+                Tools::CreateArtifactTool.new(self, logger:),
+                Tools::GetArtifactTool.new(@input_artifacts, logger:)
               ] + agent_tools
             )
           ] + @handoff_agents

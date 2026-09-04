@@ -73,7 +73,7 @@ module ComposableAgents
       @output_artifacts = {}
       @output_artifacts_errors = {}
       @system_prompt = render_system_prompt(render_instructions(@system_instructions))
-      log_debug "System prompt: #{@system_prompt}"
+      logger.debug "System prompt: #{@system_prompt}"
       converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
       if respond_to?(:normalized_output_artifacts_contracts, true)
         # We know which output artifacts we are expecting.
@@ -148,7 +148,7 @@ module ComposableAgents
     def save_output_artifact(artifact_name, content)
       @output_artifacts[artifact_name] = content
       @output_artifacts_errors.delete(artifact_name)
-      log_debug "[Artifact] - Received output artifact #{artifact_name}"
+      logger.debug "[Artifact] - Received output artifact #{artifact_name}"
     end
 
     # Report an error on an output artifact.
@@ -162,7 +162,7 @@ module ComposableAgents
       @output_artifacts.delete(artifact_name)
       @output_artifacts_errors[artifact_name] = error
       # TODO: Make this as a warning message
-      log_debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
+      logger.debug "[Artifact] - Should have received content for output artifact `#{artifact_name}` " \
         "but the following error occurred: #{error}"
     end
 
@@ -191,10 +191,10 @@ module ComposableAgents
     def converse(instructions, input_artifacts: {}, author: 'Orchestrator')
       rendered_instructions = render_instructions(instructions)
       rendered_user_prompt = render_user_prompt(rendered_instructions, input_artifacts:)
-      log_debug "Rendered User prompt: #{rendered_user_prompt}"
+      logger.debug "Rendered User prompt: #{rendered_user_prompt}"
       track_message(message: rendered_instructions, author:)
       response = prompt(rendered_user_prompt)
-      log_debug "Raw Agent #{full_name} response: #{response}"
+      logger.debug "Raw Agent #{full_name} response: #{response}"
       track_message(message: response, author: "Agent #{full_name}")
     end
 

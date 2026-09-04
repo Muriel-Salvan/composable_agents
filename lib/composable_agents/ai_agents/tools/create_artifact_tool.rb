@@ -2,10 +2,8 @@ module ComposableAgents
   module AiAgents
     module Tools
       # Tool that is used to create a new artifact's content
-      class CreateArtifactTool < Agents::Tool
+      class CreateArtifactTool < BaseTool
         # @!group Internal
-
-        include Mixins::Logger
 
         description <<~EO_DESCRIPTION
           Create an output artifact.
@@ -18,8 +16,10 @@ module ComposableAgents
         # Constructor
         #
         # @param agent [PromptDrivenAgent] The agent that will receive output artifacts
-        def initialize(agent)
-          super()
+        # @param logger [::Logger] Logger to be used by this tool. Any Ruby-like logger is accepted.
+        #   Defaults to ComposableAgents::Logger's singleton instance.
+        def initialize(agent, logger: ComposableAgents::Logger.instance)
+          super(logger:)
           @agent = agent
         end
 

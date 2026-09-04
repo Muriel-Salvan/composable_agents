@@ -49,7 +49,7 @@ Whether you're building a code review assistant, a document summarizer, or a mul
     - [`ComposableAgents::Cline::Agent < PromptDrivenAgent`](#composableagentsclineagent--promptdrivenagent)
     - [`ComposableAgents::Cline::MissingSkillError < RuntimeError`](#composableagentsclinemissingskillerror--runtimeerror)
   - [Mixins](#mixins)
-    - [`ComposableAgents::Mixins::Logger`](#composableagentsmixinslogger)
+    - [`ComposableAgents::Logger < ::Logger`](#composableagentslogger--logger)
     - [`ComposableAgents::Mixins::Resumable`](#composableagentsmixinsresumable)
     - [`ComposableAgents::Mixins::UserInteraction`](#composableagentsmixinsuserinteraction)
     - [`ComposableAgents::Mixins::ArtifactContract`](#composableagentsmixinsartifactcontract)
@@ -365,18 +365,16 @@ The project is a Ruby library (not a CLI) — users install the gem and use its 
 
 Mixins are `prepend`-ed into an agent class to add specific capabilities.
 
-#### `ComposableAgents::Mixins::Logger`
+#### `ComposableAgents::Logger < ::Logger`
 
-- **Description:** Provides debug and info logging to agents. Debug mode is enabled by setting `COMPOSABLE_AGENTS_DEBUG=1` in the environment.
-- **Public methods (class-level):**
-  - `self.debug?` — Returns `true` if debug mode is enabled (`ENV['COMPOSABLE_AGENTS_DEBUG'] == '1'`).
+- **Description:** Standard Ruby `::Logger`-based logger for agents. Debug logging is enabled by setting `COMPOSABLE_AGENTS_DEBUG=1` in the environment (which sets the logger level to `DEBUG`), and log fields (like the agent full name) can be prefixed to messages via `#tagged`.
 - **Usage example:**
   ```ruby
   # Enable debug logs
   ENV['COMPOSABLE_AGENTS_DEBUG'] = '1'
-  puts ComposableAgents::Mixins::Logger.debug?  # => true
+  puts ComposableAgents::Logger.instance.level == Logger::DEBUG  # => true
   ```
-- **Full documentation:** [Mixins::Logger on RubyDoc](https://www.rubydoc.info/gems/composable_agents/ComposableAgents/Mixins/Logger) | [logger.rb on GitHub](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/logger.rb)
+- **Full documentation:** ComposableAgents::Logger on RubyDoc | [logger.rb on GitHub](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/logger.rb)
 
 #### `ComposableAgents::Mixins::Resumable`
 
@@ -479,7 +477,7 @@ Mixins are `prepend`-ed into an agent class to add specific capabilities.
   - [`Mixins::Resumable`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/resumable.rb) — Resumable workflow mixin
   - [`Mixins::ArtifactContract`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/artifact_contract.rb) — Artifact validation mixin
   - [`Mixins::UserInteraction`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/user_interaction.rb) — User question-asking mixin
-  - [`Mixins::Logger`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/logger.rb) — Debug logging mixin
+  - [`Logger`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/logger.rb) — Standard logger class
   - [`PromptRenderingStrategy::Markdown`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/prompt_rendering_strategy/markdown.rb) — Markdown prompt strategy
   - [`PromptRenderingStrategy::MarkdownHeavy`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/prompt_rendering_strategy/markdown_heavy.rb) — Heavy Markdown prompt strategy
   - [`Utils::Markdown`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/utils/markdown.rb) — Markdown header alignment utilities
@@ -524,7 +522,7 @@ classDiagram
 
 The framework provides a clean **4-class hierarchy**:
 
-- **`Agent`** — Abstract base class. Defines the `run(**input_artifacts)` contract and includes the [`Mixins::Logger`](lib/composable_agents/mixins/logger.rb) for debug/info logging.
+- **`Agent`** — Abstract base class. Defines the `run(**input_artifacts)` contract and includes the [`Logger`](lib/composable_agents/logger.rb) for debug/info logging.
 - **`RubyAgent`** — Wraps any Ruby `Proc` as an agent. No LLM involved: call `proc.call(input_artifacts)` and return a hash. Ideal for deterministic logic.
 - **`PromptDrivenAgent`** — Base for LLM-powered agents. Holds a **role**, **objective**, **system_instructions**, and **constraints**. Renders them via a pluggable **prompt rendering strategy** and records every prompt/response in a `conversation` array.
 - **`AiAgents::Agent` / `Cline::Agent`** — Concrete LLM backends: one wraps the [`ai-agents`](https://github.com/nicbarker/ai-agents) gem, the other wraps [`cline-rb`](https://github.com/Muriel-Salvan/cline-rb). Both implement `#prompt(user_prompt)` to send the rendered prompt to the LLM.
@@ -584,7 +582,6 @@ Mixins are **prepended** (using `prepend`) or **included** (using `include`) to 
 - **[`Mixins::ArtifactContract`](lib/composable_agents/mixins/artifact_contract.rb)** — Wraps `#run` to validate inputs before and outputs after execution against declared contracts. Raises `MissingInputArtifactError`, `MissingOutputArtifactError`, or `ArtifactTypeError` on violations.
 - **[`Mixins::Resumable`](lib/composable_agents/mixins/resumable.rb)** — Overrides `#run` with a **step-based execution model**. Each `step` block is persisted to `.composable_agents/runs/{run_id}/` as JSON. On re-run, completed steps are skipped — only new steps execute. Supports nested steps and agent state serialization via `export_state`/`import_state`.
 - **[`Mixins::UserInteraction`](lib/composable_agents/mixins/user_interaction.rb)** — Adds an `#ask(question)` method. By default prompts the terminal; override `#answer_to` for custom behavior.
-- **[`Mixins::Logger`](lib/composable_agents/mixins/logger.rb)** — Provides `log_debug`/`log_info` methods. Debug output is toggled via the `COMPOSABLE_AGENTS_DEBUG=1` environment variable.
 
 ### Instruction system 📋
 

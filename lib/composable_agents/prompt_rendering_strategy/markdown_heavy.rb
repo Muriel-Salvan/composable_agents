@@ -169,7 +169,8 @@ module ComposableAgents
       #   - error [String, nil] An error message related to this missing artifact.
       # @return [Object] The user instructions (see Instructions#initialize)
       def missing_output_user_instructions(missing_output_artifacts)
-        log_debug "[Artifact] - Asking assistant for missing output artifacts `#{missing_output_artifacts.keys.join(', ')}` to be returned in its next answer."
+        logger.debug '[Artifact] - Asking assistant for missing output artifacts ' \
+          "`#{missing_output_artifacts.keys.join(', ')}` to be returned in its next answer."
         <<~EO_PROMPT
           The following output artifacts are missing from your previous responses:
           #{

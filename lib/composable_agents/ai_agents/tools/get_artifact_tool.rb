@@ -2,10 +2,8 @@ module ComposableAgents
   module AiAgents
     module Tools
       # Tool that is used to read an artifact's content
-      class GetArtifactTool < Agents::Tool
+      class GetArtifactTool < BaseTool
         # @!group Internal
-
-        include Mixins::Logger
 
         description 'Get an input artifact'
         param :name, type: 'string', desc: 'Artifact name'
@@ -13,8 +11,10 @@ module ComposableAgents
         # Constructor
         #
         # @param artifacts [Hash{Symbol => Object}>] The artifacts store
-        def initialize(artifacts)
-          super()
+        # @param logger [::Logger] Logger to be used by this tool. Any Ruby-like logger is accepted.
+        #   Defaults to ComposableAgents::Logger's singleton instance.
+        def initialize(artifacts, logger: ComposableAgents::Logger.instance)
+          super(logger:)
           @artifacts = artifacts
         end
 
@@ -27,7 +27,7 @@ module ComposableAgents
         def perform(_tool_context, name:)
           name_sym = name.to_sym
           if @artifacts.key?(name_sym)
-            log_debug "Artifact `#{name}` read successfully."
+            @logger.debug "Artifact `#{name}` read successfully."
             @artifacts[name_sym].to_s.strip
           else
             "[ERROR] No artifact named #{name}, don't call this tool with the name #{name} anymore."

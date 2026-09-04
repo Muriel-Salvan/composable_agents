@@ -209,7 +209,7 @@ module ComposableAgents
           # Setup the temporary Cline global config dir
           agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}#{"-#{name.gsub(/[^\w.]/, '_')}" if name}"
           ::Cline.configure do |config|
-            config.debug = Mixins::Logger.debug?
+            config.debug = logger_debug?
             config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"
           end
           cline_config = ::Cline::Config.open("#{agent_tmp_dir}/cline_config", create: true)
@@ -219,7 +219,7 @@ module ComposableAgents
               new_skill = cline_config.skills.new(skill_name)
               new_skill.files.replace(::Cline::Config.global.skills[skill_name].files)
               new_skill.enable
-              log_debug "[Cline] - Enable global skill #{skill_name}"
+              logger.debug "[Cline] - Enable global skill #{skill_name}"
               new_skill.save
             end
           end
@@ -229,10 +229,10 @@ module ComposableAgents
             next if skill.enabled? == selected_skill
 
             if selected_skill
-              log_debug "[Cline] - Enable project skill #{skill_name}"
+              logger.debug "[Cline] - Enable project skill #{skill_name}"
               skill.enable
             else
-              log_debug "[Cline] - Disable project skill #{skill_name}"
+              logger.debug "[Cline] - Disable project skill #{skill_name}"
               skill.disable
             end
             skill.save
@@ -261,8 +261,15 @@ module ComposableAgents
           global_settings.auto_update_enabled = false
           @configure_global&.call(global_settings)
           global_settings.save
-          cline_config.cli(stdout_echo: Mixins::Logger.debug?, verbose: Mixins::Logger.debug?)
+          cline_config.cli(stdout_echo: logger_debug?, verbose: logger_debug?)
         end
+      end
+
+      # Check if the agent's logger is set to a debug level.
+      #
+      # @return [Boolean] True if the logger level is DEBUG or lower
+      def logger_debug?
+        @provided_logger.respond_to?(:level) && @provided_logger.level <= ::Logger::DEBUG
       end
 
       # Find a skill among the current Cline environment (global and project) and recursively finds all its dependencies.

@@ -2,6 +2,7 @@ require 'json'
 require 'fileutils'
 
 module ComposableAgents
+  # Collection of useful mixins that add functionality to agents prepending them.
   module Mixins
     # Mixin adding resumable step capabilities to agents.
     # An agent prepending this mixin can use the following:
@@ -139,14 +140,14 @@ module ComposableAgents
             if step_state == saved_input_state
               @current_step_node[:status] = :cached
               set_current_step_state(saved_output_state, agent:)
-              log_debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
+              logger.debug "[Step #{step_full_name}] - Already executed - Got #{@artifacts.size} artifacts from persistence: #{@artifacts.keys.join(', ')}"
             else
               # Clone state before yielding because it will certainly be modified
               input_step_state = clone_step_state(step_state)
               yield
               @current_step_node[:status] = :executed
               store_step_states(step_full_name, input: input_step_state, output: current_step_state(agent:))
-              log_debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
+              logger.debug "[Step #{step_full_name}] - Executed - Stored #{@artifacts.size} artifacts in persistence: #{@artifacts.keys.join(', ')}"
             end
           end
         end

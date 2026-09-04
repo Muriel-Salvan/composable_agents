@@ -16,7 +16,7 @@ module ComposableAgents
       #
       # @return [Array<Agents::Tool>] List of tools
       def agent_tools
-        super + [AiAgents::Tools::AskUserTool.new(self)]
+        super + [AiAgents::Tools::AskUserTool.new(self, logger:)]
       end
     end
   end
