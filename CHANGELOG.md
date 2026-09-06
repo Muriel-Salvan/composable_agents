@@ -1,3 +1,16 @@
+# [v2.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.0.0...v2.1.0) (2026-09-06 16:41:14)
+
+## Global changes
+### Patches
+
+* [fix: return nil on JSON parse failure to skip artifact save](https://github.com/Muriel-Salvan/composable_agents/commit/2f70822a9142d97aa9d5fa9424a8f9c97f98208e)
+* [[Feature(Agent)] Added configurable logger for all agents.](https://github.com/Muriel-Salvan/composable_agents/commit/2979d6de1ea73bb259147f3778d6a51481c79f22)
+
+## Changes for Agent
+### Features
+
+* [[Feature(Agent)] Added configurable logger for all agents.](https://github.com/Muriel-Salvan/composable_agents/commit/2979d6de1ea73bb259147f3778d6a51481c79f22)
+
 # [v2.0.0](https://github.com/Muriel-Salvan/composable_agents/compare/v1.1.2...v2.0.0) (2026-09-04 12:17:53)
 
 ## Global changes
