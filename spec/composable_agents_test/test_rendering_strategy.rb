@@ -95,6 +95,7 @@ module ComposableAgentsTest
             JSON.parse(content)
           rescue JSON::ParserError => e
             report_error_for_output_artifact(artifact_name, e)
+            nil
           end
         save_output_artifact(artifact_name, json_content) if json_content
       end
