@@ -16,8 +16,8 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 3.1'
 
-  spec.add_dependency 'ai-agents', '~> 0.12'
-  spec.add_dependency 'cline-rb', '~> 1.1'
+  spec.add_dependency 'ai-agents', '~> 0.13'
+  spec.add_dependency 'cline-rb', '~> 2.0'
   spec.add_dependency 'commonmarker', '~> 2.10'
   spec.add_dependency 'zeitwerk', '~> 2.8'
 
