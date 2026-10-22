@@ -1,3 +1,20 @@
+# [v2.1.1](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.0...v2.1.1) (2026-10-22 15:07:09)
+
+## Global changes
+### Patches
+
+* [chore(deps): update Ruby dependencies and fix comment typo](https://github.com/Muriel-Salvan/composable_agents/commit/908b6a045d0e730f09f83482fcfa4249a12f5cb7)
+
+## Changes for deps
+### Patches
+
+* [chore(deps): update Ruby dependencies and fix comment typo](https://github.com/Muriel-Salvan/composable_agents/commit/908b6a045d0e730f09f83482fcfa4249a12f5cb7)
+
+## Changes for tests
+### Patches
+
+* [chore(deps): update Ruby dependencies and fix comment typo](https://github.com/Muriel-Salvan/composable_agents/commit/908b6a045d0e730f09f83482fcfa4249a12f5cb7)
+
 # [v2.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.0.0...v2.1.0) (2026-09-06 16:41:14)
 
 ## Global changes
