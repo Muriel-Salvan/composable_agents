@@ -63,15 +63,10 @@ describe ComposableAgents::AiAgents::Agent do
           RubyLLM::Tokens,
           input: metrics[:input_tokens],
           output: metrics[:output_tokens],
-          cached: metrics[:cache_read_tokens],
-          cache_creation: metrics[:cache_write_tokens],
+          cache_read: metrics[:cache_read_tokens],
+          cache_write: metrics[:cache_write_tokens],
           thinking: 0
         ),
-        input_tokens: metrics[:input_tokens],
-        output_tokens: metrics[:output_tokens],
-        cached_tokens: metrics[:cache_read_tokens],
-        cache_creation_tokens: metrics[:cache_write_tokens],
-        thinking_tokens: 0,
         cost: instance_double(
           RubyLLM::Cost,
           input: metrics[:cost] || 0.0,
@@ -81,7 +76,7 @@ describe ComposableAgents::AiAgents::Agent do
           thinking: nil
         ),
         # RubyLLM::Message#model_info returns nil when the model is unknown in RubyLLM's registry
-        model_info: metrics[:context_window] ? instance_double(RubyLLM::Model::Info, context_window: metrics[:context_window]) : nil
+        model_info: metrics[:context_window] ? instance_double(RubyLLM::Model, context_window: metrics[:context_window]) : nil
       )
     end
 

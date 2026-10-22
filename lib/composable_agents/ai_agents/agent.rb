@@ -108,7 +108,7 @@ module ComposableAgents
       # @param response [RubyLLM::Message] The response of the LLM call
       def track_llm_usage(response)
         # Some responses have no usage metrics (eg. RubyLLM::Tool::Halt responses, or responses without token data)
-        return unless response.respond_to?(:input_tokens) && response.tokens
+        return unless response.tokens
 
         @llm_call_responses << response
         usages = @llm_call_responses
@@ -116,10 +116,10 @@ module ComposableAgents
         publish_run_info(
           usage: {
             cost: usages.sum { |run_usage| llm_call_cost(run_usage) },
-            input_tokens: usages.sum { |run_usage| run_usage.input_tokens || 0 },
-            output_tokens: usages.sum { |run_usage| run_usage.output_tokens || 0 },
-            cache_read_tokens: usages.sum { |run_usage| run_usage.cached_tokens || 0 },
-            cache_write_tokens: usages.sum { |run_usage| run_usage.cache_creation_tokens || 0 },
+            input_tokens: usages.sum { |run_usage| run_usage.tokens&.input || 0 },
+            output_tokens: usages.sum { |run_usage| run_usage.tokens&.output || 0 },
+            cache_read_tokens: usages.sum { |run_usage| run_usage.tokens&.cache_read || 0 },
+            cache_write_tokens: usages.sum { |run_usage| run_usage.tokens&.cache_write || 0 },
             # Context tokens are not summed, as each LLM call contains the full context: keep the last call's value.
             context_tokens: llm_call_context_tokens(last_response),
             context_tokens_limit: llm_call_context_tokens_limit(last_response)
@@ -147,7 +147,7 @@ module ComposableAgents
       # @return [Integer] Number of context tokens consumed by the LLM call
       def llm_call_context_tokens(response)
         tokens = response.tokens
-        %i[input output cached cache_creation thinking].sum { |component| tokens.public_send(component) || 0 }
+        %i[input output cache_read cache_write thinking].sum { |component| tokens.public_send(component) || 0 }
       end
 
       # Get the context window limit of the model used by a single LLM call.
