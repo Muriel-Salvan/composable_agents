@@ -1,3 +1,9 @@
+# [v2.1.3](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.2...v2.1.3) (2026-10-27 13:52:46)
+
+### Patches
+
+* [compose: serialize agent options to plain array for JSON persistence](https://github.com/Muriel-Salvan/composable_agents/commit/d460d3b3eb8d8150258326dab169d24e045488fb)
+
 # [v2.1.2](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.1...v2.1.2) (2026-10-27 13:29:45)
 
 ## Global changes
