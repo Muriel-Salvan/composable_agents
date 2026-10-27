@@ -193,7 +193,8 @@ module ComposableAgents
                       if content.input
                         {
                           question: content.input.question,
-                          options: content.input.options
+                          # The options are a Shale collection that JSON can't serialize: keep them as a plain Array
+                          options: content.input.options&.to_a
                         }.compact
                       end,
                     content: content.content
