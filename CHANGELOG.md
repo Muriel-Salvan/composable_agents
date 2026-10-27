@@ -1,3 +1,15 @@
+# [v2.1.2](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.1...v2.1.2) (2026-10-27 13:29:45)
+
+## Global changes
+### Patches
+
+* [fix(composable_agents): extract error message from Cline logs and update cline-rb dependency to 2.1](https://github.com/Muriel-Salvan/composable_agents/commit/5e1ef24265772a1580c75f9889442b576c665edd)
+
+## Changes for composable_agents
+### Patches
+
+* [fix(composable_agents): extract error message from Cline logs and update cline-rb dependency to 2.1](https://github.com/Muriel-Salvan/composable_agents/commit/5e1ef24265772a1580c75f9889442b576c665edd)
+
 # [v2.1.1](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.0...v2.1.1) (2026-10-22 15:07:09)
 
 ## Global changes
