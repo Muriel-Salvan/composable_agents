@@ -44,7 +44,7 @@ module ComposableAgentsTest
           mocked_run_results.map.with_index do |mocked_run_result, idx|
             [
               {
-                log: {},
+                log: mocked_run_result[:log] || {},
                 session: {
                   messages: [
                     mocked_run_result[:messages] ||
@@ -62,7 +62,7 @@ module ComposableAgentsTest
                         }.compact
                       ]
                   ]
-                }
+                }.merge(mocked_run_result[:session] || {})
               }
             ] +
               (

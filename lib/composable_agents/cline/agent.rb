@@ -100,6 +100,18 @@ module ComposableAgents
 
       private
 
+      # Extract the error message from a Cline log.
+      #
+      # @param error_log [Cline::Log] The error log object
+      # @return [String] The error message
+      def extract_error_message(error_log)
+        error_log.err&.message ||
+          error_log.error_message ||
+          error_log.error_name ||
+          error_log.msg ||
+          error_log.to_s.strip
+      end
+
       # Process a user prompt.
       #
       # @param user_prompt [String] The rendered user prompt
@@ -158,7 +170,7 @@ module ComposableAgents
           end,
           **@cli_options
         )
-        raise "Error: #{result[:error].err.message}".strip if result[:error]
+        raise "Error: #{extract_error_message(result[:error])}".strip if result[:error]
 
         # Keep the context in case we need to resume it
         if cline_cli.session&.messages
