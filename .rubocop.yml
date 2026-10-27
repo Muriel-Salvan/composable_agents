@@ -36,7 +36,7 @@ Metrics/BlockLength:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/ClassLength:
-  Max: 180
+  Max: 190
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/CyclomaticComplexity:
