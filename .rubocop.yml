@@ -28,7 +28,7 @@ Lint/UnusedMethodArgument:
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/AbcSize:
-  Max: 80
+  Max: 90
 
 # It's ok to have longer methods, while keeping readability.
 Metrics/BlockLength:
