@@ -1,3 +1,20 @@
+# [v2.2.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.3...v2.2.0) (2026-10-29 20:11:23)
+
+## Global changes
+### Patches
+
+* [feat(composable_agents): add Retriable mixin with conditional retries](https://github.com/Muriel-Salvan/composable_agents/commit/5217fb5b448f7fffc155f864888d55da48d66074)
+
+## Changes for composable_agents
+### Features
+
+* [feat(composable_agents): add Retriable mixin with conditional retries](https://github.com/Muriel-Salvan/composable_agents/commit/5217fb5b448f7fffc155f864888d55da48d66074)
+
+## Changes for retriable
+### Features
+
+* [feat(composable_agents): add Retriable mixin with conditional retries](https://github.com/Muriel-Salvan/composable_agents/commit/5217fb5b448f7fffc155f864888d55da48d66074)
+
 # [v2.1.3](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.2...v2.1.3) (2026-10-27 13:52:46)
 
 ### Patches
