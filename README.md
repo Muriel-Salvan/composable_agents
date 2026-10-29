@@ -204,7 +204,7 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
 - 📝 **Two prompt rendering strategies** — Choose between clean **Markdown** for simple agents, or **MarkdownHeavy** with structured output parsing, execution checklists, and typed artifact support for complex agentic systems.
 - 📦 **Typed artifact contracts** — Define and validate input/output schemas with descriptions, optional flags, and types (`:text`, `:markdown`, `:json`). The framework raises clear `MissingInputArtifactError`, `MissingOutputArtifactError`, or `ArtifactTypeError` on violations.
 - 💾 **Resumable execution** — Persist step-by-step state to disk (via the `Resumable` mixin). Interrupted runs can be resumed seamlessly — previously completed steps are skipped, saving time and API costs.
-- 🔁 **Conditional retries** — Wrap an agent's `#run` with the `Retriable` mixin to retry on transient failures. Register condition procs via `#retry_on` that receive the agent and any raised exception (or `nil`) and return a `RetryPolicy` (`wait_secs`, optional `modifier`) to wait-and-retry, or `nil` to skip. Unhandled exceptions are re-raised when no policy applies.
+- 🔁 **Conditional retries** — Wrap an agent's `#run` with the `Retriable` mixin to retry on transient failures. Register condition procs via `#retry_on` that receive the agent and any raised exception (or `nil`) and return a policy hash (optional `:wait_secs`, optional `:modifier`) to wait-and-retry, or `nil` to skip. Unhandled exceptions are re-raised when no policy applies.
 - 🗣️ **User interaction** — Agents can ask users clarifying questions mid-execution. Works out of the box via the terminal, or through an `ai-agents` tool integration for LLM-controlled workflows.
 - 📋 **Automatic conversation tracking** — Every prompt and response is automatically recorded with timestamps in a structured `conversation` store, ready for debugging or replay.
 - ⚙️ **Flexible instruction system** — Use raw text, structured ordered-lists, or a mix of both to define agent instructions, rendered consistently by the chosen strategy.
@@ -455,11 +455,11 @@ Mixins are `prepend`-ed into an agent class to add specific capabilities.
 
 #### `ComposableAgents::Mixins::Retriable`
 
-- **Description:** Adds conditional retry capabilities to agents. Retry condition procs are registered with `#retry_on` (or `#with_retry_on` for temporary activation) and are evaluated at the end of each run. A proc receives the agent instance and the exception raised by `run` (or `nil` if none) and returns either `nil` (no retry) or a {RetryPolicy}. When a proc returns a policy, the agent waits `wait_secs` seconds, optionally calls the policy's `modifier`, and re-runs. If `run` raised an exception and no proc returned a retry policy, the exception is re-raised to the caller.
+- **Description:** Adds conditional retry capabilities to agents. Retry condition procs are registered with `#retry_on` (or `#with_retry_on` for temporary activation) and are evaluated at the end of each run. A proc receives the agent instance and the exception raised by `run` (or `nil` if none) and returns either `nil` (no retry) or a policy hash with `:wait_secs` and optional `:modifier` keys. When a proc returns a policy, the agent waits `wait_secs` seconds, optionally calls the policy's `modifier`, and re-runs. If `run` raised an exception and no proc returned a retry policy, the exception is re-raised to the caller.
 - **Public methods:**
   - `#retry_on(proc)` — Register a retry condition proc. Returns `self` so calls can be chained.
   - `#with_retry_on(proc, &block)` — Register a retry proc for the duration of a block, then unregister it when the block returns (even if it raises).
-  - `RetryPolicy` (struct) — Configuration with `wait_secs` (seconds to wait before retrying, defaults to 0) and `modifier` (proc called with the agent before retrying).
+  - policy hash — Configuration with optional `:wait_secs` (seconds to wait before retrying, defaults to 0) and optional `:modifier` (proc called with the agent before retrying).
 - **Usage example:**
   ```ruby
   class MyAgent < ComposableAgents::Agent
@@ -474,7 +474,7 @@ Mixins are `prepend`-ed into an agent class to add specific capabilities.
   agent = MyAgent.new
   # Retry once with a short wait when the first run fails.
   agent.retry_on(lambda do |agent_instance, exception|
-    agent_instance.run_count == 1 ? ComposableAgents::Mixins::Retriable::RetryPolicy.new(wait_secs: 1) : nil
+    agent_instance.run_count == 1 ? { wait_secs: 1 } : nil
   end)
   agent.run(input: 'hello')
   ```
@@ -610,7 +610,7 @@ Two strategies are included, mixed into the agent at initialization via `singlet
 
 Mixins are **prepended** (using `prepend`) or **included** (using `include`) to override `#run` or add new methods:
 
-- **[`Mixins::Retriable`](lib/composable_agents/mixins/retriable.rb)** — Wraps `#run` with conditional retry logic. Register condition procs via `#retry_on` that receive the agent and any exception raised by `run` (or `nil`) and return a `RetryPolicy` (`wait_secs`, optional `modifier`) to trigger a wait-and-retry, or `nil` to skip retrying. If `run` raises and no policy is returned, the exception is re-raised.
+- **[`Mixins::Retriable`](lib/composable_agents/mixins/retriable.rb)** — Wraps `#run` with conditional retry logic. Register condition procs via `#retry_on` that receive the agent and any exception raised by `run` (or `nil`) and return a policy hash (`:wait_secs`, `:modifier`) to trigger a wait-and-retry, or `nil` to skip retrying. If `run` raises and no policy is returned, the exception is re-raised.
 - **[`Mixins::ArtifactContract`](lib/composable_agents/mixins/artifact_contract.rb)** — Wraps `#run` to validate inputs before and outputs after execution against declared contracts. Raises `MissingInputArtifactError`, `MissingOutputArtifactError`, or `ArtifactTypeError` on violations.
 - **[`Mixins::Resumable`](lib/composable_agents/mixins/resumable.rb)** — Overrides `#run` with a **step-based execution model**. Each `step` block is persisted to `.composable_agents/runs/{run_id}/` as JSON. On re-run, completed steps are skipped — only new steps execute. Supports nested steps and agent state serialization via `export_state`/`import_state`.
 - **[`Mixins::UserInteraction`](lib/composable_agents/mixins/user_interaction.rb)** — Adds an `#ask(question)` method. By default prompts the terminal; override `#answer_to` for custom behavior.

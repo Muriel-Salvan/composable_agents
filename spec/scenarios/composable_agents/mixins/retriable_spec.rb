@@ -1,17 +1,4 @@
 describe ComposableAgents::Mixins::Retriable do
-  # Builds a {ComposableAgents::Mixins::Retriable::RetryPolicy} with the given
-  # values (all optional).
-  #
-  # @param wait_secs [Integer, Float, nil] seconds to wait before retrying
-  # @param modifier [Proc, nil] proc to call with the agent before retrying
-  # @return [ComposableAgents::Mixins::Retriable::RetryPolicy]
-  def policy(wait_secs: nil, modifier: nil)
-    ComposableAgents::Mixins::Retriable::RetryPolicy.new(
-      wait_secs: wait_secs,
-      modifier: modifier
-    )
-  end
-
   # Builds a {ComposableAgents::Agent} subclass that prepends
   # {ComposableAgents::Mixins::Retriable} and instruments +run+ with
   # +run_count+ and +model+ attributes.
@@ -63,14 +50,14 @@ describe ComposableAgents::Mixins::Retriable do
   context 'with a proc returning a retry policy' do
     it 'retries the agent and returns the final output artifacts' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
     end
 
     it 'waits the configured number of seconds before retrying' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy(wait_secs: 3) : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 3 } : nil })
       allow(agent).to receive(:sleep).and_return(nil)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
@@ -79,14 +66,14 @@ describe ComposableAgents::Mixins::Retriable do
 
     it 'treats nil wait_secs as 0' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy(wait_secs: nil) : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: nil } : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
     end
 
     it 'does not sleep when wait_secs is 0' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy(wait_secs: 0) : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 0 } : nil })
       allow(agent).to receive(:sleep)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
@@ -107,7 +94,7 @@ describe ComposableAgents::Mixins::Retriable do
       agent.retry_on(
         lambda do |a, _exception|
           evaluation_log << :second
-          a.run_count < 2 ? policy : nil
+          a.run_count < 2 ? {} : nil
         end
       )
       expect(agent.run(input: 1)).to eq(output: 1)
@@ -121,7 +108,7 @@ describe ComposableAgents::Mixins::Retriable do
       agent.retry_on(
         lambda do |a, _exception|
           evaluation_log << :first
-          a.run_count == 1 ? policy : nil
+          a.run_count == 1 ? {} : nil
         end
       )
       agent.retry_on(
@@ -137,7 +124,7 @@ describe ComposableAgents::Mixins::Retriable do
 
     it 'supports multiple consecutive retries' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count < 3 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count < 3 ? {} : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(3)
     end
@@ -155,7 +142,7 @@ describe ComposableAgents::Mixins::Retriable do
   context 'with with_retry_on' do
     it 'registers the proc for the duration of the block and unregisters it after' do
       agent = retriable_agent
-      agent.with_retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil }) do
+      agent.with_retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil }) do
         expect(agent.run(input: 1)).to eq(output: 1)
         expect(agent.run_count).to eq(2)
       end
@@ -166,7 +153,7 @@ describe ComposableAgents::Mixins::Retriable do
     it 'keeps procs registered inside the block' do
       agent = retriable_agent
       agent.with_retry_on(->(a, _exception) {}) do
-        agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil })
+        agent.retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil })
       end
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
@@ -175,7 +162,7 @@ describe ComposableAgents::Mixins::Retriable do
     it 'unregisters the proc even if the block raises' do
       agent = retriable_agent
       expect do
-        agent.with_retry_on(->(_a, _exception) { policy }) do
+        agent.with_retry_on(->(_a, _exception) { {} }) do
           raise 'boom'
         end
       end.to raise_error('boom')
@@ -192,7 +179,7 @@ describe ComposableAgents::Mixins::Retriable do
 
     it 'keeps a registered proc across several runs' do
       agent = retriable_agent
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
     end
@@ -224,14 +211,14 @@ describe ComposableAgents::Mixins::Retriable do
 
     it 'does not raise and applies the retry policy when one is returned' do
       agent = retriable_agent(->(a) { raise 'run_failed' if a.run_count == 1 })
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
     end
 
     it 'propagates an exception raised on a retry attempt' do
       agent = retriable_agent(->(a) { raise 'retry_failed' if a.run_count == 2 })
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? {} : nil })
       expect do
         agent.run(input: 1)
       end.to raise_error('retry_failed')
@@ -240,14 +227,14 @@ describe ComposableAgents::Mixins::Retriable do
 
     it 'retries after multiple exceptions and eventually succeeds' do
       agent = retriable_agent(->(a) { raise 'transient_error' if a.run_count < 3 })
-      agent.retry_on(->(a, _exception) { a.run_count < 3 ? policy : nil })
+      agent.retry_on(->(a, _exception) { a.run_count < 3 ? {} : nil })
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(3)
     end
 
     it 'waits the configured number of seconds when retrying after an exception' do
       agent = retriable_agent(->(a) { raise 'run_failed' if a.run_count == 1 })
-      agent.retry_on(->(a, _exception) { a.run_count == 1 ? policy(wait_secs: 3) : nil })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 3 } : nil })
       allow(agent).to receive(:sleep).and_return(nil)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)

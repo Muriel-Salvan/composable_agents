@@ -16,34 +16,16 @@ module ComposableAgents
     #
     # * Each registered proc is kept in an internal array, in registration order.
     # * A proc receives the agent's instance and the exception raised by `run`
-    #   (or `nil` if none) and returns either `nil` (no retry) or a {RetryPolicy}.
+    #   (or `nil` if none) and returns either `nil` (no retry) or a policy hash
+    #   with optional `:wait_secs` and optional `:modifier` keys.
     # * The run method is wrapped: it calls the original run, then evaluates the
-    #   registered procs in order until one returns a non-nil {RetryPolicy}.
-    # * If `run` raised an exception and no proc returned a non-nil {RetryPolicy},
+    #   registered procs in order until one returns a non-nil policy hash.
+    # * If `run` raised an exception and no proc returned a non-nil policy hash,
     #   the exception is re-raised to the caller.
     # * If a proc decides to retry: wait for `wait_secs` seconds, then call the
     #   `modifier` proc (if any), then call run again.
     #
-    # # Naming
-    #
-    # The {RetryPolicy} name and its `wait_secs` / `modifier` properties are
-    # kept from the draft; they are clear and self-documenting.
     module Retriable
-      # Configuration deciding whether and how an agent should be retried.
-      #
-      # @!attribute [rw] wait_secs
-      #   @return [Integer, Float] number of seconds to wait before retrying.
-      #     Defaults to 0.
-      # @!attribute [rw] modifier
-      #   @return [Proc, nil] proc called with the agent instance before
-      #     retrying. Defaults to doing nothing.
-      RetryPolicy = Struct.new(:wait_secs, :modifier, keyword_init: true) do
-        # @return [Integer, Float] wait time, defaulting to 0 when nil.
-        def wait_secs
-          self[:wait_secs] || 0
-        end
-      end
-
       # @!group Public API
 
       # Register a proc that evaluates whether the agent should be retried
@@ -55,6 +37,12 @@ module ComposableAgents
       #
       # @param proc [Proc] the retry condition proc. It receives the agent's
       #   instance and the exception raised by `run` (or `nil` if none).
+      #   - param agent [Agent] The agent for which the retry is considered.
+      #   - param exception [Exception, nil] The exception that was raised by the run, or nil if none.
+      #   - result [Hash\\{Symbol => Object}] Definition of the retry policy, with optional properties:
+      #     - wait_secs [Integer, Float] Wait time in seconds before retrying (defaults to 0).
+      #     - modifier [Proc] Code called to modify the agent's state before retrying (defaults to doing nothing).
+      #       - param agent [Agent] The agent for which the retry is considered.
       # @return [self]
       def retry_on(proc)
         retry_policies << proc
@@ -68,9 +56,8 @@ module ComposableAgents
       # those are kept after the block ends; only the proc given to this
       # method is unregistered.
       #
-      # @param proc [Proc] the retry condition proc
+      # @param proc [Proc] the retry condition proc (see #retry_on)
       # @yield the code block in which the proc is active
-      # @return [Object] the value returned by the block
       def with_retry_on(proc, &)
         retry_on(proc)
         yield
@@ -81,10 +68,10 @@ module ComposableAgents
       # Wrap the agent's run method with retry logic.
       #
       # It calls the original run, then evaluates the registered procs in
-      # order until one returns a non-nil {RetryPolicy}. Each proc receives
+      # order until one returns a non-nil policy hash. Each proc receives
       # the agent's instance and the exception raised by `run` (or `nil` if
       # none). If `run` raised an exception and no proc returned a non-nil
-      # {RetryPolicy}, the exception is re-raised to the caller. If one does,
+      # policy hash, the exception is re-raised to the caller. If one does,
       # it waits for the policy's `wait_secs`, applies the `modifier` proc
       # (if any) and calls run again.
       #
@@ -107,10 +94,10 @@ module ComposableAgents
           end
           if policy
             retry_index += 1
-            wait_secs = policy.wait_secs
+            wait_secs = policy[:wait_secs] || 0
             logger.debug "Retry ##{retry_index}: re-running in #{wait_secs}s#{" (exception #{exception})" if exception}"
             sleep(wait_secs) if wait_secs.positive?
-            policy.modifier&.call(self)
+            policy[:modifier]&.call(self)
           else
             raise exception if exception
 
