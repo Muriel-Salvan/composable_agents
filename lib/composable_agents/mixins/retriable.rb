@@ -15,16 +15,14 @@ module ComposableAgents
     # # Behaviour
     #
     # * Each registered proc is kept in an internal array, in registration order.
-    # * A proc receives the agent's instance and returns either `nil` (no retry)
-    #   or a {RetryPolicy}.
+    # * A proc receives the agent's instance and the exception raised by `run`
+    #   (or `nil` if none) and returns either `nil` (no retry) or a {RetryPolicy}.
     # * The run method is wrapped: it calls the original run, then evaluates the
     #   registered procs in order until one returns a non-nil {RetryPolicy}.
+    # * If `run` raised an exception and no proc returned a non-nil {RetryPolicy},
+    #   the exception is re-raised to the caller.
     # * If a proc decides to retry: wait for `wait_secs` seconds, then call the
     #   `modifier` proc (if any), then call run again.
-    #
-    # # Retries are purely condition-driven: exceptions raised inside `run` are
-    # # not caught by this mixin; retries only happen when a registered proc
-    # # explicitly returns a non-nil retry policy.
     #
     # # Naming
     #
@@ -55,7 +53,8 @@ module ComposableAgents
       # various criteria to retry. The registered procs are evaluated in the
       # order they were registered.
       #
-      # @param proc [Proc] the retry condition proc
+      # @param proc [Proc] the retry condition proc. It receives the agent's
+      #   instance and the exception raised by `run` (or `nil` if none).
       # @return [self]
       def retry_on(proc)
         retry_policies << proc
@@ -72,7 +71,7 @@ module ComposableAgents
       # @param proc [Proc] the retry condition proc
       # @yield the code block in which the proc is active
       # @return [Object] the value returned by the block
-      def with_retry_on(proc, &block)
+      def with_retry_on(proc, &)
         retry_on(proc)
         yield
       ensure
@@ -82,26 +81,41 @@ module ComposableAgents
       # Wrap the agent's run method with retry logic.
       #
       # It calls the original run, then evaluates the registered procs in
-      # order until one returns a non-nil {RetryPolicy}. If one does, it waits
-      # for the policy's `wait_secs`, applies the `modifier` proc (if any)
-      # and calls run again.
+      # order until one returns a non-nil {RetryPolicy}. Each proc receives
+      # the agent's instance and the exception raised by `run` (or `nil` if
+      # none). If `run` raised an exception and no proc returned a non-nil
+      # {RetryPolicy}, the exception is re-raised to the caller. If one does,
+      # it waits for the policy's `wait_secs`, applies the `modifier` proc
+      # (if any) and calls run again.
       #
       # @param input_artifacts [Hash{Symbol => Object}] input artifacts
       # @return [Hash{Symbol => Object}] output artifacts from the last run
       def run(**input_artifacts)
         output_artifacts = nil
+        retry_index = 0
         loop do
-          output_artifacts = super
+          exception = nil
+          begin
+            output_artifacts = super
+          rescue StandardError => e
+            exception = e
+          end
           policy = nil
           retry_policies.each do |policy_proc|
-            policy = policy_proc.call(self)
+            policy = policy_proc.call(self, exception)
             break if policy
           end
-          break unless policy
+          if policy
+            retry_index += 1
+            wait_secs = policy.wait_secs
+            logger.debug "Retry ##{retry_index}: re-running in #{wait_secs}s#{" (exception #{exception})" if exception}"
+            sleep(wait_secs) if wait_secs.positive?
+            policy.modifier&.call(self)
+          else
+            raise exception if exception
 
-          wait_secs = policy.wait_secs
-          sleep(wait_secs) if wait_secs.positive?
-          policy.modifier&.call(self)
+            break
+          end
         end
         output_artifacts
       end
