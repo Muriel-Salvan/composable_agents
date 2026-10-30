@@ -23,8 +23,6 @@ module ComposableAgents
     class Agent < PromptDrivenAgent
       # @!group Public API
 
-      prepend Mixins::ArtifactContract
-
       # Initialize a new agent that uses the Cline CLI in a dedicated config
       #
       # @param strategy [Module] The prompt rendering strategy

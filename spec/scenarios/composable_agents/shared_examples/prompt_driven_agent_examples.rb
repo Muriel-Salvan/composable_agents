@@ -13,17 +13,18 @@ shared_examples 'a prompt driven agent' do |opts|
   #     - [String] The text output of the assistant.
   #     - [Hash{Symbol => Object}] A more detailed structure describing the output:
   #       - text [String] The text output of the assistant (same as the String version of the output).
+  #         This raw text can include output artifact blocks, as parsed by the used prompt rendering strategy.
+  #         The test suite's mock is responsible for processing them like a real run would:
+  #         valid blocks save their artifacts, while malformed JSON blocks report errors on their artifacts.
   #       - output_artifacts [Hash{Symbol => Object}] The output artifacts that should be mocked by the run.
   #   - Param kwargs [Hash] The parameters to be given to the agent's constructor
   #   - Return [Agent] The new agent decorated instance
-  # - contracts [Boolean] Is the agent using artifacts contracts? Defaults to `false`.
   # - default_conversation_name [String] The default conversation name
   # - named_agent_conversation_name [String] The conversation name used for an agent named 'Test Assistant'
 
   # Set default values
   opts.replace(
     {
-      contracts: false,
       default_conversation_name: 'Agent'
     }.merge(opts)
   )
@@ -139,12 +140,7 @@ shared_examples 'a prompt driven agent' do |opts|
           end
 
           it 'uses the input artifacts in the system prompt' do
-            agent = new_agent(
-              **{
-                system_instructions: test_data[:system_instructions],
-                input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
-              }.compact
-            )
+            agent = new_agent(system_instructions: test_data[:system_instructions])
             agent.run(user_instructions: 'Do this', test_artifact: 'Content')
             expect(agent.spy[:system_prompt]).to eq "SYSTEM_PROMPT[#{test_data[:system_prompt]} with test_artifact (Content)]"
           end
@@ -202,17 +198,105 @@ shared_examples 'a prompt driven agent' do |opts|
           end
 
           it 'uses the input artifacts in the user prompt' do
-            agent = new_agent(
-              mocked_assistant_outputs: 'Assistant Output',
-              **{
-                input_artifacts_contracts: opts[:contracts] ? { test_artifact: 'Description' } : nil
-              }.compact
-            )
+            agent = new_agent(mocked_assistant_outputs: 'Assistant Output')
             agent.run(user_instructions: test_data[:user_instructions], test_artifact: 'Content')
             expect(agent.spy[:user_prompts]).to eq ["USER_PROMPT[#{test_data[:user_prompt]} with test_artifact (Content)]"]
           end
         end
       end
+    end
+  end
+
+  describe 'artifacts' do
+    it 'completes artifacts on subsequent runs' do
+      # Run the agent with an artifact for the first time
+      agent = new_agent(
+        mocked_assistant_outputs: [
+          { output_artifacts: { out1: 'Content 1' } },
+          { output_artifacts: { out2: 'Content 2' } },
+          { output_artifacts: { out1: 'Content 1.1', out3: 'Content 3' } }
+        ]
+      )
+      output_artifacts1 = agent.run(user_instructions: 'Do this task', test_artifact: 'Content').dup
+      output_artifacts2 = agent.run(user_instructions: 'Do this task again', test_artifact: 'Content').dup
+      output_artifacts3 = agent.run(user_instructions: 'Do this task 1 more time', test_artifact: 'Content').dup
+      # Expectations on the 3 output artifacts
+      expect(output_artifacts1).to eq({ out1: 'Content 1' })
+      expect(output_artifacts2).to eq({ out1: 'Content 1', out2: 'Content 2' })
+      expect(output_artifacts3).to eq({ out1: 'Content 1.1', out2: 'Content 2', out3: 'Content 3' })
+    end
+
+    it 'fails when output artifact JSON parsing fails' do
+      agent = new_agent(
+        mocked_assistant_outputs: [
+          {
+            text: <<~EO_OUTPUT
+              Assistant Output #1
+              ```json output_artifact=ARTIFACT_LOGS
+              Wrong JSON
+              ```
+            EO_OUTPUT
+          }
+        ]
+      )
+      expect { agent.run }.to raise_error(ComposableAgents::OutputArtifactsError) do |error|
+        expect(error.output_artifacts_errors).to eq(
+          # Error messages differ between OS.
+          logs: begin
+            JSON.parse('Wrong JSON')
+          rescue JSON::ParserError
+            $ERROR_INFO.message
+          end
+        )
+      end
+    end
+
+    it 'removes previous versions of output artifacts when the agent tries to generate a new one with error' do
+      agent = new_agent(
+        mocked_assistant_outputs: [
+          # 1. Generates both :result and :logs successfully
+          {
+            text: <<~EO_OUTPUT
+              Assistant Output #1
+              ```json output_artifact=ARTIFACT_RESULT
+              "ok"
+              ```
+              ```json output_artifact=ARTIFACT_LOGS
+              "logs"
+              ```
+            EO_OUTPUT
+          },
+          # 2. Regenerates :logs successfully, but :result's JSON parsing fails
+          {
+            text: <<~EO_OUTPUT
+              Assistant Output #2
+              ```json output_artifact=ARTIFACT_LOGS
+              "logs 2"
+              ```
+              ```json output_artifact=ARTIFACT_RESULT
+              Wrong JSON
+              ```
+            EO_OUTPUT
+          },
+          # 3. Adds nothing
+          {
+            text: <<~EO_OUTPUT
+              Assistant Output #3
+              ```json output_artifact=ARTIFACT_RESULT
+              "ok 3"
+              ```
+            EO_OUTPUT
+          }
+        ]
+      )
+      # First run produces both artifacts
+      expect(agent.run).to eq(result: 'ok', logs: 'logs')
+      # Second run fails parsing :result: its previous version is removed and the error is recorded
+      expect { agent.run }.to raise_error(ComposableAgents::OutputArtifactsError) do |error|
+        expect(error.output_artifacts_errors.keys).to eq [:result]
+      end
+      # Third run regenerates :result: its error is cleared, and :logs keeps its version from the failing run
+      expect(agent.run).to eq(result: 'ok 3', logs: 'logs 2')
     end
   end
 

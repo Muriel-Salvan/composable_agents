@@ -153,6 +153,31 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#parse_outpu
     end
   end
 
+  describe 'with 1 output artifact containing ``` ... ``` strings in its content' do
+    it 'parses the artifact correctly' do
+      agent.parse_output_artifacts <<~EO_TEXT
+        Assistant Output
+        ```json output_artifact=ARTIFACT_RESULT
+        {
+          "status": "completed",
+          "data": "```\\nMarkdown content\\n```\\n"
+        }
+        ```
+      EO_TEXT
+      expect(agent.output_artifacts).to eq(
+        result: {
+          'status' => 'completed',
+          'data' => <<~EO_DATA
+            ```
+            Markdown content
+            ```
+          EO_DATA
+        }
+      )
+      expect(agent.output_artifacts_errors).to be_empty
+    end
+  end
+
   describe 'with several output artifacts of various types' do
     let(:output_contracts) do
       {

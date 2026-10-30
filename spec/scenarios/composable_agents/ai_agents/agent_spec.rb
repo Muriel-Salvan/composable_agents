@@ -1,5 +1,4 @@
 require_relative '../shared_examples/prompt_driven_agent_examples'
-require_relative '../shared_examples/prompt_driven_agent_with_contracts_examples'
 
 describe ComposableAgents::AiAgents::Agent do
   # Mock an agent runner run for a given agent.
@@ -24,14 +23,20 @@ describe ComposableAgents::AiAgents::Agent do
         agent.spy_contexts << context
         mocked_run_result = mocked_run_results.shift
         mocked_output_artifacts = mocked_run_result&.delete(:output_artifacts)
-        if mocked_output_artifacts
+        mocked_output_text = mocked_run_result&.dig(:output)
+        if mocked_output_artifacts || mocked_output_text
           # Use a mocked call to the corresponding tool
           tool_agent = agents
             .first
             .tools
             .find { |tool| tool.is_a?(ComposableAgents::AiAgents::Tools::CreateArtifactTool) }
             .instance_variable_get(:@agent)
-          mocked_output_artifacts.each { |name, content| tool_agent.save_output_artifact(name, content) }
+          # The assistant's text output may contain output artifact blocks (see shared examples).
+          # Process them like a real run would: valid blocks save their artifacts,
+          # malformed JSON blocks report errors on their artifacts.
+          # Here we know that the agent in tests is using the TestRenderingStrategy, so parse_output_artifacts exists.
+          tool_agent.parse_output_artifacts(mocked_output_text) if mocked_output_text
+          mocked_output_artifacts&.each { |name, content| tool_agent.save_output_artifact(name, content) }
         end
         run_idx = (context[:run_idx] || 0) + 1
         double(
@@ -83,24 +88,6 @@ describe ComposableAgents::AiAgents::Agent do
         )
         agent
       end
-    end,
-    default_conversation_name: 'Agent Unnamed (AiAgent test-model)',
-    named_agent_conversation_name: 'Agent Test Assistant (AiAgent test-model)'
-  )
-
-  it_behaves_like(
-    'a prompt driven agent with artifacts contracts',
-    new_agent: proc do |example, mocked_assistant_outputs: [], **kwargs|
-      agent = Class.new(described_class) do
-        prepend ComposableAgents::Mixins::ArtifactContract
-      end.new(composable_agents_dir: '.composable_agents_test', model: 'test-model', **kwargs)
-      example.instance_eval do
-        mock_agent_runner_for(
-          agent,
-          mocked_outputs_to_agent_runner_outputs(mocked_assistant_outputs)
-        )
-      end
-      agent
     end,
     default_conversation_name: 'Agent Unnamed (AiAgent test-model)',
     named_agent_conversation_name: 'Agent Test Assistant (AiAgent test-model)'
