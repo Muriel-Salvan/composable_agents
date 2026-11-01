@@ -1,3 +1,15 @@
+# [v3.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.0.0...v3.1.0) (2026-11-01 13:55:18)
+
+## Global changes
+### Patches
+
+* [feat(cline): introduce ClineError and extract MissingSkillError](https://github.com/Muriel-Salvan/composable_agents/commit/ba02df7d666c96c7cfc23a1b5a7eb92274a9e496)
+
+## Changes for cline
+### Features
+
+* [feat(cline): introduce ClineError and extract MissingSkillError](https://github.com/Muriel-Salvan/composable_agents/commit/ba02df7d666c96c7cfc23a1b5a7eb92274a9e496)
+
 # [v3.0.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.2.0...v3.0.0) (2026-11-01 12:34:56)
 
 ## Global changes
