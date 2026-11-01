@@ -1,3 +1,15 @@
+# [v3.0.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.2.0...v3.0.0) (2026-11-01 12:34:56)
+
+## Global changes
+### Breaking changes
+
+* [break: add retriable artifacts mixin for auto-retry on missing outputs and remove any mixin from prompt driven agents](https://github.com/Muriel-Salvan/composable_agents/commit/76073bebe8ee247d24a3bc3279c1db822640f47a)
+
+## Changes for composable-agents
+### Features
+
+* [break: add retriable artifacts mixin for auto-retry on missing outputs and remove any mixin from prompt driven agents](https://github.com/Muriel-Salvan/composable_agents/commit/76073bebe8ee247d24a3bc3279c1db822640f47a)
+
 # [v2.2.0](https://github.com/Muriel-Salvan/composable_agents/compare/v2.1.3...v2.2.0) (2026-10-29 20:11:23)
 
 ## Global changes
