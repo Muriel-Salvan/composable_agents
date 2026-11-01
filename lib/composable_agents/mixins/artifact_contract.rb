@@ -64,6 +64,15 @@ module ComposableAgents
 
       private
 
+      # Restrict the output artifacts errors that should raise an {OutputArtifactsError} at the end of a run
+      #   to only those concerning artifacts defined in the output artifacts contracts.
+      # Errors on artifacts that are not part of the contracts are ignored.
+      #
+      # @return [Hash{Symbol => String}] The output artifacts errors that should raise, per artifact name
+      def output_artifacts_errors_to_raise
+        (defined?(super) ? super : {}).slice(*normalized_output_artifacts_contracts.keys)
+      end
+
       # Define input artifacts contracts
       #
       # @return [Hash{Symbol => Object}] Set of input artifacts contract, per artifact name

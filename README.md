@@ -54,6 +54,7 @@ Whether you're building a code review assistant, a document summarizer, or a mul
     - [`ComposableAgents::Mixins::UserInteraction`](#composableagentsmixinsuserinteraction)
     - [`ComposableAgents::Mixins::ArtifactContract`](#composableagentsmixinsartifactcontract)
     - [`ComposableAgents::Mixins::Retriable`](#composableagentsmixinsretriable)
+    - [`ComposableAgents::Mixins::RetriableArtifacts`](#composableagentsmixinsretriableartifacts)
   - [Additional notes](#additional-notes)
 - [Documentation](#documentation)
 - [How it works](#how-it-works)
@@ -205,6 +206,7 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
 - 📦 **Typed artifact contracts** — Define and validate input/output schemas with descriptions, optional flags, and types (`:text`, `:markdown`, `:json`). The framework raises clear `MissingInputArtifactError`, `MissingOutputArtifactError`, or `ArtifactTypeError` on violations.
 - 💾 **Resumable execution** — Persist step-by-step state to disk (via the `Resumable` mixin). Interrupted runs can be resumed seamlessly — previously completed steps are skipped, saving time and API costs.
 - 🔁 **Conditional retries** — Wrap an agent's `#run` with the `Retriable` mixin to retry on transient failures. Register condition procs via `#retry_on` that receive the agent and any raised exception (or `nil`) and return a policy hash (optional `:wait_secs`, optional `:modifier`) to wait-and-retry, or `nil` to skip. Unhandled exceptions are re-raised when no policy applies.
+- 🔁 **Automatic artifact retry* — Prepend the RetriableArtifacts mixin to a PromptDrivenAgent subclass to automatically re-run when output artifacts declared in contracts are missing or in error. Configurable via `artifacts_errors_max_retries` (default: 3); raises `ArtifactsErrorsMaxRetriesExceededError` when the limit is exceeded.
 - 🗣️ **User interaction** — Agents can ask users clarifying questions mid-execution. Works out of the box via the terminal, or through an `ai-agents` tool integration for LLM-controlled workflows.
 - 📋 **Automatic conversation tracking** — Every prompt and response is automatically recorded with timestamps in a structured `conversation` store, ready for debugging or replay.
 - ⚙️ **Flexible instruction system** — Use raw text, structured ordered-lists, or a mix of both to define agent instructions, rendered consistently by the chosen strategy.
@@ -480,6 +482,34 @@ Mixins are `prepend`-ed into an agent class to add specific capabilities.
   ```
 - **Full documentation:** [Mixins::Retriable on RubyDoc](https://www.rubydoc.info/gems/composable_agents/ComposableAgents/Mixins/Retriable) | [retriable.rb on GitHub](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/mixins/retriable.rb)
 
+
+#### `ComposableAgents::Mixins::RetriableArtifacts`
+
+- **Description:** Automatically retries the run when output artifacts declared in contracts are missing or in error on prompt-driven agents. Requires both the ArtifactContract and Retriable mixins to be prepended, and must be prepended on an agent descending from PromptDrivenAgent.
+- **Public methods:**
+  - `#initialize(*args, artifacts_errors_max_retries: 3, **kwargs)` — Registers a retry policy that re-executes the run with a prompt asking for missing artifacts when output artifacts are missing or in error. The artifacts_errors_max_retries parameter (default: 3) sets the maximum number of retries before raising ArtifactsErrorsMaxRetriesExceededError.
+- **Usage example:**
+  ```ruby
+  class MyAgent < ComposableAgents::PromptDrivenAgent
+    prepend ComposableAgents::Mixins::ArtifactContract
+    prepend ComposableAgents::Mixins::Retriable
+    prepend ComposableAgents::Mixins::RetriableArtifacts
+
+    def output_artifacts_contracts
+      { result: "Final result", logs: "Execution logs" }
+    end
+
+    def run(**inputs)
+      # Processing logic that may produce incomplete output artifacts
+      super
+    end
+  end
+
+  agent = MyAgent.new(artifacts_errors_max_retries: 3)
+  agent.run  # Automatically retries if result or logs are missing or in error
+  ```
+- **Raises:** ArtifactsErrorsMaxRetriesExceededError when the maximum number of retries is exceeded.
+
 ---
 
 ### Additional notes
@@ -680,7 +710,7 @@ npm install node-pty
 │       ├── instructions.rb       # Instruction system
 │       ├── ai_agents/            # ai-agents backend
 │       ├── cline/                # cline-rb backend
-│       ├── mixins/               # Resumable, ArtifactContract, UserInteraction, Logger
+│       ├── mixins/               # ArtifactContract, Logger, Resumable, Retriable, RetriableArtifacts, UserInteraction
 │       ├── prompt_rendering_strategy/ # Markdown & MarkdownHeavy strategies
 │       └── utils/                # Markdown utilities
 ├── spec/                         # Test suite

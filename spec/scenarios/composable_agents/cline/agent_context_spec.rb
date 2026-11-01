@@ -224,28 +224,22 @@ describe ComposableAgents::Cline::Agent do
       expect(agent.spy[:user_prompts].last).to include('Assistant Output #1').once
     end
 
-    it 'includes the context again in missing output artifacts prompts' do
-      agent = cline_agent(output_artifacts_contracts: { result: 'Final result' })
+    it 'includes the context again in subsequent runs' do
+      agent = cline_agent
       mock_cline_for(
         agent,
         [
-          {
-            stdout: 'Assistant Output #1'
-          },
-          {
-            stdout: <<~EO_OUTPUT
-              Assistant Output #2
-              ```json output_artifact=ARTIFACT_RESULT
-              "ok"
-              ```
-            EO_OUTPUT
-          }
+          { stdout: 'Assistant Output #1' },
+          { stdout: 'Assistant Output #2' },
+          { stdout: 'Assistant Output #3' }
         ]
       )
-      agent.run
+      agent.run(user_instructions: 'Instructions #1')
+      agent.run(user_instructions: 'Instructions #2')
+      agent.run(user_instructions: 'Instructions #3')
       expect(agent.spy[:user_prompts]).to eq [
-        'USER_PROMPT[]',
-        <<~EO_USER_PROMPT.strip
+        'USER_PROMPT[RENDERED_TEXT: Instructions #1]',
+        <<~EO_USER_PROMPT.strip,
           # Previous sessions context
 
           Here is the conversation from a previous session for context:
@@ -254,7 +248,7 @@ describe ComposableAgents::Cline::Agent do
           #{JSON.dump [
             {
               role: 'user',
-              content: [{ type: 'text', text: 'USER_PROMPT[]' }]
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Instructions #1]' }]
             },
             {
               role: 'assistant',
@@ -265,7 +259,37 @@ describe ComposableAgents::Cline::Agent do
 
           Continue with the task, building on the work from the session above.
 
-          USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result)]
+          USER_PROMPT[RENDERED_TEXT: Instructions #2]
+        EO_USER_PROMPT
+        <<~EO_USER_PROMPT.strip
+          # Previous sessions context
+
+          Here is the conversation from a previous session for context:
+
+          ```json
+          #{JSON.dump [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Instructions #1]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #1' }]
+            },
+            {
+              role: 'user',
+              content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Instructions #2]' }]
+            },
+            {
+              role: 'assistant',
+              content: [{ type: 'text', text: 'Assistant Output #2' }]
+            }
+          ]}
+          ```
+
+          Continue with the task, building on the work from the session above.
+
+          USER_PROMPT[RENDERED_TEXT: Instructions #3]
         EO_USER_PROMPT
       ]
     end

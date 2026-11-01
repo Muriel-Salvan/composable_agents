@@ -59,6 +59,8 @@ module ComposableAgents
       @system_instructions = system_instructions
       @constraints = constraints
       @conversation = []
+      @output_artifacts = {}
+      @output_artifacts_errors = {}
     end
 
     # Execute the agent to generate some output artifacts based on some input artifacts.
@@ -70,29 +72,14 @@ module ComposableAgents
     def run(user_instructions: nil, **input_artifacts)
       super
       @input_artifacts = input_artifacts
-      @output_artifacts = {}
-      @output_artifacts_errors = {}
       @system_prompt = render_system_prompt(render_instructions(@system_instructions))
       logger.debug "System prompt: #{@system_prompt}"
+      # TODO: Merge converse and prompt directly here. No need for this extra complexity now that Retriable has been moved out.
       converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
-      if respond_to?(:normalized_output_artifacts_contracts, true)
-        # We know which output artifacts we are expecting.
-        # Therefore check if some are missing and prompt again if that's the case.
-        # TODO: Implement a max number of retries and throw an exception if it exceeds.
-        loop do
-          missing_artifacts = normalized_output_artifacts_contracts
-            .reject { |artifact_name, _artifact_description| @output_artifacts.key?(artifact_name) }
-            .to_h do |artifact_name, artifact_description|
-              [
-                artifact_name,
-                artifact_description.merge(@output_artifacts_errors[artifact_name] ? { error: @output_artifacts_errors[artifact_name] } : {})
-              ]
-            end
-          break if missing_artifacts.empty?
+      # Raise an exception if some output artifacts have errors.
+      output_artifacts_errors = output_artifacts_errors_to_raise
+      raise OutputArtifactsError, output_artifacts_errors unless output_artifacts_errors.empty?
 
-          converse(missing_output_user_instructions(missing_artifacts))
-        end
-      end
       @output_artifacts
     end
 
@@ -167,6 +154,15 @@ module ComposableAgents
     end
 
     private
+
+    # Get the output artifacts errors that should raise an {OutputArtifactsError} at the end of a run.
+    # By default, all the errors that were reported during the run should raise.
+    # This is a hook that other mixins can override to restrict the errors that should raise.
+    #
+    # @return [Hash{Symbol => String}] The output artifacts errors that should raise, per artifact name
+    def output_artifacts_errors_to_raise
+      @output_artifacts_errors
+    end
 
     # Render instructions using the prompt rendering strategy.
     # Returns nil if instructions is nil.
