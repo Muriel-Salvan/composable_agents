@@ -12,7 +12,7 @@ describe ComposableAgents::Cline::Agent do
         }
       )
       expect { agent.run(user_instructions: 'Do something') }
-        .to raise_error(/Error: max consecutive mistakes reached \(3\) in yolo mode/)
+        .to raise_error(ComposableAgents::Cline::ClineError, /Error: max consecutive mistakes reached \(3\) in yolo mode/)
     end
 
     it 'raises with the error_message attribute when no err field is present' do
@@ -25,7 +25,7 @@ describe ComposableAgents::Cline::Agent do
         }
       )
       expect { agent.run(user_instructions: 'Do something') }
-        .to raise_error(/Error: max consecutive mistakes reached \(3\) in yolo mode/)
+        .to raise_error(ComposableAgents::Cline::ClineError, /Error: max consecutive mistakes reached \(3\) in yolo mode/)
     end
 
     it 'falls back to error_name when neither err nor error_message is present' do
@@ -38,7 +38,7 @@ describe ComposableAgents::Cline::Agent do
         }
       )
       expect { agent.run(user_instructions: 'Do something') }
-        .to raise_error(/Error: AgentRuntimeAbortError/)
+        .to raise_error(ComposableAgents::Cline::ClineError, /Error: AgentRuntimeAbortError/)
     end
 
     it 'raises with the msg fallback when the error log has no err field' do
@@ -50,7 +50,7 @@ describe ComposableAgents::Cline::Agent do
           exit: 1
         }
       )
-      expect { agent.run(user_instructions: 'Do something') }.to raise_error(/Error: Something went wrong/)
+      expect { agent.run(user_instructions: 'Do something') }.to raise_error(ComposableAgents::Cline::ClineError, /Error: Something went wrong/)
     end
   end
 end

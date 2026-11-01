@@ -48,6 +48,7 @@ Whether you're building a code review assistant, a document summarizer, or a mul
     - [`ComposableAgents::AiAgents::Agent < PromptDrivenAgent`](#composableagentsaiagentsagent--promptdrivenagent)
     - [`ComposableAgents::Cline::Agent < PromptDrivenAgent`](#composableagentsclineagent--promptdrivenagent)
     - [`ComposableAgents::Cline::MissingSkillError < RuntimeError`](#composableagentsclinemissingskillerror--runtimeerror)
+    - [`ComposableAgents::Cline::ClineError < RuntimeError`](#composableagentsclineerror--runtimeerror)
   - [Mixins](#mixins)
     - [`ComposableAgents::Logger < ::Logger`](#composableagentslogger--logger)
     - [`ComposableAgents::Mixins::Resumable`](#composableagentsmixinsresumable)
@@ -362,6 +363,11 @@ The project is a Ruby library (not a CLI) — users install the gem and use its 
 
 - **Description:** Raised by `Cline::Agent` when a referenced skill is not found in the global or project Cline configuration.
 - **Full documentation:** [cline/agent.rb on GitHub](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/cline/agent.rb)
+
+#### `ComposableAgents::Cline::ClineError < RuntimeError`
+
+- **Description:** Raised by `Cline::Agent` when a Cline CLI run fails.
+- **Full documentation:** [cline/cline_error.rb on GitHub](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/cline/cline_error.rb)
 
 ---
 
