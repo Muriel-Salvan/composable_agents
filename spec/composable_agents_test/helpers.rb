@@ -3,6 +3,7 @@ module ComposableAgentsTest
     include Cline
     include Debug
     include PromptDrivenAgents
+    include Sleep
 
     # Instantiate an agent using the Markdown prompt rendering strategy.
     #

@@ -26,6 +26,10 @@ Layout/MultilineOperationIndentation:
 Lint/UnusedMethodArgument:
   AllowUnusedKeywordArguments: true
 
+# Adding the extra private modifier is just noise
+Lint/UselessConstantScoping:
+  Enabled: false
+
 # It's ok to have longer methods, while keeping readability.
 Metrics/AbcSize:
   Max: 90

@@ -81,10 +81,10 @@ describe ComposableAgents::Mixins::Retriable do
     it 'waits the configured number of seconds before retrying' do
       agent = retriable_agent
       agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 3 } : nil })
-      allow(agent).to receive(:sleep).and_return(nil)
+      mock_sleeps(agent)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
-      expect(agent).to have_received(:sleep).with(3)
+      expect(sleep_calls).to eq([3])
     end
 
     it 'treats nil wait_secs as 0' do
@@ -97,10 +97,10 @@ describe ComposableAgents::Mixins::Retriable do
     it 'does not sleep when wait_secs is 0' do
       agent = retriable_agent
       agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 0 } : nil })
-      allow(agent).to receive(:sleep)
+      mock_sleeps(agent)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
-      expect(agent).not_to have_received(:sleep)
+      expect(sleep_calls).to be_empty
     end
   end
 
@@ -357,10 +357,10 @@ describe ComposableAgents::Mixins::Retriable do
     it 'waits the configured number of seconds when retrying after an exception' do
       agent = retriable_agent(->(a) { raise 'run_failed' if a.run_count == 1 })
       agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 3 } : nil })
-      allow(agent).to receive(:sleep).and_return(nil)
+      mock_sleeps(agent)
       expect(agent.run(input: 1)).to eq(output: 1)
       expect(agent.run_count).to eq(2)
-      expect(agent).to have_received(:sleep).with(3)
+      expect(sleep_calls).to eq([3])
     end
   end
 end

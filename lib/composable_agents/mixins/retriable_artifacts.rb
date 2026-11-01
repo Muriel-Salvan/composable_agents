@@ -23,7 +23,7 @@
       # @param kwargs [Hash] Keyword arguments passed to the parent initializer
       def initialize(*args, artifacts_errors_max_retries: 3, **kwargs)
         super(*args, **kwargs)
-        @overridden_user_instructions = nil
+        @retriable_artifacts_user_instructions = nil
         max_retries = artifacts_errors_max_retries
         artifacts_errors_retries = 0
         last_artifact_keys = nil
