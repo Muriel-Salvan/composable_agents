@@ -3,10 +3,6 @@ require 'cline'
 module ComposableAgents
   # All agents from this module work with the awesome cline-rb Rubygem
   module Cline
-    # Missin skill error
-    class MissingSkillError < RuntimeError
-    end
-
     # Agent implementation that uses an ai-agent's AgentRunner.
     # This agent publishes the following run information:
     # - usage [Hash] Cumulative usage of the API requests (cost and tokens) made during the run.
@@ -168,7 +164,7 @@ module ComposableAgents
           end,
           **@cli_options
         )
-        raise "Error: #{extract_error_message(result[:error])}".strip if result[:error]
+        raise ClineError, "Error: #{extract_error_message(result[:error])}".strip if result[:error]
 
         # Keep the context in case we need to resume it
         if cline_cli.session&.messages
