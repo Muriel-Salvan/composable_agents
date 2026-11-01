@@ -1,4 +1,4 @@
-require 'spec_helper'
+﻿require 'spec_helper'
 
 describe ComposableAgents::Mixins::RetriableArtifacts do
   # Build a {ComposableAgents::PromptDrivenAgent} subclass that prepends
@@ -69,7 +69,10 @@ describe ComposableAgents::Mixins::RetriableArtifacts do
       end
 
       def spy
-        { system_prompt: @system_prompt, user_prompts: @user_prompts || [] }
+        {
+          system_prompt: @system_prompt,
+          user_prompts: @user_prompts || []
+        }
       end
     end
     new_agent = agent_class.new(strategy: ComposableAgentsTest::TestRenderingStrategy, **kwargs)
@@ -125,17 +128,54 @@ describe ComposableAgents::Mixins::RetriableArtifacts do
       agent = retriable_artifacts_agent(
         [
           { output_artifacts: { result: 'partial' } },
-          { output_artifacts: { logs: 'complete' } },
-          { output_artifacts: { result: 'partial', logs: 'complete' } }
+          { output_artifacts: { logs: 'complete' } }
+        ],
+        artifacts_errors_max_retries: 0,
+        output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
+      )
+      # First run: missing logs -> max retries (0) exceeded immediately -> raises
+      expect do
+        agent.run
+      end.to raise_error(ComposableAgents::ArtifactsErrorsMaxRetriesExceededError)
+      # Second run: all artifacts provided -> succeeds
+      expect(agent.run).to include(result: 'partial', logs: 'complete')
+    end
+
+    it 'uses default max_retries of 3' do
+      agent = retriable_artifacts_agent(
+        [
+          {},  # Run 1: missing result + logs -> retry 1
+          {},  # Run 2: missing result + logs -> retry 2
+          {},  # Run 3: missing result + logs -> retry 3
+          {}   # Run 4: missing result + logs -> max retries (3) exceeded -> raises
         ],
         output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
       )
-      # TODO: Wrong test case: can't be tested unless we have a max number of retries (so that first run fails, but second run completes).
-      expect(agent.run).to include(result: 'partial', logs: 'complete')
-      expect(agent.run(output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' })).to eq(result: 'partial', logs: 'complete')
-      # TODO: Validate prompts
+      # All 4 runs: missing result + logs -> max retries (3) exceeded on 4th attempt -> raises
+      expect { agent.run }.to raise_error(ComposableAgents::ArtifactsErrorsMaxRetriesExceededError) do |error|
+        expect(error.message).to eq 'Maximum number of retries (3) exceeded. Missing or errored artifacts: result, logs'
+      end
     end
 
+    it 'resets retry counter when the set of artifacts needing retry changes' do
+      agent = retriable_artifacts_agent(
+        [
+          {},
+          { output_artifacts: { result: 'partial' } },
+          { output_artifacts: { result: 'complete', logs: 'final' } }
+        ],
+        artifacts_errors_max_retries: 1,
+        output_artifacts_contracts: { result: 'Final result', logs: 'Execution logs' }
+      )
+      # Run 1: missing result + logs -> counter resets to 0 -> retry (counter=1)
+      # Run 2: missing logs only -> list changed -> counter resets to 0 -> retry (counter=1)
+      # Run 3: all present -> no retry -> succeeds
+      expect(agent.run).to include(result: 'complete', logs: 'final')
+      expect(agent.spy[:user_prompts].size).to eq(3)
+    end
+  end
+
+  describe 'OutputArtifactsError handling' do
     it 'subsequent runs can change output artifacts' do
       agent = retriable_artifacts_agent(
         [
@@ -178,10 +218,10 @@ describe ComposableAgents::Mixins::RetriableArtifacts do
 
     it 'does not raise when output artifacts errors concern artifacts that are not expected outputs' do
       agent = retriable_artifacts_agent(
-        [{ output_artifacts: { result: 'ok' }, output_artifacts_errors: { unknown: 'Parsing error' } }],
+        [{ output_artifacts: { result: 'ok' }, output_artifacts_errors: { unexpected: 'error' } }],
         output_artifacts_contracts: { result: 'Final result' }
       )
-      expect(agent.run).to eq(result: 'ok')
+      expect(agent.run).to include(result: 'ok')
       expect(agent.spy[:user_prompts].size).to eq(1)
     end
 

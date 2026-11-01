@@ -1,4 +1,4 @@
-module ComposableAgents
+﻿module ComposableAgents
   module Mixins
     # Mixin adding automatic retry of the run when output artifacts are missing on prompt-driven agents.
     # This mixin requires the following mixins to be prepended:
@@ -15,15 +15,42 @@ module ComposableAgents
     # included in the prompt, taken from the exception data.
     module RetriableArtifacts
       # Initialize a new agent with the retry-on-missing-artifacts policy registered.
-      def initialize(*args, **kwargs)
-        super
+      #
+      # @param artifacts_errors_max_retries [Integer] Maximum number of retries when output
+      #   artifacts are missing or in error. Defaults to 3. When the number of retries
+      #   exceeds this value, a {ArtifactsErrorsMaxRetriesExceededError} is raised.
+      # @param args [Array] Arguments passed to the parent initializer
+      # @param kwargs [Hash] Keyword arguments passed to the parent initializer
+      def initialize(*args, artifacts_errors_max_retries: 3, **kwargs)
+        super(*args, **kwargs)
         @overridden_user_instructions = nil
+        max_retries = artifacts_errors_max_retries
+        artifacts_errors_retries = 0
+        last_artifact_keys = nil
         retry_on(
-          proc do |agent, exception|
+          proc do |_agent, exception|
             output_artifacts_errors = exception.is_a?(OutputArtifactsError) ? exception.output_artifacts_errors : {}
-            missing = agent.send(:missing_artifacts, output_artifacts_errors)
-            # TODO: Implement a max number of retries and throw an exception if it exceeds.
-            missing.empty? ? nil : { modifier: proc { @overridden_user_instructions = missing_output_user_instructions(missing) } }
+            missing = missing_artifacts(output_artifacts_errors)
+            artifact_keys = missing.keys
+
+            # Reset counter when the set of artifacts needing retry changes between iterations
+            if artifact_keys != last_artifact_keys
+              artifacts_errors_retries = 0
+              last_artifact_keys = artifact_keys
+            end
+
+            # If no artifacts need retry, return nil (no retry)
+            if artifact_keys.empty?
+              nil
+            elsif artifacts_errors_retries >= max_retries
+              artifacts_errors_retries = 0
+              last_artifact_keys = []
+              raise ArtifactsErrorsMaxRetriesExceededError,
+                    "Maximum number of retries (#{max_retries}) exceeded. Missing or errored artifacts: #{artifact_keys.join(', ')}"
+            else
+              artifacts_errors_retries += 1
+              { modifier: proc { @overridden_user_instructions = missing_output_user_instructions(missing) } }
+            end
           end
         )
       end

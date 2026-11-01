@@ -1,4 +1,4 @@
-module ComposableAgents
+﻿module ComposableAgents
   # Custom exception raised when output artifacts have errors.
   # The whole output_artifacts_errors structure is embedded in the exception.
   class OutputArtifactsError < StandardError
