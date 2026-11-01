@@ -19,18 +19,28 @@ preferences_agent = ComposableAgents::RubyAgent.new(
     }
   end
 )
-itinerary_agent = ComposableAgents::Cline::Agent.new(
-  role: 'You are a travel planner',
-  objective: 'Find cities that would be the best destinations for the user\'s holidays',
-  input_artifacts_contracts: {
-    preferences: 'The user travel preferences'
-  },
-  output_artifacts_contracts: {
-    cities: 'The best cities matching the user travel preferences'
-  },
-  model: 'deepseek/deepseek-v4-flash',
-  api_key: ENV.fetch('CLINE_API_KEY', nil)
-)
+# Cline agent computing itineraries
+class ItineraryAgent < ComposableAgents::Cline::Agent
+  prepend ComposableAgents::Mixins::ArtifactContract
+
+  # Constructor
+  def initialize
+    super(
+      role: 'You are a travel planner',
+      objective: 'Find cities that would be the best destinations for the user\'s holidays',
+      input_artifacts_contracts: {
+        preferences: 'The user travel preferences'
+      },
+      output_artifacts_contracts: {
+        cities: 'The best cities matching the user travel preferences'
+      },
+      model: 'deepseek/deepseek-v4-flash',
+      api_key: ENV.fetch('CLINE_API_KEY', nil)
+    )
+  end
+end
+
+itinerary_agent = ItineraryAgent.new
 itinerary_agent.system_instructions = {
   ordered_list: [
     "Get the user preferences from the artifact named `#{itinerary_agent.artifact_ref(:preferences)}`.",
