@@ -14,8 +14,8 @@ describe ComposableAgents::Mixins::RetriableCline do
   #   descending from ComposableAgents::Cline::Agent
   def retriable_cline_agent(behavior = nil, **kwargs)
     new_agent = Class.new(ComposableAgents::Cline::Agent) do
-      prepend ComposableAgents::Mixins::RetriableCline
       prepend ComposableAgents::Mixins::Retriable
+      prepend ComposableAgents::Mixins::RetriableCline
 
       # @return [Proc, nil] Optional behavior called at the start of each #run
       attr_accessor :behavior
@@ -149,7 +149,7 @@ describe ComposableAgents::Mixins::RetriableCline do
     it 'retries with overridden user instructions' do
       call_count = 0
       agent = retriable_cline_agent(
-        lambda do |_agent|
+        proc do
           call_count += 1
           raise Cline::Cli::UnexpectedInteractiveSessionError, 'interactive' if call_count == 1
         end,
