@@ -23,7 +23,6 @@
       # @param kwargs [Hash] Keyword arguments passed to the parent initializer
       def initialize(*args, artifacts_errors_max_retries: 3, **kwargs)
         super(*args, **kwargs)
-        @retriable_artifacts_user_instructions = nil
         max_retries = artifacts_errors_max_retries
         artifacts_errors_retries = 0
         last_artifact_keys = nil
@@ -63,8 +62,9 @@
       #   as given by the {OutputArtifactsError} raised by the run (or empty if none).
       # @return [Hash{Symbol => Hash{Symbol => Object}}] Missing artifacts, per artifact name.
       def missing_artifacts(output_artifacts_errors)
+        output_artifacts = saved_output_artifacts
         normalized_output_artifacts_contracts
-          .reject { |artifact_name, _artifact_description| @output_artifacts.key?(artifact_name) }
+          .reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
           .to_h do |artifact_name, artifact_description|
             [
               artifact_name,

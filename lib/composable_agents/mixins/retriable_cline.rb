@@ -27,7 +27,6 @@ module ComposableAgents
         **kwargs
       )
         super(*args, **kwargs)
-        @retriable_cline_user_instructions = nil
         max_retries = cline_errors_max_retries
         initial_delay = cline_errors_retry_initial_delay_secs
         backoff_factor = cline_errors_retry_backoff_factor
