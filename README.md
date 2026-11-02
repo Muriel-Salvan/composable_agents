@@ -521,6 +521,38 @@ When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `
 
 ---
 
+#### `ComposableAgents::Mixins::RetriableCline`
+
+- **Description:** Automatically retries the run when Cline raises errors (such as `UnexpectedExitStatusError` or `UnexpectedInteractiveSessionError`) using exponential backoff with jitter. Requires the `Retriable` mixin to be prepended first, and must be prepended on an agent descending from `ComposableAgents::Cline::Agent`.
+
+- **Public methods:**
+  - `#initialize(*args, cline_errors_max_retries: 3, cline_errors_retry_initial_delay_secs: 5, cline_errors_retry_backoff_factor: 2, cline_errors_retry_max_delay_secs: 60, cline_errors_retry_jitter: 0.1, **kwargs)` — Registers a retry policy that re-executes the run with exponential backoff when Cline errors occur. Configuration options include:
+    - `cline_errors_max_retries`: Maximum number of retries (default: 3)
+    - `cline_errors_retry_initial_delay_secs`: Initial delay in seconds before first retry (default: 5)
+    - `cline_errors_retry_backoff_factor`: Multiplier for each subsequent retry (default: 2)
+    - `cline_errors_retry_max_delay_secs`: Maximum delay between retries (default: 60)
+    - `cline_errors_retry_jitter`: Amount of random jitter to add (default: 0.1 = 10%)
+  - `#run(user_instructions: nil, **input_artifacts)` — Re-executes the run, using stored user instructions from interactive session errors if applicable.
+
+- **Usage example:**
+  ```ruby
+  class MyClineAgent < ComposableAgents::Cline::Agent
+    prepend ComposableAgents::Mixins::Retriable
+    prepend ComposableAgents::Mixins::RetriableCline
+
+    def run(**inputs)
+      super
+    end
+  end
+
+  agent = MyClineAgent.new(cline_errors_max_retries: 3, cline_errors_retry_initial_delay_secs: 2)
+  agent.run  # Automatically retries on Cline errors with exponential backoff
+  ```
+
+- **Raises:** Various Cline error classes (e.g., `ComposableAgents::Cline::ClineError`, `::Cline::Cli::UnexpectedExitStatusError`, `::Cline::Cli::UnexpectedInteractiveSessionError`) when the maximum number of retries is exceeded.
+
+---
+
 ### Additional notes
 
 - **No executables / CLI** — This gem is a library only; there are no scripts in `bin/`.
@@ -719,7 +751,7 @@ npm install node-pty
 │       ├── instructions.rb       # Instruction system
 │       ├── ai_agents/            # ai-agents backend
 │       ├── cline/                # cline-rb backend
-│       ├── mixins/               # ArtifactContract, Logger, Resumable, Retriable, RetriableArtifacts, UserInteraction
+│       ├── mixins/               # ArtifactContract, Logger, Resumable, Retriable, RetriableArtifacts, RetriableCline, UserInteraction
 │       ├── prompt_rendering_strategy/ # Markdown & MarkdownHeavy strategies
 │       └── utils/                # Markdown utilities
 ├── spec/                         # Test suite
