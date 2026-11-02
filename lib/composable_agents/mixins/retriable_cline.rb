@@ -50,12 +50,14 @@ module ComposableAgents
         )
       end
 
+      # @return [Array<Class>] List of Cline error classes that trigger a retry of the run when raised by Cline.
       CLINE_ERROR_CLASSES = [
         ComposableAgents::Cline::ClineError,
         ::Cline::Cli::UnexpectedExitStatusError,
         ::Cline::Cli::UnexpectedInteractiveSessionError
       ].freeze
 
+      # @return [String] Default user instructions used to retry a run that raised an {::Cline::Cli::UnexpectedInteractiveSessionError}.
       INTERACTIVE_SESSION_USER_INSTRUCTIONS = <<~TEXT.freeze
         You are not running in interactive mode, so you will not receive any input from the user.
         If you were expecting to ask the user a question, you must find the best answer to your question by yourself
