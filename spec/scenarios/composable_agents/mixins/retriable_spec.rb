@@ -1,7 +1,7 @@
 describe ComposableAgents::Mixins::Retriable do
   # Builds a {ComposableAgents::Agent} subclass that prepends
   # {ComposableAgents::Mixins::Retriable} and instruments +run+ with
-  # +run_count+ and +model+ attributes.
+  # +run_count+, +model+, +state+ and +input_sequence+ attributes.
   #
   # Each instance starts with +run_count+ at 0 and +model+ at 'default',
   # and its +run+ method delegates to +super+ before returning
@@ -13,21 +13,44 @@ describe ComposableAgents::Mixins::Retriable do
   #   redefining +run+.
   # @return [ComposableAgents::Agent] a retriable agent instance
   def retriable_agent(behavior = nil)
-    Class.new(ComposableAgents::Agent) do
+    new_agent = Class.new(ComposableAgents::Agent) do
       prepend ComposableAgents::Mixins::Retriable
 
+      # @return [Proc, nil] Optional behaviour proc called with the agent
+      #   instance at the end of each +run+, once +run_count+ has been
+      #   incremented. It can be used to raise exceptions or perform any
+      #   additional behaviour without redefining +run+.
+      attr_accessor :behavior
+
+      # @return [Integer] Number of completed runs (starts at 0)
       attr_accessor :run_count
+
+      # @return [String] Model name, defaults to 'default'
       attr_accessor :model
 
-      define_method(:run) do |**input_artifacts|
-        super(**input_artifacts)
+      # @return [Hash] Mutable state map that can be set by retry policy
+      #   +modifier+ procs registered via #retry_on.
+      attr_accessor :state
+
+      # @return [Array<Hash{Symbol => Object}>] Input artifacts passed to each
+      #   invocation of #run, in chronological order.
+      attr_accessor :input_sequence
+
+      # @param input_artifacts [Hash{Symbol => Object}] Input artifacts
+      # @return [Hash{Symbol => Object}] Output artifacts
+      def run(**input_artifacts)
+        super
         @run_count ||= 0
         @run_count += 1
         @model ||= 'default'
+        @input_sequence ||= []
+        @input_sequence << input_artifacts.dup
         behavior&.call(self)
         { output: input_artifacts[:input] }
       end
     end.new
+    new_agent.behavior = behavior
+    new_agent
   end
 
   context 'with no retry policy registered' do
@@ -81,18 +104,117 @@ describe ComposableAgents::Mixins::Retriable do
     end
   end
 
+  context 'with retry_on policies that modify input artifacts on retry' do
+    it 'adds a new input artifact on the retry' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { extra: 'hello' } } : nil })
+      agent.run
+      expect(agent.input_sequence).to eq([{}, { extra: 'hello' }])
+    end
+
+    it 'adds a new input artifact while keeping the original artifacts' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { extra: 'hello' } } : nil })
+      agent.run(input: 1)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 1, extra: 'hello' }])
+    end
+
+    it 'replaces an existing input artifact on the retry' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { input: 2 } } : nil })
+      expect(agent.run(input: 1)).to eq(output: 2)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 2 }])
+    end
+
+    it 'replaces an input artifact while keeping other artifacts' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { input: 3, other: 'x' } } : nil })
+      agent.run(input: 1)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 3, other: 'x' }])
+    end
+
+    it 'deletes an existing input artifact on the retry' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { input: nil } } : nil })
+      expect(agent.run(input: 1)).to eq(output: nil)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: nil }])
+    end
+
+    it 'defaults new_input_artifacts to {} when omitted' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 0 } : nil })
+      agent.run(input: 1)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 1 }])
+    end
+
+    it 'applies the new input artifacts on a retry after an exception' do
+      agent = retriable_agent(->(a) { raise 'boom' if a.run_count == 1 })
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { retry: true } } : nil })
+      expect(agent.run(input: 1)).to eq(output: 1)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 1, retry: true }])
+    end
+
+    it 'does not mutate the caller\'s original input artifacts' do
+      original_input = { input: 1 }
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { new_input_artifacts: { retry: true } } : nil })
+      agent.run(**original_input)
+      expect(agent.input_sequence).to eq([{ input: 1 }, { input: 1, retry: true }])
+      expect(original_input).to eq(input: 1)
+    end
+  end
+
+  context 'with retry_on policies that modify the agent state on retry' do
+    it 'defaults the modifier to doing nothing when omitted' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 0 } : nil })
+      agent.run(input: 1)
+      expect(agent.state).to be_nil
+    end
+
+    it 'defaults the modifier to doing nothing when nil' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { wait_secs: 0, modifier: nil } : nil })
+      agent.run(input: 1)
+      expect(agent.state).to be_nil
+    end
+
+    it 'calls the modifier with the agent before retrying' do
+      agent = retriable_agent
+      agent.retry_on(->(a, _exception) { a.run_count == 1 ? { modifier: ->(agent) { agent.state = :modified_by_retry_policy } } : nil })
+      agent.run(input: 1)
+      expect(agent.state).to eq(:modified_by_retry_policy)
+    end
+
+    it 'applies the modifier on a retry after an exception' do
+      agent = retriable_agent(->(a) { raise 'boom' if a.run_count == 1 })
+      agent.retry_on(
+        proc do |a|
+          if a.run_count == 1
+            {
+              wait_secs: 0,
+              modifier: ->(agent) { agent.state = :exception }
+            }
+          end
+        end
+      )
+      expect(agent.run(input: 1)).to eq(output: 1)
+      expect(agent.state).to eq(:exception)
+    end
+  end
+
   context 'with multiple registered procs' do
     it 'evaluates them in registration order' do
       evaluation_log = []
       agent = retriable_agent
       agent.retry_on(
-        lambda do |_a, _exception|
+        proc do
           evaluation_log << :first
           nil
         end
       )
       agent.retry_on(
-        lambda do |a, _exception|
+        proc do |a|
           evaluation_log << :second
           a.run_count < 2 ? {} : nil
         end
@@ -106,13 +228,13 @@ describe ComposableAgents::Mixins::Retriable do
       evaluation_log = []
       agent = retriable_agent
       agent.retry_on(
-        lambda do |a, _exception|
+        proc do |a|
           evaluation_log << :first
           a.run_count == 1 ? {} : nil
         end
       )
       agent.retry_on(
-        lambda do |_a, _exception|
+        proc do
           evaluation_log << :second
           nil
         end

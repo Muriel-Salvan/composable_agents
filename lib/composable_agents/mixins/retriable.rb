@@ -17,14 +17,13 @@ module ComposableAgents
     # * Each registered proc is kept in an internal array, in registration order.
     # * A proc receives the agent's instance and the exception raised by `run`
     #   (or `nil` if none) and returns either `nil` (no retry) or a policy hash
-    #   with optional `:wait_secs` and optional `:modifier` keys.
+    #   (see Retriable#retry_on).
     # * The run method is wrapped: it calls the original run, then evaluates the
     #   registered procs in order until one returns a non-nil policy hash.
     # * If `run` raised an exception and no proc returned a non-nil policy hash,
     #   the exception is re-raised to the caller.
     # * If a proc decides to retry: wait for `wait_secs` seconds, then call the
-    #   `modifier` proc (if any), then call run again.
-    #
+    #   `modifier` proc (if any), merge the `new_input_artifacts` into the retry input, and call run again.
     module Retriable
       # @!group Public API
 
@@ -41,8 +40,9 @@ module ComposableAgents
       #   - param exception [Exception, nil] The exception that was raised by the run, or nil if none.
       #   - result [Hash\\{Symbol => Object}] Definition of the retry policy, with optional properties:
       #     - wait_secs [Integer, Float] Wait time in seconds before retrying (defaults to 0).
-      #     - modifier [Proc] Code called to modify the agent's state before retrying (defaults to doing nothing).
+      #     - modifier [#call(agent)] Code called to modify the agent's state before retrying (defaults to doing nothing).
       #       - param agent [Agent] The agent for which the retry is considered.
+      #     - new_input_artifacts [Hash\\{Symbol => Object}] New input artifacts that need to be added to the retried run (defaults to {}).
       # @return [self]
       def retry_on(proc)
         retry_policies << proc
@@ -78,12 +78,13 @@ module ComposableAgents
       # @param input_artifacts [Hash{Symbol => Object}] input artifacts
       # @return [Hash{Symbol => Object}] output artifacts from the last run
       def run(**input_artifacts)
+        retry_input_artifacts = input_artifacts.dup
         output_artifacts = nil
         retry_index = 0
         loop do
           exception = nil
           begin
-            output_artifacts = super
+            output_artifacts = super(**retry_input_artifacts)
           rescue StandardError => e
             exception = e
           end
@@ -98,6 +99,7 @@ module ComposableAgents
             logger.debug "Retry ##{retry_index}: re-running in #{wait_secs}s#{" (exception #{exception})" if exception}"
             sleep(wait_secs) if wait_secs.positive?
             policy[:modifier]&.call(self)
+            retry_input_artifacts.merge!(policy[:new_input_artifacts] || {})
           else
             raise exception if exception
 
