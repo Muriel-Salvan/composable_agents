@@ -1,3 +1,15 @@
+# [v3.2.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.1.0...v3.2.0) (2026-11-02 16:54:36)
+
+## Global changes
+### Patches
+
+* [feat(Retriable): enhance retry policy options with new_input_artifacts, altering retried input artifacts](https://github.com/Muriel-Salvan/composable_agents/commit/e4ee0fe4105bdddb87670817006aedee6a7f3840)
+
+## Changes for Retriable
+### Features
+
+* [feat(Retriable): enhance retry policy options with new_input_artifacts, altering retried input artifacts](https://github.com/Muriel-Salvan/composable_agents/commit/e4ee0fe4105bdddb87670817006aedee6a7f3840)
+
 # [v3.1.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.0.0...v3.1.0) (2026-11-01 13:55:18)
 
 ## Global changes
