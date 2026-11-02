@@ -1,3 +1,9 @@
+# [v3.3.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.3.0...v3.3.1) (2026-11-02 20:20:46)
+
+### Patches
+
+* [refactor: remove redundant instance variable initialization in retriable mixins](https://github.com/Muriel-Salvan/composable_agents/commit/de7fbde82ed2b9540831eeca976f44662a748af9)
+
 # [v3.3.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.2.0...v3.3.0) (2026-11-02 17:21:04)
 
 ## Global changes
