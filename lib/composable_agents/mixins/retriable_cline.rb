@@ -41,30 +41,13 @@ module ComposableAgents
             retries += 1
             delay = initial_delay * (backoff_factor**(retries - 1))
             delay *= (1 + (jitter * ((2 * rand) - 1))) if jitter.positive?
-            {
-              wait_secs: delay.clamp(0, max_delay),
-              modifier: proc do
-                @retriable_cline_user_instructions = INTERACTIVE_SESSION_USER_INSTRUCTIONS if exception.is_a?(::Cline::Cli::UnexpectedInteractiveSessionError)
-              end
-            }
+            retry_policy = { wait_secs: delay.clamp(0, max_delay) }
+            if exception.is_a?(::Cline::Cli::UnexpectedInteractiveSessionError)
+              retry_policy[:new_input_artifacts] = { user_instructions: INTERACTIVE_SESSION_USER_INSTRUCTIONS }
+            end
+            retry_policy
           end
         )
-      end
-
-      # Re-executes the {run} method, handling any retriable user instructions captured from interactive session errors.
-      # If an interactive session error occurred during a previous attempt, the stored user instructions will be used
-      # instead of the provided ones, allowing the agent to proceed without user input in non-interactive mode.
-      #
-      # @param user_instructions [String, nil] The user instructions to process; will be replaced by stored
-      #   retriable instructions if an interactive session error was captured
-      # @param **input_artifacts [Hash] Additional input artifacts to pass to the parent {run} method
-      # @return [Object] The result of the parent {run} method
-      def run(user_instructions: nil, **input_artifacts)
-        if @retriable_cline_user_instructions
-          user_instructions = @retriable_cline_user_instructions
-          @retriable_cline_user_instructions = nil
-        end
-        super
       end
 
       CLINE_ERROR_CLASSES = [
