@@ -463,11 +463,14 @@ Mixins are `prepend`-ed into an agent class to add specific capabilities.
 
 #### `ComposableAgents::Mixins::Retriable`
 
-- **Description:** Adds conditional retry capabilities to agents. Retry condition procs are registered with `#retry_on` (or `#with_retry_on` for temporary activation) and are evaluated at the end of each run. A proc receives the agent instance and the exception raised by `run` (or `nil` if none) and returns either `nil` (no retry) or a policy hash with `:wait_secs` and optional `:modifier` keys. When a proc returns a policy, the agent waits `wait_secs` seconds, optionally calls the policy's `modifier`, and re-runs. If `run` raised an exception and no proc returned a retry policy, the exception is re-raised to the caller.
+- **Description:** Adds conditional retry capabilities to agents. Retry condition procs are registered with `#retry_on` (or `#with_retry_on` for temporary activation) and are evaluated at the end of each run. A proc receives the agent instance and the exception raised by `run` (or `nil` if none) and returns either `nil` (no retry) or a policy hash with optional keys to describe the policy:
+  - `:wait_secs` — Wait time in seconds before retrying (defaults to 0).
+  - `:modifier` — Proc called with the agent before retrying ( defaults to doing nothing).
+  - `:new_input_artifacts` — Hash of input artifacts to add to the retried run (defaults to `{}`).
+When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `modifier` proc (if any), merges the `new_input_artifacts` into the retry input, and re-runs. If `run` raised an exception and no proc returned a retry policy, the exception is re-raised to the caller.
 - **Public methods:**
-  - `#retry_on(proc)` — Register a retry condition proc. Returns `self` so calls can be chained.
+  - `#retry_on(proc)` — Register a retry condition proc.
   - `#with_retry_on(proc, &block)` — Register a retry proc for the duration of a block, then unregister it when the block returns (even if it raises).
-  - policy hash — Configuration with optional `:wait_secs` (seconds to wait before retrying, defaults to 0) and optional `:modifier` (proc called with the agent before retrying).
 - **Usage example:**
   ```ruby
   class MyAgent < ComposableAgents::Agent

@@ -18,9 +18,9 @@ describe ComposableAgents::Mixins::RetriableArtifacts do
   # @return [ComposableAgents::PromptDrivenAgent] Agent to be tested
   def retriable_artifacts_agent(mocked_outputs = [], **kwargs)
     agent_class = Class.new(ComposableAgents::PromptDrivenAgent) do
-      prepend ComposableAgents::Mixins::RetriableArtifacts
       prepend ComposableAgents::Mixins::Retriable
       prepend ComposableAgents::Mixins::ArtifactContract
+      prepend ComposableAgents::Mixins::RetriableArtifacts
 
       # @!attribute [RW] mocked_outputs
       #   List of mocked assistant outputs (see #retriable_artifacts_agent).

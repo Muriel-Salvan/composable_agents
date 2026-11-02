@@ -49,25 +49,10 @@
                     "Maximum number of retries (#{max_retries}) exceeded. Missing or errored artifacts: #{artifact_keys.join(', ')}"
             else
               artifacts_errors_retries += 1
-              { modifier: proc { @overridden_user_instructions = missing_output_user_instructions(missing) } }
+              { new_input_artifacts: { user_instructions: missing_output_user_instructions(missing) } }
             end
           end
         )
-      end
-
-      # Execute the agent to generate some output artifacts based on some input artifacts.
-      # On retry, uses +@overridden_user_instructions+ (set by the retry policy's modifier)
-      # instead of the original +user_instructions+.
-      #
-      # @param user_instructions [Object, nil] Instructions for the user prompt, that will be rendered.
-      # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content, per artifact name
-      # @return [Hash{Symbol => Object}] The output artifacts
-      def run(user_instructions: nil, **input_artifacts)
-        if @overridden_user_instructions
-          user_instructions = @overridden_user_instructions
-          @overridden_user_instructions = nil
-        end
-        super
       end
 
       private
