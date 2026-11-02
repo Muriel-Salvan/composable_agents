@@ -153,6 +153,13 @@ module ComposableAgents
         "but the following error occurred: #{error}"
     end
 
+    # Return the currently saved output artifacts
+    #
+    # @return [Hash{Symbol => Object}] The currently saved output artifacts
+    def saved_output_artifacts
+      @output_artifacts
+    end
+
     private
 
     # Get the output artifacts errors that should raise an {OutputArtifactsError} at the end of a run.
