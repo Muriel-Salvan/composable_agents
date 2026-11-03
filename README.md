@@ -495,6 +495,18 @@ When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `
 #### `ComposableAgents::Mixins::RetriableArtifacts`
 
 - **Description:** Automatically retries the run when output artifacts declared in contracts are missing or in error on prompt-driven agents. Requires both the ArtifactContract and Retriable mixins to be prepended, and must be prepended on an agent descending from PromptDrivenAgent.
+
+- **Optional artifacts:** Artifacts can be marked as `optional: true` in their contract. When an optional artifact is missing, the run will not retry — it will complete successfully. This is useful for artifacts that are nice-to-have but not required for the agent to function.
+
+  Example contract with optional artifact:
+  ```ruby
+  output_artifacts_contracts: {
+    result: 'Final result',           # required artifact
+    logs: { description: 'Execution logs', optional: true }  # optional artifact
+  }
+  ```
+
+- **Configuration:** Configurable via `artifacts_errors_max_retries` (default: 3); raises `ArtifactsErrorsMaxRetriesExceededError` when the limit is exceeded.
 - **Public methods:**
   - `#initialize(*args, artifacts_errors_max_retries: 3, **kwargs)` — Registers a retry policy that re-executes the run with a prompt asking for missing artifacts when output artifacts are missing or in error. The artifacts_errors_max_retries parameter (default: 3) sets the maximum number of retries before raising ArtifactsErrorsMaxRetriesExceededError.
 - **Usage example:**
