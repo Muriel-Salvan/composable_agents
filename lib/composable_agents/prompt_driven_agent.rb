@@ -211,13 +211,14 @@ module ComposableAgents
     # Track a message that is part of the conversation with this agent
     #
     # @param message [String, #to_hash, nil] The message content, as a String or an object that can be hashed, or nil if none.
+    #   Nil attributes of the hashed message are not kept in the conversation.
     # @param author [String] Author of the message.
     # @param question [Boolean] Is this message a question expecting a reply?
     def track_message(message:, author: 'Orchestrator', question: false)
       @conversation << {
         at: Time.now.utc,
         author:,
-        message: message.is_a?(String) ? message : message&.to_hash,
+        message: message.is_a?(String) ? message : message&.to_hash&.compact,
         question:
       }
     end
