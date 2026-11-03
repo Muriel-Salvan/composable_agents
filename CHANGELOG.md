@@ -1,3 +1,9 @@
+# [v3.4.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.3.1...v3.4.0) (2026-11-03 13:46:46)
+
+### Features
+
+* [feat: add optional artifact support to retriable artifacts](https://github.com/Muriel-Salvan/composable_agents/commit/df88d8b5e4f6ef377dfab34fb0e7a3feeccb1b15)
+
 # [v3.3.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.3.0...v3.3.1) (2026-11-02 20:20:46)
 
 ### Patches
