@@ -95,6 +95,10 @@ Security/MarshalLoad:
 Style/FrozenStringLiteralComment:
   EnforcedStyle: never
 
+# Block chaining can be readable
+Style/MultilineBlockChain:
+  Enabled: false
+
 # I don't want to pollute my code with something that should be integrated in the language
 Style/MutableConstant:
   Enabled: false

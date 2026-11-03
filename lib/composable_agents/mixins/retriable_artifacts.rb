@@ -64,7 +64,11 @@
       def missing_artifacts(output_artifacts_errors)
         output_artifacts = saved_output_artifacts
         normalized_output_artifacts_contracts
-          .reject { |artifact_name, _artifact_description| output_artifacts.key?(artifact_name) }
+          .reject do |artifact_name, artifact_contract|
+            output_artifacts.key?(artifact_name) || (
+              artifact_contract[:optional] && !output_artifacts_errors[artifact_name]
+            )
+          end
           .to_h do |artifact_name, artifact_description|
             [
               artifact_name,

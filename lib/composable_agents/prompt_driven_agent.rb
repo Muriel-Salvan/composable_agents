@@ -74,7 +74,6 @@ module ComposableAgents
       @input_artifacts = input_artifacts
       @system_prompt = render_system_prompt(render_instructions(@system_instructions))
       logger.debug "System prompt: #{@system_prompt}"
-      # TODO: Merge converse and prompt directly here. No need for this extra complexity now that Retriable has been moved out.
       converse(user_instructions, input_artifacts: @input_artifacts, author: 'User')
       # Raise an exception if some output artifacts have errors.
       output_artifacts_errors = output_artifacts_errors_to_raise
