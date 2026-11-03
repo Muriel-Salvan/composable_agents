@@ -170,32 +170,31 @@ module ComposableAgents
         if cline_cli.session&.messages
           @context.concat(
             cline_cli.session.messages.map.with_index do |message, idx_message|
-              {
-                role: message.role,
-                content: message.content.map.with_index do |content, idx_content|
-                  {
-                    type: content.type,
-                    text: (
-                      if idx_message.zero? && idx_content.zero?
-                        # First message is the user prompt, but we don't want to include the context from it
-                        user_prompt
-                      else
-                        content.text
-                      end
-                    ),
-                    input:
-                      if content.input
-                        {
-                          question: content.input.question,
-                          # The options are a Shale collection that JSON can't serialize: keep them as a plain Array
-                          options: content.input.options&.to_a
-                        }.compact
-                      end,
-                    content: content.content
-                  }.compact
-                end
-              }
-            end
+              curated_content = message.content.map.with_index do |content, idx_content|
+                curated_message = {
+                  type: content.type,
+                  text: (
+                    if idx_message.zero? && idx_content.zero?
+                      # First message is the user prompt, but we don't want to include the context from it
+                      user_prompt
+                    else
+                      content.thinking || content.text
+                    end
+                  ),
+                  input:
+                    if content.input&.question
+                      {
+                        question: content.input.question,
+                        # The options are a Shale collection that JSON can't serialize: keep them as a plain Array
+                        options: content.input.options&.to_a
+                      }.compact
+                    end,
+                  content: content.content
+                }.compact
+                curated_message.keys == [:type] ? nil : curated_message
+              end.compact
+              curated_content.empty? ? nil : { role: message.role, content: curated_content }
+            end.compact
           )
         end
 
