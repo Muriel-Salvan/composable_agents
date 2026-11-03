@@ -6,6 +6,7 @@ describe ComposableAgents::Cline::Agent do
     # Mocked session messages in which the assistant asks a question with some options, then uses a tool without any question.
     # The question is not the last message, as a plain Cline agent can't answer questions.
     # Note: the options given in the mocked messages are parsed by the Cline Rubygem as a Shale collection, not as a plain Array.
+    # Note: the tool_use without a question is dropped from the context as it carries no useful content.
     let(:messages_with_question) do
       [
         {
@@ -324,10 +325,6 @@ describe ComposableAgents::Cline::Agent do
             },
             {
               role: 'assistant',
-              content: [{ type: 'tool_use', input: {} }]
-            },
-            {
-              role: 'assistant',
               content: [{ type: 'text', text: 'Assistant Output #1' }]
             }
           ]}
@@ -350,14 +347,86 @@ describe ComposableAgents::Cline::Agent do
       # Check that the context is JSON-serializable, as it is when saved by the Resumable mixin
       persisted_state = JSON.parse(JSON.dump(state))
       expect(persisted_state).to eq state
-      expect(persisted_state['context'][1]['content']).to eq [
-        { 'type' => 'tool_use', 'input' => { 'question' => 'Which approach?', 'options' => %w[Direct Indirect] } }
+      # The tool_use without any question is dropped from the context, as it carries no useful content
+      expect(persisted_state['context']).to eq [
+        { 'role' => 'user', 'content' => [{ 'type' => 'text', 'text' => 'USER_PROMPT[RENDERED_TEXT: First message]' }] },
+        {
+          'role' => 'assistant',
+          'content' => [{ 'type' => 'tool_use', 'input' => { 'question' => 'Which approach?', 'options' => %w[Direct Indirect] } }]
+        },
+        { 'role' => 'assistant', 'content' => [{ 'type' => 'text', 'text' => 'Assistant Output #1' }] }
       ]
-      expect(persisted_state['context'][2]['content']).to eq [{ 'type' => 'tool_use', 'input' => {} }]
 
       agent2 = cline_agent
       agent2.import_state(persisted_state)
       expect(agent2.export_state).to eq persisted_state
+    end
+
+    it 'keeps the thinking content of messages in the context given to the next run' do
+      agent = cline_agent
+      mock_cline_for(
+        agent,
+        [
+          {
+            messages: [
+              {
+                ts: 100,
+                role: 'assistant',
+                content: [
+                  { type: 'thinking', thinking: 'Assistant Thinking #1' },
+                  { type: 'text', text: 'Assistant Output #1' }
+                ]
+              }
+            ]
+          },
+          { stdout: 'Assistant Output #2' }
+        ]
+      )
+      agent.run(user_instructions: 'First message')
+      agent.run(user_instructions: 'Second message')
+      # Extract the context from the second prompt and check the thinking content is preserved in it
+      context = JSON.parse(agent.spy[:user_prompts].last[/```json\n(.+?)\n```/m, 1])
+      expect(context).to eq [
+        { 'role' => 'user', 'content' => [{ 'type' => 'text', 'text' => 'USER_PROMPT[RENDERED_TEXT: First message]' }] },
+        {
+          'role' => 'assistant',
+          'content' => [
+            { 'type' => 'thinking', 'text' => 'Assistant Thinking #1' },
+            { 'type' => 'text', 'text' => 'Assistant Output #1' }
+          ]
+        }
+      ]
+    end
+
+    it 'drops content blocks having no useful content from the context given to the next run' do
+      agent = cline_agent
+      mock_cline_for(
+        agent,
+        [
+          {
+            messages: [
+              {
+                ts: 100,
+                role: 'assistant',
+                content: [
+                  # A tool_use block without any input carries no useful content: it is dropped from the context.
+                  { type: 'tool_use', name: 'run_commands' },
+                  { type: 'text', text: 'Assistant Output #1' }
+                ]
+              }
+            ]
+          },
+          { stdout: 'Assistant Output #2' }
+        ]
+      )
+      agent.run(user_instructions: 'First message')
+      agent.run(user_instructions: 'Second message')
+      # Extract the context from the second prompt: only the text content block is kept in the assistant message
+      context = JSON.parse(agent.spy[:user_prompts].last[/```json\n(.+?)\n```/m, 1])
+      expect(context).to eq [
+        { 'role' => 'user', 'content' => [{ 'type' => 'text', 'text' => 'USER_PROMPT[RENDERED_TEXT: First message]' }] },
+        { 'role' => 'assistant', 'content' => [{ 'type' => 'text', 'text' => 'Assistant Output #1' }] }
+      ]
     end
   end
 end
