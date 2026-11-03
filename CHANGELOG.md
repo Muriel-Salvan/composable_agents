@@ -1,3 +1,9 @@
+# [v3.4.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.0...v3.4.1) (2026-11-03 17:18:14)
+
+### Patches
+
+* [chore: update cline-rb to 2.2 and filter empty assistant messages](https://github.com/Muriel-Salvan/composable_agents/commit/7e166079df9bd949b86e7172dc06a4bc4f62d093)
+
 # [v3.4.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.3.1...v3.4.0) (2026-11-03 13:46:46)
 
 ### Features
