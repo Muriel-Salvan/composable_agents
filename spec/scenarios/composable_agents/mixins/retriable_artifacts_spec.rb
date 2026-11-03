@@ -309,4 +309,59 @@ describe ComposableAgents::Mixins::RetriableArtifacts do
       )
     end
   end
+
+  describe 'optional artifacts' do
+    it 'does not retry when missing artifact is optional' do
+      agent = retriable_artifacts_agent(
+        [{ text: 'Assistant Output #1' }],
+        output_artifacts_contracts: { optional_logs: { description: 'Execution logs', optional: true } }
+      )
+      expect(agent.run).to eq({})
+      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
+    end
+
+    it 'accepts optional artifact when provided' do
+      agent = retriable_artifacts_agent(
+        [{ text: 'Assistant Output #1', output_artifacts: { optional_logs: 'provided' } }],
+        output_artifacts_contracts: { optional_logs: { description: 'Execution logs', optional: true } }
+      )
+      expect(agent.run).to eq(optional_logs: 'provided')
+      expect(agent.spy[:user_prompts]).to eq ['USER_PROMPT[]']
+    end
+
+    it 'retry only for required artifacts when mix of optional and required are missing' do
+      agent = retriable_artifacts_agent(
+        [
+          { text: 'Assistant Output #1' },
+          { text: 'Assistant Output #2', output_artifacts: { result: 'complete' } }
+        ],
+        output_artifacts_contracts: {
+          result: 'Final result',
+          optional_logs: { description: 'Execution logs', optional: true }
+        }
+      )
+      expect(agent.run).to eq(result: 'complete')
+      expect(agent.spy[:user_prompts]).to eq [
+        'USER_PROMPT[]',
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: result (Final result)]'
+      ]
+    end
+
+    it 'retries when optional artifact has errors' do
+      agent = retriable_artifacts_agent(
+        [
+          { text: 'Assistant Output #1', output_artifacts_errors: { optional_logs: 'Parsing error' } },
+          { text: 'Assistant Output #2', output_artifacts: { optional_logs: 'provided' } }
+        ],
+        output_artifacts_contracts: {
+          optional_logs: { description: 'Execution logs', optional: true }
+        }
+      )
+      expect(agent.run).to eq(optional_logs: 'provided')
+      expect(agent.spy[:user_prompts]).to eq [
+        'USER_PROMPT[]',
+        'USER_PROMPT[RENDERED_TEXT: MISSING_PROMPT: optional_logs (Execution logs) (Error: Parsing error)]'
+      ]
+    end
+  end
 end
