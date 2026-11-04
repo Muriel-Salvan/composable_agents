@@ -1,3 +1,15 @@
+# [v3.4.2](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.1...v3.4.2) (2026-11-04 16:45:13)
+
+## Global changes
+### Patches
+
+* [fix(retriable): include exception backtrace in retry debug log](https://github.com/Muriel-Salvan/composable_agents/commit/5230a9ddf73f90335021581592e01342ca0d9768)
+
+## Changes for retriable
+### Patches
+
+* [fix(retriable): include exception backtrace in retry debug log](https://github.com/Muriel-Salvan/composable_agents/commit/5230a9ddf73f90335021581592e01342ca0d9768)
+
 # [v3.4.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.0...v3.4.1) (2026-11-03 17:18:14)
 
 ### Patches
