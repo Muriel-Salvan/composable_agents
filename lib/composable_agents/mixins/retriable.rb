@@ -96,7 +96,7 @@ module ComposableAgents
           if policy
             retry_index += 1
             wait_secs = policy[:wait_secs] || 0
-            logger.debug "Retry ##{retry_index}: re-running in #{wait_secs}s#{" (exception #{exception})" if exception}"
+            logger.debug "Retry ##{retry_index}: re-running in #{wait_secs}s#{" (exception #{exception})\n#{exception.backtrace.join("\n")}" if exception}"
             sleep(wait_secs) if wait_secs.positive?
             policy[:modifier]&.call(self)
             retry_input_artifacts.merge!(policy[:new_input_artifacts] || {})
