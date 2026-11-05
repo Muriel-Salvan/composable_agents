@@ -1,3 +1,9 @@
+# [v3.4.3](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.2...v3.4.3) (2026-11-05 09:18:36)
+
+### Patches
+
+* [fix: normalize Cline session context with recursive JSON-safe conversion](https://github.com/Muriel-Salvan/composable_agents/commit/179334f05dbb758161c11c1d9b8d016c24d46909)
+
 # [v3.4.2](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.1...v3.4.2) (2026-11-04 16:45:13)
 
 ## Global changes
