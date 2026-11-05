@@ -41,6 +41,33 @@ describe ComposableAgents::Cline::Agent do
       ]
     end
 
+    # Mocked session message in which a tool returns structured (non-String) content.
+    # In cline-rb >= 2.3 such tool_result content is deserialized as a Shale collection of
+    # Cline::SessionMessage::MessageContent::ToolResultContent objects, which JSON can't serialize directly.
+    let(:messages_with_structured_tool_result) do
+      [
+        {
+          ts: 200,
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'tool_use_1',
+              content: [
+                { query: 'ls', result: 'a.txt', success: true },
+                { query: 'cat a.txt', result: 'hello' }
+              ]
+            }
+          ]
+        },
+        {
+          ts: 201,
+          role: 'assistant',
+          content: [{ type: 'text', text: 'Assistant Output #1' }]
+        }
+      ]
+    end
+
     it 'has an empty context at the beginning of the first run' do
       agent = cline_agent
       mock_cline_for(agent)
@@ -355,6 +382,28 @@ describe ComposableAgents::Cline::Agent do
           'content' => [{ 'type' => 'tool_use', 'input' => { 'question' => 'Which approach?', 'options' => %w[Direct Indirect] } }]
         },
         { 'role' => 'assistant', 'content' => [{ 'type' => 'text', 'text' => 'Assistant Output #1' }] }
+      ]
+
+      agent2 = cline_agent
+      agent2.import_state(persisted_state)
+      expect(agent2.export_state).to eq persisted_state
+    end
+
+    it 'persists structured tool results through a JSON-serializable state' do
+      agent1 = cline_agent
+      mock_cline_for(agent1, { messages: messages_with_structured_tool_result })
+      agent1.run(user_instructions: 'First message')
+      state = agent1.export_state
+      # Structured tool_result content should be plain Ruby objects: the ones given by the Cline
+      # Rubygem are Shale collections that JSON can't serialize.
+      expect(state['context'][1]['content'].first['content']).to be_an_instance_of(Array)
+      expect(state['context'][1]['content'].first['content'].first).to be_an_instance_of(Hash)
+      # Check that the context is JSON-serializable, as it is when saved by the Resumable mixin
+      persisted_state = JSON.parse(JSON.dump(state))
+      expect(persisted_state).to eq state
+      expect(persisted_state['context'][1]['content'].first['content']).to eq [
+        { 'query' => 'ls', 'result' => 'a.txt', 'success' => true },
+        { 'query' => 'cat a.txt', 'result' => 'hello', 'success' => nil }
       ]
 
       agent2 = cline_agent

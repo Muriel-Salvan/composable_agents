@@ -241,5 +241,24 @@ module ComposableAgents
         obj
       end
     end
+
+    # Recursively convert any value into a plain, JSON-serializable Ruby object.
+    # Some agent states contain Shale objects (e.g. Cline session messages from the cline-rb Rubygem).
+    # Shale's to_json accepts no positional argument, while the JSON gem calls to_json with the generator state,
+    # so JSON.dump raises ArgumentError on them. Their to_hash (and the to_hash of their collections and maps)
+    # returns the equivalent plain structure, so we recurse into it to normalize nested schemas, collections and maps.
+    #
+    # @param value [Object] Value to normalize
+    # @return [Object] Equivalent JSON-serializable value
+    def deep_json_safe(value)
+      case value
+      when Array
+        value.map { |element| deep_json_safe(element) }
+      when Hash
+        value.to_h { |key, element| [key, deep_json_safe(element)] }
+      else
+        value.respond_to?(:to_hash) ? deep_json_safe(value.to_hash) : value
+      end
+    end
   end
 end
