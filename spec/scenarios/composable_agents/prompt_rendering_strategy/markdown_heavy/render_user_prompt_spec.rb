@@ -36,7 +36,10 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
       ## `ARTIFACT_BUDGET`
 
       ```json input_artifact=ARTIFACT_BUDGET
-      {"amount":50000,"currency":"EUR"}
+      {
+        "amount": 50000,
+        "currency": "EUR"
+      }
       ```
 
       # User instructions
@@ -81,6 +84,19 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
       "Just the plan"
       ```
     EO_PROMPT
+  end
+
+  it 'pretty-prints input artifacts JSON so that no line is too long' do
+    plan = {
+      title: 'Build a house',
+      steps: (1..20).map { |step_idx| { step: step_idx, action: "Action #{step_idx}", done: step_idx.even? } }
+    }
+    rendered_prompt = agent_for_markdown_heavy.render_user_prompt(nil, input_artifacts: { plan: })
+    # The JSON block is pretty-printed, so no line exceeds the limits of harnesses truncating them
+    expect(rendered_prompt.lines.map { |line| line.chomp.length }.max).to be < 100
+    # The JSON content still holds the artifact content
+    json_block = rendered_prompt.scan(/^```json input_artifact=ARTIFACT_PLAN\n(.*?)^```/m).last.first
+    expect(JSON.parse(json_block)).to eq(JSON.parse(JSON.generate(plan)))
   end
 
   it 'levels big headers in rendered instructions properly' do

@@ -146,7 +146,7 @@ module ComposableAgents
                   ## `#{art_ref}`
 
                   ```json input_artifact=#{art_ref}
-                  #{JSON.dump(artifact_content)}
+                  #{JSON.pretty_generate(artifact_content)}
                   ```
                 EO_ARTIFACT_SECTION
               end.join("\n\n")

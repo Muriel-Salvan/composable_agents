@@ -122,7 +122,7 @@ module ComposableAgents
               Here is the conversation from a previous session for context:
 
               ```json
-              #{JSON.dump(@context)}
+              #{JSON.pretty_generate(@context)}
               ```
 
               Continue with the task, building on the work from the session above.

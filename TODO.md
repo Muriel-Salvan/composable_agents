@@ -1,3 +1,5 @@
+* Add a new Breakable/Interruptable mixin for Cline::Agent with proper methods or config to define conditions to interrupt a run (could be based on timeouts, costs, tokens, infinite loops...).
+* Use a ContextSummarizer agent to shrink the context given in retries.
 * Add a new mixin for Cline::Agent with proper methods or config to define retries in case of errors, with exponential waits.
 * Add a new retry mixin for Cline::Agent with proper methods or config to define retries in case of errors and 429 issues to define fallback models in case of errors, with exponential waits (reuse code from the RetriableCline mixin).
 * Add a way to detect infinite loops in agents and act on it (maybe a mixin looking at prompts/messages).

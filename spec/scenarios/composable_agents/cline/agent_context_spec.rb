@@ -94,7 +94,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
@@ -149,7 +149,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
@@ -171,7 +171,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
@@ -201,7 +201,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
@@ -273,7 +273,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Instructions #1]' }]
@@ -295,7 +295,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: Instructions #1]' }]
@@ -341,7 +341,7 @@ describe ComposableAgents::Cline::Agent do
           Here is the conversation from a previous session for context:
 
           ```json
-          #{JSON.dump [
+          #{JSON.pretty_generate [
             {
               role: 'user',
               content: [{ type: 'text', text: 'USER_PROMPT[RENDERED_TEXT: First message]' }]
