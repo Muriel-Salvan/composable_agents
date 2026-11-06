@@ -1,3 +1,15 @@
+# [v3.5.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.3...v3.5.0) (2026-11-06 18:46:37)
+
+## Global changes
+### Patches
+
+* [feat(prompts): pretty-print JSON context and artifacts](https://github.com/Muriel-Salvan/composable_agents/commit/2c32832997d33431a5af0ec931627faa4a87a7a7)
+
+## Changes for prompts
+### Features
+
+* [feat(prompts): pretty-print JSON context and artifacts](https://github.com/Muriel-Salvan/composable_agents/commit/2c32832997d33431a5af0ec931627faa4a87a7a7)
+
 # [v3.4.3](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.2...v3.4.3) (2026-11-05 09:18:36)
 
 ### Patches
