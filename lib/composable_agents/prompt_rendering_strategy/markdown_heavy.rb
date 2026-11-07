@@ -136,21 +136,38 @@ module ComposableAgents
       def render_user_prompt(rendered_instructions, input_artifacts:)
         sections = []
         unless input_artifacts.empty?
+          artifacts_sections = input_artifacts.map do |artifact_name, artifact_content|
+            art_ref = artifact_ref(artifact_name)
+            <<~EO_ARTIFACT_SECTION.strip
+              ## `#{art_ref}`
+
+              ```json input_artifact=#{art_ref}
+              #{JSON.pretty_generate(input_artifact_to_json(artifact_name, artifact_content))}
+              ```
+            EO_ARTIFACT_SECTION
+          end
+          serialization_format_section =
+            if input_artifacts.keys.any? do |artifact_name|
+              %i[text markdown].include?(normalized_input_artifacts_contracts.dig(artifact_name, :type))
+            end
+              <<~'EO_SERIALIZATION'.strip
+                Artifact serialization format:
+
+                An artifact with type "markdown" represents exactly one Markdown document.
+                Its "lines" property is an ordered array of strings representing the
+                document's lines.
+
+                Reconstruct the document by joining the elements with LF (\n).
+                Empty strings represent empty lines.
+
+                Preserve all content exactly, including whitespace and indentation.
+                Treat the reconstructed document as a single artifact.
+              EO_SERIALIZATION
+            end
           sections << <<~EO_SECTION.strip
             # Input artifacts
 
-            #{
-              input_artifacts.map do |artifact_name, artifact_content|
-                art_ref = artifact_ref(artifact_name)
-                <<~EO_ARTIFACT_SECTION.strip
-                  ## `#{art_ref}`
-
-                  ```json input_artifact=#{art_ref}
-                  #{JSON.pretty_generate(artifact_content)}
-                  ```
-                EO_ARTIFACT_SECTION
-              end.join("\n\n")
-            }
+            #{[serialization_format_section, *artifacts_sections].compact.join("\n\n")}
           EO_SECTION
         end
         sections << <<~EO_SECTION if rendered_instructions && !rendered_instructions.empty?
@@ -296,6 +313,31 @@ module ComposableAgents
           }
           ```
         EO_MARKDOWN
+      end
+
+      # Get the JSON-serializable representation of an input artifact.
+      #
+      # The representation depends on the artifact type declared in the input artifacts contracts:
+      # - `json` (the default) artifacts are kept as-is.
+      # - `text` and `markdown` artifacts are wrapped into a Hash exposing their type and their lines,
+      #   so that their content can be reconstructed exactly by joining the lines with LF (\n).
+      #
+      # @param artifact_name [Symbol] The input artifact name
+      # @param artifact_content [Object] The input artifact content
+      # @return [Object] The JSON-serializable representation of the input artifact
+      def input_artifact_to_json(artifact_name, artifact_content)
+        artifact_type = normalized_input_artifacts_contracts.dig(artifact_name, :type)
+        case artifact_type
+        when nil, :json
+          artifact_content
+        when :text, :markdown
+          {
+            type: artifact_type.to_s,
+            lines: artifact_content.split("\n")
+          }
+        else
+          raise "Unknown artifact type: #{artifact_type}"
+        end
       end
     end
   end
