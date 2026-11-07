@@ -144,4 +144,101 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavy, '#render_user
       #### Header 1.1.1
     EO_PROMPT
   end
+
+  it 'serializes text input artifacts as lines and adds the serialization format description' do
+    expect(
+      agent_for_markdown_heavy(input_artifacts_contracts: { report: { description: 'The report', type: :text } }).render_user_prompt(
+        nil,
+        input_artifacts: { report: "Line 1\nLine 2" }
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # Input artifacts
+
+      Artifact serialization format:
+
+      An artifact with type "markdown" represents exactly one Markdown document.
+      Its "lines" property is an ordered array of strings representing the
+      document's lines.
+
+      Reconstruct the document by joining the elements with LF (\\n).
+      Empty strings represent empty lines.
+
+      Preserve all content exactly, including whitespace and indentation.
+      Treat the reconstructed document as a single artifact.
+
+      ## `ARTIFACT_REPORT`
+
+      ```json input_artifact=ARTIFACT_REPORT
+      {
+        "type": "text",
+        "lines": [
+          "Line 1",
+          "Line 2"
+        ]
+      }
+      ```
+    EO_PROMPT
+  end
+
+  it 'serializes markdown input artifacts as lines' do
+    expect(
+      agent_for_markdown_heavy(input_artifacts_contracts: { doc: { description: 'The document', type: :markdown } }).render_user_prompt(
+        nil,
+        input_artifacts: { doc: "# Title\n\nBody" }
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # Input artifacts
+
+      Artifact serialization format:
+
+      An artifact with type "markdown" represents exactly one Markdown document.
+      Its "lines" property is an ordered array of strings representing the
+      document's lines.
+
+      Reconstruct the document by joining the elements with LF (\\n).
+      Empty strings represent empty lines.
+
+      Preserve all content exactly, including whitespace and indentation.
+      Treat the reconstructed document as a single artifact.
+
+      ## `ARTIFACT_DOC`
+
+      ```json input_artifact=ARTIFACT_DOC
+      {
+        "type": "markdown",
+        "lines": [
+          "# Title",
+          "",
+          "Body"
+        ]
+      }
+      ```
+    EO_PROMPT
+  end
+
+  it 'does not add the serialization format description for json-only input artifacts' do
+    expect(
+      agent_for_markdown_heavy(input_artifacts_contracts: { data: { description: 'The data', type: :json } }).render_user_prompt(
+        nil,
+        input_artifacts: { data: { 'key' => 'value' } }
+      )
+    ).to eq <<~EO_PROMPT.strip
+      # Input artifacts
+
+      ## `ARTIFACT_DATA`
+
+      ```json input_artifact=ARTIFACT_DATA
+      {
+        "key": "value"
+      }
+      ```
+    EO_PROMPT
+  end
+
+  it 'raises when an input artifact has an unknown type' do
+    expect do
+      agent_for_markdown_heavy(input_artifacts_contracts: { weird: { description: 'The weird artifact', type: :unknown } })
+        .render_user_prompt(nil, input_artifacts: { weird: 'content' })
+    end.to raise_error(RuntimeError, /Unknown artifact type: unknown/)
+  end
 end
