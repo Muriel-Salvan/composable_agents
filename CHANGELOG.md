@@ -1,3 +1,15 @@
+# [v3.6.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.5.0...v3.6.0) (2026-11-07 11:35:50)
+
+## Global changes
+### Patches
+
+* [feat(prompt): serialize text and markdown artifacts as lines](https://github.com/Muriel-Salvan/composable_agents/commit/160facaf017dad0936997e3d787c17c359850493)
+
+## Changes for prompt
+### Features
+
+* [feat(prompt): serialize text and markdown artifacts as lines](https://github.com/Muriel-Salvan/composable_agents/commit/160facaf017dad0936997e3d787c17c359850493)
+
 # [v3.5.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.4.3...v3.5.0) (2026-11-06 18:46:37)
 
 ## Global changes
