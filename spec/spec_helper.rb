@@ -1,9 +1,16 @@
 require 'simplecov'
 SimpleCov.start do
-  minimum_coverage 98
+  # Make sure repositories behind symbolic links or Windows junctions are resolved properly
+  root Pathname.new(SimpleCov.root).realpath.to_s
+  minimum_coverage 99
 end
 require 'simplecov-cobertura'
-SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+  [
+    SimpleCov::Formatter::HTMLFormatter,
+    SimpleCov::Formatter::CoberturaFormatter
+  ]
+)
 
 require 'composable_agents'
 require 'fileutils'

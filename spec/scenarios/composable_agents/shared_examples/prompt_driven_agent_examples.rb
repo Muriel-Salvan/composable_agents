@@ -391,4 +391,58 @@ shared_examples 'a prompt driven agent' do |opts|
       )
     end
   end
+
+  describe '#logger' do
+    # Build an agent whose public #run logs via the given scenario.
+    # The scenario receives the agent's logger (obtained via the private #logger,
+    # as a self-call inside #run), so that the logger is exercised through the
+    # agent's public interface only.
+    #
+    # @param log_scenario [Proc] Code called with the agent's logger to emit logs
+    # @return [ComposableAgents::Agent] An agent whose #run is instrumented to log
+    def logger_agent(&log_scenario)
+      agent = new_agent
+      agent.define_singleton_method(:run) { |**| log_scenario.call(logger) }
+      agent
+    end
+
+    it 'writes messages with a UTC timestamp, severity and the agent full name prefix' do
+      agent = logger_agent { |logger| logger.info('Hello from agent') }
+      allow($stdout).to receive(:write)
+      agent.run
+      expect($stdout).to have_received(:write).with(
+        /\A\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] \[INFO\] \[#{Regexp.escape(agent.full_name)}\] - Hello from agent\n\z/
+      )
+    end
+
+    it 'delegates #log to the corresponding severity method' do
+      agent = logger_agent { |logger| logger.log(Logger::WARN, 'Something warned') }
+      allow($stdout).to receive(:write)
+      agent.run
+      expect($stdout).to have_received(:write).with(
+        /\[WARN\] \[#{Regexp.escape(agent.full_name)}\] - Something warned\n\z/
+      )
+    end
+
+    it 'resolves block messages lazily' do
+      agent = logger_agent { |logger| logger.info { 'Lazy block message' } }
+      allow($stdout).to receive(:write)
+      agent.run
+      expect($stdout).to have_received(:write).with(/- Lazy block message\n\z/)
+    end
+
+    it 'resolves Proc messages' do
+      agent = logger_agent { |logger| logger.info(-> { 'Lazy proc message' }) }
+      allow($stdout).to receive(:write)
+      agent.run
+      expect($stdout).to have_received(:write).with(/- Lazy proc message\n\z/)
+    end
+
+    it 'falls back to the progname when no message is given' do
+      agent = logger_agent { |logger| logger.add(Logger::INFO, nil, 'progname message') }
+      allow($stdout).to receive(:write)
+      agent.run
+      expect($stdout).to have_received(:write).with(/- progname message\n\z/)
+    end
+  end
 end
