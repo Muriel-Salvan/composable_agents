@@ -1,3 +1,9 @@
+# [v3.6.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.6.0...v3.6.1) (2026-11-07 16:11:50)
+
+### Patches
+
+* [test: add logger coverage and improve SimpleCov configuration](https://github.com/Muriel-Salvan/composable_agents/commit/68804370a2d54917eb3792ec4932db3fc4941b4a)
+
 # [v3.6.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.5.0...v3.6.0) (2026-11-07 11:35:50)
 
 ## Global changes
