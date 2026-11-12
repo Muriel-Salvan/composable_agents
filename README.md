@@ -203,7 +203,7 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
 - 🧠 **Three agent types** — Create LLM-powered agents via [`PromptDrivenAgent`](lib/composable_agents/prompt_driven_agent.rb), wrap plain Ruby logic with [`RubyAgent`](lib/composable_agents/ruby_agent.rb), or compose complex multi-step workflows using the [`Resumable`](lib/composable_agents/mixins/resumable.rb) mixin.
 - 🔄 **Composable pipelines** — Pass output artifacts from one agent directly as input to another, forming reusable, chainable workflows.
 - 🎯 **Multiple LLM backends** — Plug into different AI providers via the [`ai-agents`](https://github.com/nicbarker/ai-agents) gem (OpenRouter) or [`cline-rb`](https://github.com/Muriel-Salvan/cline-rb) (Claude, GPT, and many more).
-- 📝 **Two prompt rendering strategies** — Choose between clean **Markdown** for simple agents, or **MarkdownHeavy** with structured output parsing, execution checklists, and typed artifact support for complex agentic systems.
+- 📝 **Three prompt rendering strategies** — Choose between clean **Markdown** for simple agents, **MarkdownHeavy** with structured output parsing, execution checklists, and typed artifact support for complex agentic systems, or **MarkdownHeavyFiles** which persists input and output artifacts as files on disk.
 - 📦 **Typed artifact contracts** — Define and validate input/output schemas with descriptions, optional flags, and types (`:text`, `:markdown`, `:json`). The framework raises clear `MissingInputArtifactError`, `MissingOutputArtifactError`, or `ArtifactTypeError` on violations.
 - 💾 **Resumable execution** — Persist step-by-step state to disk (via the `Resumable` mixin). Interrupted runs can be resumed seamlessly — previously completed steps are skipped, saving time and API costs.
 - 🔁 **Conditional retries** — Wrap an agent's `#run` with the `Retriable` mixin to retry on transient failures. Register condition procs via `#retry_on` that receive the agent and any raised exception (or `nil`) and return a policy hash (optional `:wait_secs`, optional `:modifier`) to wait-and-retry, or `nil` to skip. Unhandled exceptions are re-raised when no policy applies.
@@ -292,7 +292,7 @@ The project is a Ruby library (not a CLI) — users install the gem and use its 
 
 #### `ComposableAgents::PromptDrivenAgent < Agent`
 
-- **Description:** An agent that uses a **prompt rendering strategy** (Markdown or MarkdownHeavy) to build prompts for an LLM. It manages role, objective, instructions, constraints, and a conversation history.
+- **Description:** An agent that uses a **prompt rendering strategy** (Markdown, MarkdownHeavy, or MarkdownHeavyFiles) to build prompts for an LLM. It manages role, objective, instructions, constraints, and a conversation history.
 - **Public methods:**
   - `#role` / `#role=` — Agent's role description.
   - `#objective` / `#objective=` — Agent's objective.
@@ -568,7 +568,7 @@ When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `
 ### Additional notes
 
 - **No executables / CLI** — This gem is a library only; there are no scripts in `bin/`.
-- **Prompt rendering strategies** (`PromptRenderingStrategy::Markdown` and `PromptRenderingStrategy::MarkdownHeavy`) are not part of the public API themselves — they are included automatically by the agent's `strategy:` parameter.
+- **Prompt rendering strategies** (`PromptRenderingStrategy::Markdown`, `PromptRenderingStrategy::MarkdownHeavy`, and `PromptRenderingStrategy::MarkdownHeavyFiles`) are not part of the public API themselves — they are included automatically by the agent's `strategy:` parameter.
 - **The `AiAgentUserInteraction` mixin** (`ComposableAgents::Mixins::AiAgentUserInteraction`) is an internal bridge that combines `UserInteraction` with `AiAgents::Agent`; it is used by prepending it to an `AiAgents::Agent` subclass.
 - See the [examples/](https://github.com/Muriel-Salvan/composable_agents/tree/main/examples) directory for complete, runnable scripts demonstrating all the above APIs.
 
@@ -594,6 +594,7 @@ When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `
   - [`Logger`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/logger.rb) — Standard logger class
   - [`PromptRenderingStrategy::Markdown`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/prompt_rendering_strategy/markdown.rb) — Markdown prompt strategy
   - [`PromptRenderingStrategy::MarkdownHeavy`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/prompt_rendering_strategy/markdown_heavy.rb) — Heavy Markdown prompt strategy
+  - [`PromptRenderingStrategy::MarkdownHeavyFiles`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/prompt_rendering_strategy/markdown_heavy_files.rb) — Heavy Markdown prompt strategy persisting artifacts as files
   - [`Utils::Markdown`](https://github.com/Muriel-Salvan/composable_agents/blob/main/lib/composable_agents/utils/markdown.rb) — Markdown header alignment utilities
 
 ## How it works
@@ -674,10 +675,11 @@ flowchart TD
 
 ### Prompt rendering strategies 📝
 
-Two strategies are included, mixed into the agent at initialization via `singleton_class.include strategy`:
+Three strategies are included, mixed into the agent at initialization via `singleton_class.include strategy`:
 
 - **`PromptRenderingStrategy::Markdown`** — Clean, minimal Markdown. Simple instructions and artifact references.
 - **`PromptRenderingStrategy::MarkdownHeavy`** (default for Cline) — Elaborate prompts with execution checklists, structured artifact definition sections, and **JSON-based output parsing**. Agents format their artifacts as JSON blocks tagged with `output_artifact=NAME`, which the strategy parses back into the output hash. Includes type-aware parsing (`:text`, `:markdown`, `:json`).
+- **`PromptRenderingStrategy::MarkdownHeavyFiles`** — Same heavy Markdown behavior as `MarkdownHeavy`, but artifacts are persisted as files on disk instead of being in-lined or returned as JSON. Input artifacts are written to files that the assistant is asked to open, and output artifacts are expected as files that are read back from disk. Accepts an `artifacts_directory` constructor parameter (defaults to `#{composable_agents_dir}/artifacts`).
 
 ### LLM backends: ai-agents vs cline-rb 🎯
 
@@ -764,7 +766,7 @@ npm install node-pty
 │       ├── ai_agents/            # ai-agents backend
 │       ├── cline/                # cline-rb backend
 │       ├── mixins/               # ArtifactContract, Logger, Resumable, Retriable, RetriableArtifacts, RetriableCline, UserInteraction
-│       ├── prompt_rendering_strategy/ # Markdown & MarkdownHeavy strategies
+│       ├── prompt_rendering_strategy/ # Markdown, MarkdownHeavy & MarkdownHeavyFiles strategies
 │       └── utils/                # Markdown utilities
 ├── spec/                         # Test suite
 │   ├── scenarios/                # RSpec test cases
