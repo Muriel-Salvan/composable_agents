@@ -66,6 +66,29 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavyFiles, '#render
     EO_SYSTEM_PROMPT
   end
 
+  it 'describes optional input artifacts as such' do
+    expect(
+      system_prompt(input_artifacts_contracts: { plan: { description: 'The plan', optional: true } })
+    ).to eq <<~EO_SYSTEM_PROMPT.strip
+      # Instructions
+
+      Instruction 1
+
+      Instruction 2
+
+      # Input artifacts' concept and usage
+
+      - Artifacts are documents that you can get as input.
+      - Each input artifact is persisted as a file on disk, identified by its absolute path, like `#{plan_path}`.
+      - You must consider all artifacts given in the "Input artifacts" section of the user prompt.
+      - The "Input artifacts" section of the user prompt gives you the absolute path of each input artifact file.
+      - Open and read the file at the given absolute path whenever you need the corresponding input artifact content.
+      - The file extension indicates the artifact content type: `.json` for JSON, `.md` for Markdown, `.txt` for raw text.
+      - The content of input artifact `#{plan_path}` describes this: The plan
+      - The input artifact `#{plan_path}` is optional and may not be given to you.
+    EO_SYSTEM_PROMPT
+  end
+
   it 'describes output artifacts as files to write' do
     expect(
       system_prompt(output_artifacts_contracts: { report: { description: 'The final report', type: :text } })

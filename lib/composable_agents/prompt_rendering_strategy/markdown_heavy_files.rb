@@ -242,14 +242,10 @@ module ComposableAgents
       def persist_input_artifact(artifact_name, artifact_content)
         artifact_path = input_artifact_path(artifact_name)
         artifact_type = normalized_input_artifacts_contracts.dig(artifact_name, :type)
-        case artifact_type
-        when nil, :json
-          File.write(artifact_path, JSON.pretty_generate(artifact_content))
-        when :text, :markdown
-          File.write(artifact_path, artifact_content)
-        else
-          raise "Unknown artifact type: #{artifact_type}"
-        end
+        File.write(
+          artifact_path,
+          %i[text markdown].include?(artifact_type) ? artifact_content : JSON.pretty_generate(artifact_content)
+        )
         artifact_path
       end
 
@@ -259,13 +255,10 @@ module ComposableAgents
       # @param artifact_type [Symbol, nil] The output artifact type
       # @return [Object] The output artifact content
       def read_output_artifact(artifact_path, artifact_type)
-        case artifact_type
-        when nil, :json
-          JSON.parse(File.read(artifact_path))
-        when :text, :markdown
+        if %i[text markdown].include?(artifact_type)
           File.read(artifact_path)
         else
-          raise "Unknown artifact type: #{artifact_type}"
+          JSON.parse(File.read(artifact_path))
         end
       end
     end
