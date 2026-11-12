@@ -40,5 +40,27 @@ module ComposableAgentsTest
         attr_accessor :output_artifacts_errors
       end.new(*args, **kwargs)
     end
+
+    # Instantiate an agent using the MarkdownHeavyFiles prompt rendering strategy,
+    # with ArtifactContract mixin prepended.
+    #
+    # @param args [Array] Args to be given to the agent's constructor
+    # @param kwargs [Hash] Keyword args to be given to the agent's constructor
+    # @return [ComposableAgents::PromptDrivenAgent] Agent to be tested
+    def agent_for_markdown_heavy_files(*args, **kwargs)
+      Class.new(ComposableAgents::PromptDrivenAgent) do
+        prepend ComposableAgents::Mixins::ArtifactContract
+        include ComposableAgents::PromptRenderingStrategy::MarkdownHeavyFiles
+
+        # @return [Hash{Symbol => Object}] The input artifacts that are set using run calls
+        attr_accessor :input_artifacts
+
+        # @return [Hash{Symbol => Object}] The output artifacts being filled during run
+        attr_accessor :output_artifacts
+
+        # @return [Hash{Symbol => String}] The output artifacts errors encountered during run
+        attr_accessor :output_artifacts_errors
+      end.new(*args, **kwargs)
+    end
   end
 end

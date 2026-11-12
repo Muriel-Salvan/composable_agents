@@ -59,68 +59,8 @@ module ComposableAgents
         sections = [super]
         # Don't document the user instructions themselves
         input_contracts = normalized_input_artifacts_contracts.except(:user_instructions)
-        unless input_contracts.empty?
-          sections << <<~EO_SECTION
-            # Input artifacts' concept and usage
-
-            - Artifacts are documents that you can get as input.
-            - Each artifact is identified by a name, like `#{artifact_ref(:plan)}`.
-            - You must consider all artifacts given in the "Input artifacts" section of the user prompt.
-            - All artifacts presented in the "Input artifacts" section of the user prompt provide their content in an in-line JSON document.
-            #{
-              input_contracts.map do |artifact_name, artifact_contract|
-                art_ref = artifact_ref(artifact_name)
-                [
-                  "- The content of input artifact `#{art_ref}` describes this: #{artifact_contract[:description]}"
-                ] + (
-                  if artifact_contract[:optional]
-                    ["- The input artifact `#{art_ref}` is optional and may not be given to you."]
-                  else
-                    ["- The input artifact `#{art_ref}` is expected to be in the user prompt."]
-                  end
-                ) + [
-                  "- The input artifact `#{art_ref}` artifact content is embedded directly in the user prompt as in-line JSON. It is NOT a file. Do NOT try to open it as a file."
-                ]
-              end.compact.flatten(1).join("\n")
-            }
-          EO_SECTION
-        end
-        unless normalized_output_artifacts_contracts.empty?
-          sections << <<~EO_SECTION
-            # Output artifacts' concept and usage
-
-            - The user will ask you to provide some artifacts as output.
-            - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
-              ```json output_artifact=#{artifact_ref(:name)}
-              {artifact_content}
-              ```
-            - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
-            - Always return output artifacts that the user is asking you to provide.
-            - You can return several output artifacts in your responses if needed.
-
-            Following sections enumerate all expected output artifacts.
-
-            #{
-              normalized_output_artifacts_contracts.map do |artifact_name, artifact_contract|
-                art_ref = artifact_ref(artifact_name)
-                (
-                  [
-                    "## Output artifact `#{art_ref}`",
-                    '',
-                    "- The content of output artifact `#{art_ref}` should describe this: #{artifact_contract[:description]}"
-                  ] + (
-                    artifact_contract[:type] ? ["- The output artifact `#{art_ref}` content format should be #{artifact_contract[:type]}"] : []
-                  ) + [
-                    <<~EO_ITEM.strip
-                      - The output artifact `#{art_ref}` should be given in a block like this:
-                      #{example_json_block(artifact_name)}
-                    EO_ITEM
-                  ]
-                ).join("\n")
-              end.join("\n\n")
-            }
-          EO_SECTION
-        end
+        sections << render_input_artifacts_system_prompt_section(input_contracts) unless input_contracts.empty?
+        sections << render_output_artifacts_system_prompt_section unless normalized_output_artifacts_contracts.empty?
         sections.map(&:strip).join("\n\n")
       end
 
@@ -287,6 +227,77 @@ module ComposableAgents
       end
 
       private
+
+      # Render the input artifacts concept section of the system prompt.
+      #
+      # @param input_contracts [Hash{Symbol => Hash{Symbol => Object}}] The normalized input artifacts contracts
+      # @return [String] The rendered input artifacts' concept and usage section
+      def render_input_artifacts_system_prompt_section(input_contracts)
+        <<~EO_SECTION
+          # Input artifacts' concept and usage
+
+          - Artifacts are documents that you can get as input.
+          - Each artifact is identified by a name, like `#{artifact_ref(:plan)}`.
+          - You must consider all artifacts given in the "Input artifacts" section of the user prompt.
+          - All artifacts presented in the "Input artifacts" section of the user prompt provide their content in an in-line JSON document.
+          #{
+            input_contracts.map do |artifact_name, artifact_contract|
+              art_ref = artifact_ref(artifact_name)
+              [
+                "- The content of input artifact `#{art_ref}` describes this: #{artifact_contract[:description]}"
+              ] + (
+                if artifact_contract[:optional]
+                  ["- The input artifact `#{art_ref}` is optional and may not be given to you."]
+                else
+                  ["- The input artifact `#{art_ref}` is expected to be in the user prompt."]
+                end
+              ) + [
+                "- The input artifact `#{art_ref}` artifact content is embedded directly in the user prompt as in-line JSON. It is NOT a file. Do NOT try to open it as a file."
+              ]
+            end.compact.flatten(1).join("\n")
+          }
+        EO_SECTION
+      end
+
+      # Render the output artifacts concept section of the system prompt.
+      #
+      # @return [String] The rendered output artifacts' concept and usage section
+      def render_output_artifacts_system_prompt_section
+        <<~EO_SECTION
+          # Output artifacts' concept and usage
+
+          - The user will ask you to provide some artifacts as output.
+          - You must always return the required artifact as a JSON document in your response, with its name in the JSON header, like this:
+            ```json output_artifact=#{artifact_ref(:name)}
+            {artifact_content}
+            ```
+          - Do not create files for output artifacts: always give them inside embedded JSON in your last response.
+          - Always return output artifacts that the user is asking you to provide.
+          - You can return several output artifacts in your responses if needed.
+
+          Following sections enumerate all expected output artifacts.
+
+          #{
+            normalized_output_artifacts_contracts.map do |artifact_name, artifact_contract|
+              art_ref = artifact_ref(artifact_name)
+              (
+                [
+                  "## Output artifact `#{art_ref}`",
+                  '',
+                  "- The content of output artifact `#{art_ref}` should describe this: #{artifact_contract[:description]}"
+                ] + (
+                  artifact_contract[:type] ? ["- The output artifact `#{art_ref}` content format should be #{artifact_contract[:type]}"] : []
+                ) + [
+                  <<~EO_ITEM.strip
+                    - The output artifact `#{art_ref}` should be given in a block like this:
+                    #{example_json_block(artifact_name)}
+                  EO_ITEM
+                ]
+              ).join("\n")
+            end.join("\n\n")
+          }
+        EO_SECTION
+      end
 
       # Provide a Markdown example of a JSON block for a given output artifact
       #

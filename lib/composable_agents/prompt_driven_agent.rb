@@ -52,8 +52,8 @@ module ComposableAgents
       strategy: PromptRenderingStrategy::Markdown,
       **kwargs
     )
-      super(*args, **kwargs)
       singleton_class.include strategy
+      super(*args, **kwargs)
       @role = role
       @objective = objective
       @system_instructions = system_instructions
