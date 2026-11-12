@@ -214,7 +214,7 @@ module ComposableAgents
             find_skill(skill, selected_skills)
           end
           # Setup the temporary Cline global config dir
-          agent_tmp_dir = "#{@composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}#{"-#{name.gsub(/[^\w.]/, '_')}" if name}"
+          agent_tmp_dir = "#{composable_agents_dir}/tmp/#{Time.now.utc.strftime('%F-%H-%M-%S')}#{"-#{name.gsub(/[^\w.]/, '_')}" if name}"
           ::Cline.configure do |config|
             config.debug = logger_debug?
             config.temp_dir_root = "#{agent_tmp_dir}/cline-rb"

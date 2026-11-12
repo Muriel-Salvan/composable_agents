@@ -568,7 +568,7 @@ When a proc returns a policy, the agent waits `wait_secs` seconds, applies the `
 ### Additional notes
 
 - **No executables / CLI** — This gem is a library only; there are no scripts in `bin/`.
-- **Prompt rendering strategies** (`PromptRenderingStrategy::Markdown`, `PromptRenderingStrategy::MarkdownHeavy`, and `PromptRenderingStrategy::MarkdownHeavyFiles`) are not part of the public API themselves — they are included automatically by the agent's `strategy:` parameter.
+- **Prompt rendering strategies** (`PromptRenderingStrategy::Markdown`, `PromptRenderingStrategy::MarkdownHeavy`, and `PromptRenderingStrategy::MarkdownHeavyFiles`) are not part of the public API themselves — they are included automatically by the agent's `strategy:` parameter. A strategy never defines `initialize`: when it can be customized, it exposes public accessors on the agent, resolved lazily and set at any time after construction (e.g. `PromptRenderingStrategy::MarkdownHeavyFiles#artifacts_directory=`).
 - **The `AiAgentUserInteraction` mixin** (`ComposableAgents::Mixins::AiAgentUserInteraction`) is an internal bridge that combines `UserInteraction` with `AiAgents::Agent`; it is used by prepending it to an `AiAgents::Agent` subclass.
 - See the [examples/](https://github.com/Muriel-Salvan/composable_agents/tree/main/examples) directory for complete, runnable scripts demonstrating all the above APIs.
 
@@ -679,7 +679,7 @@ Three strategies are included, mixed into the agent at initialization via `singl
 
 - **`PromptRenderingStrategy::Markdown`** — Clean, minimal Markdown. Simple instructions and artifact references.
 - **`PromptRenderingStrategy::MarkdownHeavy`** (default for Cline) — Elaborate prompts with execution checklists, structured artifact definition sections, and **JSON-based output parsing**. Agents format their artifacts as JSON blocks tagged with `output_artifact=NAME`, which the strategy parses back into the output hash. Includes type-aware parsing (`:text`, `:markdown`, `:json`).
-- **`PromptRenderingStrategy::MarkdownHeavyFiles`** — Same heavy Markdown behavior as `MarkdownHeavy`, but artifacts are persisted as files on disk instead of being in-lined or returned as JSON. Input artifacts are written to files that the assistant is asked to open, and output artifacts are expected as files that are read back from disk. Accepts an `artifacts_directory` constructor parameter (defaults to `#{composable_agents_dir}/artifacts`); its artifacts directories are resolved lazily and created on first use.
+- **`PromptRenderingStrategy::MarkdownHeavyFiles`** — Same heavy Markdown behavior as `MarkdownHeavy`, but artifacts are persisted as files on disk instead of being in-lined or returned as JSON. Input artifacts are written to files that the assistant is asked to open, and output artifacts are expected as files that are read back from disk. It exposes a public `#artifacts_directory` accessor (defaulting to `#{composable_agents_dir}/artifacts`) that can be set on the agent at any time; its artifacts directories are resolved lazily and created on first use. Example: `agent.artifacts_directory = File.join(composable_agents_dir, 'my_artifacts')`.
 
 ### LLM backends: ai-agents vs cline-rb 🎯
 

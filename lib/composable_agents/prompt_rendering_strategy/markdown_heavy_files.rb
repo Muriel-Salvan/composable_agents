@@ -17,29 +17,44 @@ module ComposableAgents
     #     This can be used to refer to the artifact names properly in the user or system instructions.
     # Artifacts are persisted in a directory that defaults to `#{composable_agents_dir}/artifacts`, where input and
     # output artifacts are persisted in its `input` and `output` sub-directories respectively.
-    # Those directories are resolved lazily and created on disk the first time they are needed, so that no state
-    # needs to be initialized by this module's constructor.
-    # They can be customized using the `artifacts_directory` constructor parameter, when this strategy is
-    # included in a class.
+    # Those directories are resolved lazily and created on disk the first time they are needed, so that this strategy
+    # needs no state initialization and no constructor parameter.
+    # The directory can be customized at any time on an agent using this strategy by setting its
+    # #artifacts_directory accessor.
     module MarkdownHeavyFiles
-      # @!group Internal
-
       include MarkdownHeavy
 
-      # Constructor
+      # @!group Public API
+
+      # Get the directory where artifacts are persisted.
+      # Defaults to `#{composable_agents_dir}/artifacts`.
+      # Input and output artifacts are persisted in its `input` and `output` sub-directories respectively.
+      # Those directories are resolved lazily and created on disk the first time they are needed.
       #
-      # @param artifacts_directory [String, nil] Directory where artifacts are persisted, or nil to default to
-      #   `#{composable_agents_dir}/artifacts`
-      def initialize(*args, artifacts_directory: nil, **kwargs)
-        @artifacts_directory = artifacts_directory
-        super(*args, **kwargs)
+      # @return [String] The directory where artifacts are persisted
+      def artifacts_directory
+        @artifacts_directory || "#{composable_agents_dir}/artifacts"
       end
 
+      # Set the directory where artifacts are persisted (see #artifacts_directory).
+      # Already resolved input and output artifacts directories are reset, so that they follow the new directory
+      #   the next time they are needed.
+      #
+      # @param directory [String, nil] The directory where artifacts are persisted, or nil to default to
+      #   `#{composable_agents_dir}/artifacts`
+      def artifacts_directory=(directory)
+        @artifacts_directory = directory
+        @input_artifacts_directory = nil
+        @output_artifacts_directory = nil
+      end
+
+      # @!group Internal
+
       # Render the user prompt
-      # The following instance variables are accessible to render the prompt:
-      # - `@role`
-      # - `@objective`
-      # - `@constraints`
+      # The following accessors are available to render the prompt:
+      # - `#role`
+      # - `#objective`
+      # - `#constraints`
       #
       # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
@@ -131,15 +146,6 @@ module ComposableAgents
       end
 
       private
-
-      # Get the directory where artifacts are persisted.
-      # Defaults to `#{composable_agents_dir}/artifacts`.
-      # Memoized. This directory is not created on disk until it is actually needed.
-      #
-      # @return [String] The directory where artifacts are persisted
-      def artifacts_directory
-        @artifacts_directory ||= "#{@composable_agents_dir}/artifacts"
-      end
 
       # Get the directory where input artifacts are persisted.
       # Created on disk the first time it is needed.
