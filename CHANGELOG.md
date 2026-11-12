@@ -1,3 +1,15 @@
+# [v3.7.2](https://github.com/Muriel-Salvan/composable_agents/compare/v3.7.1...v3.7.2) (2026-11-12 15:34:25)
+
+## Global changes
+### Patches
+
+* [fix(strategies): expose options through agent accessors](https://github.com/Muriel-Salvan/composable_agents/commit/5a6901d858f6382e63efa49edd4dabf21efd8082)
+
+## Changes for strategies
+### Patches
+
+* [fix(strategies): expose options through agent accessors](https://github.com/Muriel-Salvan/composable_agents/commit/5a6901d858f6382e63efa49edd4dabf21efd8082)
+
 # [v3.7.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.7.0...v3.7.1) (2026-11-12 13:28:25)
 
 ## Global changes
