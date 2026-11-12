@@ -15,10 +15,12 @@ module ComposableAgents
     # - `#parse_output_artifacts(text)` Parses a text that comes from the agent to retrieve output artifacts from files.
     # - `#artifact_ref(artifact_name) -> String` Returns the absolute path of the artifact file as seen by the assistant.
     #     This can be used to refer to the artifact names properly in the user or system instructions.
-    # The constructor accepts the following extra parameter:
-    # - `artifacts_directory` [String, nil] Directory where artifacts are persisted, or nil to default to
-    #   `#{composable_agents_dir}/artifacts`. Input and output artifacts are persisted in the
-    #   `input` and `output` sub-directories respectively.
+    # Artifacts are persisted in a directory that defaults to `#{composable_agents_dir}/artifacts`, where input and
+    # output artifacts are persisted in its `input` and `output` sub-directories respectively.
+    # Those directories are resolved lazily and created on disk the first time they are needed, so that no state
+    # needs to be initialized by this module's constructor.
+    # They can be customized using the `artifacts_directory` constructor parameter, when this strategy is
+    # included in a class.
     module MarkdownHeavyFiles
       # @!group Internal
 
@@ -29,12 +31,8 @@ module ComposableAgents
       # @param artifacts_directory [String, nil] Directory where artifacts are persisted, or nil to default to
       #   `#{composable_agents_dir}/artifacts`
       def initialize(*args, artifacts_directory: nil, **kwargs)
+        @artifacts_directory = artifacts_directory
         super(*args, **kwargs)
-        artifacts_directory ||= "#{@composable_agents_dir}/artifacts"
-        @input_artifacts_directory = File.join(artifacts_directory, 'input')
-        @output_artifacts_directory = File.join(artifacts_directory, 'output')
-        FileUtils.mkdir_p(@input_artifacts_directory)
-        FileUtils.mkdir_p(@output_artifacts_directory)
       end
 
       # Render the user prompt
@@ -134,6 +132,33 @@ module ComposableAgents
 
       private
 
+      # Get the directory where artifacts are persisted.
+      # Defaults to `#{composable_agents_dir}/artifacts`.
+      # Memoized. This directory is not created on disk until it is actually needed.
+      #
+      # @return [String] The directory where artifacts are persisted
+      def artifacts_directory
+        @artifacts_directory ||= "#{@composable_agents_dir}/artifacts"
+      end
+
+      # Get the directory where input artifacts are persisted.
+      # Created on disk the first time it is needed.
+      # Memoized.
+      #
+      # @return [String] The directory where input artifacts are persisted
+      def input_artifacts_directory
+        @input_artifacts_directory ||= File.join(artifacts_directory, 'input').tap { |dir| FileUtils.mkdir_p(dir) }
+      end
+
+      # Get the directory where output artifacts are persisted.
+      # Created on disk the first time it is needed.
+      # Memoized.
+      #
+      # @return [String] The directory where output artifacts are persisted
+      def output_artifacts_directory
+        @output_artifacts_directory ||= File.join(artifacts_directory, 'output').tap { |dir| FileUtils.mkdir_p(dir) }
+      end
+
       # Render the input artifacts concept section of the system prompt.
       #
       # @param input_contracts [Hash{Symbol => Hash{Symbol => Object}}] The normalized input artifacts contracts
@@ -218,7 +243,7 @@ module ComposableAgents
       # @return [String] The absolute path of the input artifact file
       def input_artifact_path(artifact_name)
         File.join(
-          @input_artifacts_directory,
+          input_artifacts_directory,
           "#{artifact_name}#{artifact_extension(normalized_input_artifacts_contracts.dig(artifact_name, :type))}"
         )
       end
@@ -229,7 +254,7 @@ module ComposableAgents
       # @return [String] The absolute path of the output artifact file
       def output_artifact_path(artifact_name)
         File.join(
-          @output_artifacts_directory,
+          output_artifacts_directory,
           "#{artifact_name}#{artifact_extension(normalized_output_artifacts_contracts.dig(artifact_name, :type))}"
         )
       end
