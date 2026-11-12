@@ -1,3 +1,15 @@
+# [v3.7.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.7.0...v3.7.1) (2026-11-12 13:28:25)
+
+## Global changes
+### Patches
+
+* [fix(MarkdownHeavyFiles): lazy-init MarkdownHeavyFiles artifact dirs](https://github.com/Muriel-Salvan/composable_agents/commit/bb64c69e65a60130e356c70755d0b862586a5351)
+
+## Changes for MarkdownHeavyFiles
+### Patches
+
+* [fix(MarkdownHeavyFiles): lazy-init MarkdownHeavyFiles artifact dirs](https://github.com/Muriel-Salvan/composable_agents/commit/bb64c69e65a60130e356c70755d0b862586a5351)
+
 # [v3.7.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.6.1...v3.7.0) (2026-11-12 12:08:18)
 
 ## Global changes
