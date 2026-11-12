@@ -1,3 +1,15 @@
+# [v3.7.0](https://github.com/Muriel-Salvan/composable_agents/compare/v3.6.1...v3.7.0) (2026-11-12 12:08:18)
+
+## Global changes
+### Patches
+
+* [feat(MarkdownHeavyFiles): implement MarkdownHeavyFiles prompt rendering strategy](https://github.com/Muriel-Salvan/composable_agents/commit/f6d2e057a64a98c79e5d2566893bdd92bc16185e)
+
+## Changes for MarkdownHeavyFiles
+### Features
+
+* [feat(MarkdownHeavyFiles): implement MarkdownHeavyFiles prompt rendering strategy](https://github.com/Muriel-Salvan/composable_agents/commit/f6d2e057a64a98c79e5d2566893bdd92bc16185e)
+
 # [v3.6.1](https://github.com/Muriel-Salvan/composable_agents/compare/v3.6.0...v3.6.1) (2026-11-07 16:11:50)
 
 ### Patches
