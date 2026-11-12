@@ -679,7 +679,7 @@ Three strategies are included, mixed into the agent at initialization via `singl
 
 - **`PromptRenderingStrategy::Markdown`** — Clean, minimal Markdown. Simple instructions and artifact references.
 - **`PromptRenderingStrategy::MarkdownHeavy`** (default for Cline) — Elaborate prompts with execution checklists, structured artifact definition sections, and **JSON-based output parsing**. Agents format their artifacts as JSON blocks tagged with `output_artifact=NAME`, which the strategy parses back into the output hash. Includes type-aware parsing (`:text`, `:markdown`, `:json`).
-- **`PromptRenderingStrategy::MarkdownHeavyFiles`** — Same heavy Markdown behavior as `MarkdownHeavy`, but artifacts are persisted as files on disk instead of being in-lined or returned as JSON. Input artifacts are written to files that the assistant is asked to open, and output artifacts are expected as files that are read back from disk. Accepts an `artifacts_directory` constructor parameter (defaults to `#{composable_agents_dir}/artifacts`).
+- **`PromptRenderingStrategy::MarkdownHeavyFiles`** — Same heavy Markdown behavior as `MarkdownHeavy`, but artifacts are persisted as files on disk instead of being in-lined or returned as JSON. Input artifacts are written to files that the assistant is asked to open, and output artifacts are expected as files that are read back from disk. Accepts an `artifacts_directory` constructor parameter (defaults to `#{composable_agents_dir}/artifacts`); its artifacts directories are resolved lazily and created on first use.
 
 ### LLM backends: ai-agents vs cline-rb 🎯
 

@@ -23,10 +23,12 @@ describe ComposableAgents::PromptRenderingStrategy::MarkdownHeavyFiles, '#parse_
   end
 
   # Get the directory where this strategy persists its output artifacts on disk.
+  # This directory is created lazily by the strategy, so it is created here to simulate the assistant
+  # writing its output artifacts to the paths it was given.
   #
   # @return [String] The absolute path of the output artifacts directory
   def output_dir
-    File.join(composable_agents_dir, 'artifacts', 'output')
+    File.join(composable_agents_dir, 'artifacts', 'output').tap { |dir| FileUtils.mkdir_p(dir) }
   end
 
   describe 'with 1 output artifact not having type information' do
