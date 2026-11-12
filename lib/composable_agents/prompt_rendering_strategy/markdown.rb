@@ -1,5 +1,15 @@
 module ComposableAgents
-  # Collection of prompt rendering strategies that can be used with PromptDrivenAgent's agents
+  # Collection of prompt rendering strategies that can be used with PromptDrivenAgent's agents.
+  # A strategy is a module that is included in the agent's singleton class when the agent is constructed
+  #   (see PromptDrivenAgent#initialize).
+  # Strategies must follow these rules:
+  # - They must not define an #initialize method: strategies don't have any constructor parameter.
+  # - A strategy that can be customized publishes public accessors on the agent, whose defaults are resolved lazily
+  #   from the agent's public API, so that they can be set at any time on a constructed agent
+  #   (see MarkdownHeavyFiles#artifacts_directory).
+  # - They use the agent's accessors (e.g. #name, #role, #objective, #constraints, #input_artifacts,
+  #   #composable_agents_dir) — including its private ones, as strategies are part of the agent — and never access
+  #   its instance variables.
   module PromptRenderingStrategy
     # Render prompt as Markdown documents
     module Markdown
@@ -30,44 +40,44 @@ module ComposableAgents
       end
 
       # Render the system prompt.
-      # The following instance variables are accessible to render the prompt:
-      # - `@input_artifacts`
-      # - `@role`
-      # - `@objective`
-      # - `@constraints`
+      # The following accessors are available to render the prompt:
+      # - `#input_artifacts`
+      # - `#role`
+      # - `#objective`
+      # - `#constraints`
       #
       # @param rendered_instructions [String, nil] The rendered system instructions, or nil if none
       # @return [String] The rendered system prompt
       def render_system_prompt(rendered_instructions)
         sections = []
-        sections << <<~EO_SECTION if @role && !@role.empty?
+        sections << <<~EO_SECTION if role && !role.empty?
           # Role
 
-          #{Utils::Markdown.align_markdown_headers(@role, level: 2).strip}
+          #{Utils::Markdown.align_markdown_headers(role, level: 2).strip}
         EO_SECTION
-        sections << <<~EO_SECTION if @objective && !@objective.empty?
+        sections << <<~EO_SECTION if objective && !objective.empty?
           # Objective
 
-          #{Utils::Markdown.align_markdown_headers(@objective, level: 2).strip}
+          #{Utils::Markdown.align_markdown_headers(objective, level: 2).strip}
         EO_SECTION
         sections << <<~EO_SECTION if rendered_instructions && !rendered_instructions.empty?
           # Instructions
 
           #{Utils::Markdown.align_markdown_headers(rendered_instructions, level: 2).strip}
         EO_SECTION
-        sections << <<~EO_SECTION if @constraints && !@constraints.empty?
+        sections << <<~EO_SECTION if constraints && !constraints.empty?
           # Constraints
 
-          #{Utils::Markdown.align_markdown_headers(@constraints, level: 2).strip}
+          #{Utils::Markdown.align_markdown_headers(constraints, level: 2).strip}
         EO_SECTION
         sections.map(&:strip).join("\n\n")
       end
 
       # Render the user prompt
-      # The following instance variables are accessible to render the prompt:
-      # - `@role`
-      # - `@objective`
-      # - `@constraints`
+      # The following accessors are available to render the prompt:
+      # - `#role`
+      # - `#objective`
+      # - `#constraints`
       #
       # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name

@@ -56,6 +56,10 @@ module ComposableAgents
     # @return [RunInfo, nil] The current run info, or nil if no run has started yet
     attr_reader :current_run_info
 
+    # @return [String] Base directory where this agent stores its data (runs, artifacts...).
+    #   Available to this agent's mixins and prompt rendering strategies.
+    attr_reader :composable_agents_dir
+
     # Get the logger to be used by this agent, with this agent's log fields (see #log_fields) prefixed to messages.
     # If the provided logger does not support fields tagging, it is used as-is (fields are ignored).
     # Memoized.

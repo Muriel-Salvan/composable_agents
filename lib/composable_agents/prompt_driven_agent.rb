@@ -10,6 +10,8 @@ module ComposableAgents
   #
   # Prompt rendering strategies are useful because different prompt-driven agents would benefit from different
   #   prompt formats or structures (JSON, Markdown, explicit ordered lists, in-lining artifacts' contents without tools...).
+  # A strategy is a module that is included in the agent's singleton class when the agent is constructed
+  #   (see PromptRenderingStrategy).
   # This agent automatically records non-rendered conversation (prompts + outputs) in a `conversation` store, part of its state.
   class PromptDrivenAgent < Agent
     # @!group Public API
@@ -42,7 +44,9 @@ module ComposableAgents
     # @param system_instructions [Object, nil] Original instructions for the agent, or nil if no system instructions are needed.
     #   The kind of instructions that can be given are defined by the Instructions's constructor (see Instructions#initialize).
     # @param constraints [String, nil] Constraints to be respected, or nil for the agent's default
-    # @param strategy [Module] The prompt rendering strategy
+    # @param strategy [Module] The prompt rendering strategy.
+    #   Strategies must not define their own constructor: a strategy that can be customized exposes public accessors
+    #   to be set on the agent (see PromptRenderingStrategy::MarkdownHeavyFiles#artifacts_directory=).
     def initialize(
       *args,
       role: nil,
@@ -160,6 +164,10 @@ module ComposableAgents
     end
 
     private
+
+    # @return [Hash{Symbol => Object}, nil] The input artifacts of the current run, or nil if no run has started yet.
+    #   Available to this agent's prompt rendering strategies.
+    attr_reader :input_artifacts
 
     # Get the output artifacts errors that should raise an {OutputArtifactsError} at the end of a run.
     # By default, all the errors that were reported during the run should raise.

@@ -47,11 +47,11 @@ module ComposableAgents
       end
 
       # Render the system prompt
-      # The following instance variables are accessible to render the prompt:
-      # - `@input_artifacts`
-      # - `@role`
-      # - `@objective`
-      # - `@constraints`
+      # The following accessors are available to render the prompt:
+      # - `#input_artifacts`
+      # - `#role`
+      # - `#objective`
+      # - `#constraints`
       #
       # @param rendered_instructions [String, nil] The rendered system instructions, or nil if none
       # @return [String] The rendered system prompt
@@ -65,10 +65,10 @@ module ComposableAgents
       end
 
       # Render the user prompt
-      # The following instance variables are accessible to render the prompt:
-      # - `@role`
-      # - `@objective`
-      # - `@constraints`
+      # The following accessors are available to render the prompt:
+      # - `#role`
+      # - `#objective`
+      # - `#constraints`
       #
       # @param rendered_instructions [String, nil] The rendered instructions, or nil if none
       # @param input_artifacts [Hash{Symbol => Object}] The input artifacts content for which we render this prompt, per artifact name
