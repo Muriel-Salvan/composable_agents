@@ -14,7 +14,7 @@ Agents.configure do |config|
   config.openrouter_api_key = ENV.fetch('OPENROUTER_API_KEY', nil)
   raise 'Set the OpenRouter API key in the OPENROUTER_API_KEY env variable' unless config.openrouter_api_key
 end
-RubyLLM::Models.refresh!
+RubyLLM.models.refresh
 
 # Define agents
 preferences_agent = ComposableAgents::RubyAgent.new(
@@ -25,21 +25,44 @@ preferences_agent = ComposableAgents::RubyAgent.new(
     }
   end
 )
-itinerary_agent = ComposableAgents::AiAgents::Agent.new(
+# AI-backed agent that suggests holiday destination cities.
+class ItineraryAgent < ComposableAgents::AiAgents::Agent
+  prepend ComposableAgents::Mixins::ArtifactContract
+  prepend ComposableAgents::Mixins::Retriable
+  prepend ComposableAgents::Mixins::RetriableArtifacts
+
+  private
+
+  def prompt(user_prompt)
+    response = super
+    parse_output_artifacts(response) if response.is_a?(String)
+    response
+  end
+end
+
+itinerary_agent = ItineraryAgent.new(
+  artifacts_errors_max_retries: 2,
+  output_artifacts_contracts: {
+    cities: 'A JSON array of city names matching the user\'s holiday preferences'
+  },
+  strategy: ComposableAgents::PromptRenderingStrategy::MarkdownHeavy,
   role: 'You are a travel planner',
   objective: 'Find cities that would be the best destinations for the user\'s holidays',
   system_instructions: <<~EO_INSTRUCTIONS,
     Get the user preferences from the artifact named `preferences`.
     Find the best cities that match those preferences.
-    Create an artifact named `cities` as a JSON list of those city names.
+    Return the `cities` artifact in the JSON output block specified in the system prompt.
+    Its content must be a valid JSON array of city names, not prose.
   EO_INSTRUCTIONS
-  model: 'arcee-ai/trinity-large-thinking:free'
+  model: 'nvidia/nemotron-3.5-lightning:free'
 )
 budget_agent = ComposableAgents::RubyAgent.new(
   proc do |input_artifacts|
     # Compute the budget from the cities list
+    cities = input_artifacts[:cities]
+    cities = JSON.parse(cities) if cities.is_a?(String)
     {
-      budget: JSON.parse(input_artifacts[:cities]).size * 1000
+      budget: cities.size * 1000
     }
   end
 )
