@@ -111,7 +111,7 @@ Or install it globally:
 gem install composable_agents
 ```
 
-Requires **Ruby >= 3.1**.
+Requires **Ruby >= 3.3**.
 
 ### Basic usage: create a composed pipeline of agents
 
@@ -189,7 +189,7 @@ itinerary_agent = ComposableAgents::Cline::Agent.new(
 
 ## Requirements
 
-- **Ruby** >= 3.1 — The gem requires Ruby 3.1 or newer.
+- **Ruby** >= 3.3 — The gem requires Ruby 3.3 or newer.
 - **Bundler** — Used to install the gem and manage its dependencies (comes with Ruby).
 - **Node.js** — Required at runtime by the `cline-rb` backend for pseudo-terminal (PTY) support via `node-pty`.
 - **An LLM provider API key** — One of the following (depending on the agent backend you use):
@@ -730,7 +730,7 @@ The `Resumable` mixin tracks a **hierarchical step index** for each step, stored
 
 ### Prerequisites
 
-- **Ruby** >= 3.1
+- **Ruby** >= 3.3
 - **Bundler** (comes with Ruby)
 - **Node.js** — required by the `cline-rb` backend for pseudo-terminal support (`node-pty`)
 

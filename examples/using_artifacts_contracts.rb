@@ -14,7 +14,7 @@ Agents.configure do |config|
   config.openrouter_api_key = ENV.fetch('OPENROUTER_API_KEY', nil)
   raise 'Set the OpenRouter API key in the OPENROUTER_API_KEY env variable' unless config.openrouter_api_key
 end
-RubyLLM::Models.refresh!
+RubyLLM.models.refresh
 
 # Define agents
 
@@ -56,7 +56,7 @@ class ItineraryAgent < ComposableAgents::AiAgents::Agent
         Find the best cities that match those preferences.
         Create an artifact named `cities` as a JSON list of those city names.
       EO_INSTRUCTIONS
-      model: 'arcee-ai/trinity-large-thinking:free'
+      model: 'nvidia/nemotron-3.5-lightning:free'
     )
   end
 end

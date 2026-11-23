@@ -14,6 +14,7 @@ require 'agents'
 Agents.configure do |config|
   config.openrouter_api_key = ENV.fetch('OPENROUTER_API_KEY', nil)
 end
+RubyLLM.models.refresh
 
 # An analysis agent that produces a result and logs.
 # If either artifact is missing after a run, RetriableArtifacts automatically
@@ -32,7 +33,7 @@ class AnalysisAgent < ComposableAgents::AiAgents::Agent
         Create an artifact named `result` with your analysis findings as text.
         Create an artifact named `logs` with a summary of the steps you performed.
       EO_INSTRUCTIONS
-      model: 'arcee-ai/trinity-large-thinking:free'
+      model: 'nvidia/nemotron-3.5-lightning:free'
     )
   end
 
